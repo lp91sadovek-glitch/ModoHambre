@@ -1,0 +1,301 @@
+
+/* RESET Y BASE */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: orange;
+    color: #333;
+}
+
+/* navbar */
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: orange;
+    padding: 14px 20px;
+}
+
+.nav-titulo {
+    color: black;
+    font-size: 50px;
+    font-weight: bold;
+}
+
+.nav-links {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* BOTÓN HAMBURGUESA (oculto en PC) */
+.hamburguesa {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+}
+
+.hamburguesa span {
+    display: block;
+    width: 26px;
+    height: 3px;
+    background: white;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+.hamburguesa.abierto span:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+}
+.hamburguesa.abierto span:nth-child(2) {
+    opacity: 0;
+}
+.hamburguesa.abierto span:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
+}
+
+/* menu moviles */
+.menu-mobile {
+    display: none;
+    flex-direction: column;
+    background-color: rgb(200, 120, 30);
+}
+
+.menu-mobile.visible {
+    display: flex;
+}
+
+.menu-mobile a {
+    color: white;
+    text-decoration: none;
+    font-size: 16px;
+    padding: 14px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    transition: background 0.2s;
+}
+
+.menu-mobile a:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* logo */
+.logo-container {
+    background-color: orange;
+    text-align: center;
+    padding: 10px 0 20px;
+}
+
+.logo {
+    width: 150px;
+    border-radius: 50%;
+    display: block;
+    margin: 0 auto;
+    transition: transform 0.3s ease;
+}
+
+.logo:hover {
+    transform: scale(1.1);
+}
+
+/* botones */
+.boton {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: rgb(139, 86, 36);
+    color: white;
+    text-decoration: none;
+    border-radius: 20px;
+    font-size: 15px;
+    transition: transform 0.3s ease;
+}
+
+.boton:hover {
+    transform: scale(1.05);
+}
+
+/*carrusel*/
+.container-de-carrusel {
+    width: 100%;
+    padding: 20px 15px;
+}
+
+.carrusel {
+    position: relative;
+    width: 100%;
+    height: 600px;
+    overflow: hidden;
+    border-radius: 20px;
+    box-shadow: 1px 1px 5px #999;
+    margin-bottom: 20px;
+}
+
+.slide {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+    z-index: 0;
+}
+
+.slide.active {
+    opacity: 1;
+    z-index: 1;
+}
+
+.prev,
+.next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    padding: 10px 14px;
+    font-size: 18px;
+    cursor: pointer;
+    z-index: 2;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+}
+
+.prev { left: 10px; }
+.next { right: 10px; }
+
+.prev:hover,
+.next:hover {
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+/* foto única */
+.foto-unica {
+    width: 100%;
+    overflow: hidden;
+}
+
+.foto-unica img {
+    width: 100%;
+    height: auto;
+    border-radius: 20px;
+    box-shadow: 1px 1px 5px #999;
+    display: block;
+}
+
+/* mapa */
+.map-container {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%;
+    height: 0;
+    overflow: hidden;
+    margin: 20px 0;
+}
+
+.map-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+/* whatsapp */
+.whatsapp-float {
+    position: fixed;
+    width: 60px;
+    height: 60px;
+    bottom: 80px;
+    right: 15px;
+    background-color: #25d366;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s ease;
+}
+
+.whatsapp-float:hover {
+    transform: scale(1.1);
+}
+
+/*  TABLET hasta 768px */
+@media (max-width: 768px) {
+
+    .nav-titulo {
+        font-size: 24px;
+    }
+
+    .boton {
+        font-size: 13px;
+        padding: 8px 14px;
+    }
+
+    .carrusel {
+        height: 380px;
+    }
+
+    .logo {
+        width: 120px;
+    }
+}
+
+/* RESPONSIVE — CELULAR hasta 480px */
+@media (max-width: 480px) {
+
+    /* Muestra hamburguesa, oculta links */
+    .hamburguesa {
+        display: flex;
+    }
+
+    .nav-links {
+        display: none;
+    }
+
+    .nav-titulo {
+        font-size: 22px;
+    }
+
+    .carrusel {
+        height: 220px;
+        border-radius: 10px;
+    }
+
+    .prev,
+    .next {
+        padding: 8px 10px;
+        font-size: 14px;
+    }
+
+    .logo {
+        width: 90px;
+    }
+
+    .logo-container {
+        padding: 8px 0 14px;
+    }
+
+    .whatsapp-float {
+        width: 50px;
+        height: 50px;
+        bottom: 15px;
+        right: 10px;
+    }
+
+    .whatsapp-float img {
+        width: 30px !important;
+        height: 30px !important;
+    }
+}

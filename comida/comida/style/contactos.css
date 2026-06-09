@@ -1,0 +1,41 @@
+body{
+
+   
+    background-color: orange;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+h1{
+    text-align: center;
+    color: black;
+    margin-top: 20px;
+}
+form{
+    background-color: orange;
+    max-width: 400px;
+    margin: 20px auto;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+button{
+    
+    
+    background-color: black;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 15px;
+    cursor: pointer;
+}
+a{
+    text-align: center;
+    display: block;
+    margin-top: 20px;
+    color: black;
+    text-decoration: none;
+}
+a:hover{
+    text-decoration: underline;
+}   
