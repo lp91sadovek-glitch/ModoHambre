@@ -1,94 +1,86 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>pollo al espiedo</title>
-
-<!--link de estilo-->
-<link rel="stylesheet" href="style/style.css">
-
+    <title>Modo Hambre</title>
+    <link rel="stylesheet" href="style/style.css">
 </head>
 <body>
 
-  <!--titulo-->
+    <!-- NAVBAR -->
+    <nav class="navbar">
 
-    <div class="container-titulo">
+        <span class="nav-titulo">Modo Hambre</span>
 
-        <h1>El mejor pollo al espiedo de la ciudad.</h1>
-
-        <a href="platos.html" class="boton">ver nuestros platos</a>
-
-        <a href="sobre nosotros.html" class="boton">sobre nosotros</a>  
-
-        <a href="contactos.html" class="boton">contactanos</a>
-
-        
-        <!--imagen de logo-->
-
-        <img src="imagenes/logo.png" alt="logo" class="logo">
-
+        <div class="nav-links">
+            <a href="platos.html" class="boton">Ver nuestros platos</a>
+            <a href="sobre nosotros.html" class="boton">Sobre nosotros</a>
+            <a href="contactos.html" class="boton">Contactanos</a>
         </div>
 
+        <button class="hamburguesa" id="btn-menu" aria-label="Abrir menú" onclick="toggleMenu()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
 
-       <!--carrusel-->
+    </nav>
 
-        <div class="container-de-carrusel">
+    <!-- MENÚ DESPLEGABLE MOBILE -->
+    <div class="menu-mobile" id="menu-mobile">
+        <a href="platos.html">Ver nuestros platos</a>
+        <a href="sobre nosotros.html">Sobre nosotros</a>
+        <a href="contactos.html">Contactanos</a>
+    </div>
 
+    <!-- LOGO -->
+    <div class="logo-container">
+        <img src="imagenes/modo hambre.png" alt="logo" class="logo">
+    </div>
 
-        <!--carrusel de imagenes-->
+    <!-- CARRUSEL -->
+    <div class="container-de-carrusel">
+
         <div class="carrusel">
 
             <img src="imagenes/imagen0.png" class="slide active" alt="1">
-
             <img src="imagenes/imagen2.jpg" class="slide" alt="2">
-
-            <img src="imagenes/imagen3.jpg" class="slide" alt="3">
-
-            <!--botones del carrusel -->
+            <img src="imagenes/hamburgers.png" class="slide" alt="3">
+            <img src="imagenes/modo hambre.png" class="slide" alt="4">
 
             <button class="prev" onclick="prevSlide()">&#10094;</button>
             <button class="next" onclick="nextSlide()">&#10095;</button>
 
-          </div>
-
-          <div class="foto-unica">
-
-            <img src="imagenes/imagen4.jpg" alt="4">
-
-          </div>
-
         </div>
 
-
-        <div class="map-container">
-
-        <!--mapa de google maps-->
-
-        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3650.1234567890123!2d-46.1234567890123!3d-23.1234567890123!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94ce123456789012%3A0x1234567890123456!2sPollo%20al%20Espiedo%20Delicioso!5e0!3m2!1ses-419!2sve!4v1234567890123" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
-
-
+        <div class="foto-unica">
+            <img src="imagenes/hamburguesassss.jpg" alt="foto">
         </div>
-
-
-        <div class="whatsapp">
-
-        <!--boton de whatsapp-->
-        <a href = "https://wa.me/2215012289"
-
-        class="whatsapp-float" target="_blank">
-
-        <img src="https://cdn-icons-png.flaticon.com/512/733/733585.png" alt="whatsapp" width="50px" height="50px">
-        </a>
-
-
-
-        <!--script del carrusel-->
-
-        <script src="carrusel.js"></script> 
 
     </div>
 
+    <!-- MAPA -->
+    <div class="map-container">
+        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3650.1234567890123!2d-46.1234567890123!3d-23.1234567890123!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94ce123456789012%3A0x1234567890123456!2sPollo%20al%20Espiedo%20Delicioso!5e0!3m2!1ses-419!2sve!4v1234567890123" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+    </div>
 
-  </body>
+    <!-- BOTÓN WHATSAPP -->
+    <a href="https://wa.me/2215012289" class="whatsapp-float" target="_blank">
+        <img src="https://cdn-icons-png.flaticon.com/512/733/733585.png" alt="whatsapp" width="50px" height="50px">
+    </a>
+
+    <!-- SCRIPTS -->
+    <script src="carrusel.js"></script>
+
+    <script>
+        function toggleMenu() {
+            const menu = document.getElementById('menu-mobile');
+            const btn = document.getElementById('btn-menu');
+            menu.classList.toggle('visible');
+            btn.classList.toggle('abierto');
+        }
+    </script>
+
+</body>
 </html>

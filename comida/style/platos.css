@@ -91,14 +91,14 @@ body {
     transition: all 0.3s ease;
 }
 
-/* EFECTO HOVER */
+/* efecto hover */
 
 .plato:hover {
     transform: translateY(-10px) scale(1.03);
     box-shadow: 0px 10px 25px rgba(0,0,0,0.25);
 }
 
-/* BOTÓN */
+/* boton*/
 
 .container-boton {
     text-align: center;
@@ -143,4 +143,19 @@ body {
         width: 90%;
         text-align: center;
     }
+}
+
+h1 {
+    font-family: 'Alfa Slab One', serif;
+    color: #7a7171; /* Letra blanca o clarita */
+    
+    /* El primer valor es el color base, el segundo hace un destello más grande */
+    text-shadow: 0 0 10px #ff5722, 0 0 20px #ff2a00; 
+}
+
+p {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 16px;      /* Un tamaño estándar para que se lea bien */
+    color: #333333;       /* Un gris oscuro que no cansa la vista */
+    line-height: 1.5;     /* Le da un poco de aire entre líneas */
 }
