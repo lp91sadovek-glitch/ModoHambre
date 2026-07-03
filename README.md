@@ -18,6 +18,16 @@ De esta forma, la coordinación del pago y el envío se realiza directamente ent
 
 ---
 
+## Tecnologías utilizadas
+
+El proyecto fue desarrollado utilizando las siguientes tecnologías:
+
+* **Frontend:** HTML5, CSS3, JavaScript
+* **Backend:** Python
+* **Base de datos:** SQLite
+
+---
+
 ## Integrantes
 
 Modo Hambre fue pensada para la materia de **Diseño Web** de la carrera de **Desarrollo de Software**.
