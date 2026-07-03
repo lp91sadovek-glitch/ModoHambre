@@ -15,52 +15,115 @@ body {
 /* navbar */
 .navbar {
     display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
     align-items: center;
     justify-content: space-between;
     background-color: orange;
-    padding: 14px 20px;
+    padding: 0.875rem 1.25rem;
 }
 
 .nav-titulo {
     color: black;
-    font-size: 50px;
+    font-size: 3.125rem;
     font-weight: bold;
 }
 
 .nav-links {
     display: flex;
-    gap: 10px;
+    flex-wrap: wrap;
+    gap: 0.625rem;
     align-items: center;
+    justify-content: flex-end;
 }
 
 /* BOTÓN HAMBURGUESA (oculto en PC) */
 .hamburguesa {
     display: none;
     flex-direction: column;
-    gap: 5px;
+    gap: 0.3125rem;
     background: none;
     border: none;
     cursor: pointer;
-    padding: 4px;
+    padding: 0.25rem;
+}
+
+.nav-dropdown {
+    position: relative;
+}
+
+.dropdown-toggle {
+    border: none;
+    cursor: pointer;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    display: none;
+    flex-direction: column;
+    gap: 0.35rem;
+    background: white;
+    padding: 0.5rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.15);
+    min-width: 8rem;
+}
+
+.nav-dropdown:hover .dropdown-menu,
+.nav-dropdown:focus-within .dropdown-menu {
+    display: flex;
+}
+
+.social-link {
+    text-decoration: none;
+    color: #333;
+    padding: 0.35rem 0.5rem;
+    border-radius: 0.5rem;
+}
+
+.social-link:hover {
+    background: #fff3e0;
+}
+
+.mobile-socials {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 0.0625rem solid rgba(0, 0, 0, 0.1);
+}
+
+.mobile-socials span {
+    font-weight: bold;
+    color: #333;
+}
+
+.mobile-socials a {
+    text-decoration: none;
+    color: #333;
+    padding: 0.25rem 0;
 }
 
 .hamburguesa span {
     display: block;
-    width: 26px;
-    height: 3px;
+    width: 1.625rem;
+    height: 0.1875rem;
     background: white;
-    border-radius: 2px;
+    border-radius: 0.125rem;
     transition: all 0.3s ease;
 }
 
 .hamburguesa.abierto span:nth-child(1) {
-    transform: translateY(8px) rotate(45deg);
+    transform: translateY(0.5rem) rotate(45deg);
 }
 .hamburguesa.abierto span:nth-child(2) {
     opacity: 0;
 }
 .hamburguesa.abierto span:nth-child(3) {
-    transform: translateY(-8px) rotate(-45deg);
+    transform: translateY(-0.5rem) rotate(-45deg);
 }
 
 /* menu moviles */
@@ -68,6 +131,7 @@ body {
     display: none;
     flex-direction: column;
     background-color: rgb(200, 120, 30);
+    width: 100%;
 }
 
 .menu-mobile.visible {
@@ -77,9 +141,9 @@ body {
 .menu-mobile a {
     color: white;
     text-decoration: none;
-    font-size: 16px;
-    padding: 14px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 1rem;
+    padding: 0.875rem 1.25rem;
+    border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.2);
     transition: background 0.2s;
 }
 
@@ -91,11 +155,11 @@ body {
 .logo-container {
     background-color: orange;
     text-align: center;
-    padding: 10px 0 20px;
+    padding: 0.625rem 0 1.25rem;
 }
 
 .logo {
-    width: 150px;
+    width: clamp(5.625rem, 15vw, 9.375rem);
     border-radius: 50%;
     display: block;
     margin: 0 auto;
@@ -109,12 +173,12 @@ body {
 /* botones */
 .boton {
     display: inline-block;
-    padding: 10px 20px;
+    padding: 0.625rem 1.25rem;
     background-color: rgb(139, 86, 36);
     color: white;
     text-decoration: none;
-    border-radius: 20px;
-    font-size: 15px;
+    border-radius: 1.25rem;
+    font-size: 0.9375rem;
     transition: transform 0.3s ease;
 }
 
@@ -125,17 +189,19 @@ body {
 /*carrusel*/
 .container-de-carrusel {
     width: 100%;
-    padding: 20px 15px;
+    max-width: 75rem;
+    margin: 0 auto;
+    padding: 1.25rem 0.9375rem;
 }
 
 .carrusel {
     position: relative;
     width: 100%;
-    height: 600px;
+    height: 37.5rem;
     overflow: hidden;
-    border-radius: 20px;
-    box-shadow: 1px 1px 5px #999;
-    margin-bottom: 20px;
+    border-radius: 1.25rem;
+    box-shadow: 0.0625rem 0.0625rem 0.3125rem #999;
+    margin-bottom: 1.25rem;
 }
 
 .slide {
@@ -161,16 +227,16 @@ body {
     background-color: rgba(0, 0, 0, 0.5);
     color: white;
     border: none;
-    padding: 10px 14px;
-    font-size: 18px;
+    padding: 0.625rem 0.875rem;
+    font-size: 1.125rem;
     cursor: pointer;
     z-index: 2;
-    border-radius: 6px;
+    border-radius: 0.375rem;
     transition: background-color 0.2s;
 }
 
-.prev { left: 10px; }
-.next { right: 10px; }
+.prev { left: 0.625rem; }
+.next { right: 0.625rem; }
 
 .prev:hover,
 .next:hover {
@@ -186,8 +252,8 @@ body {
 .foto-unica img {
     width: 100%;
     height: auto;
-    border-radius: 20px;
-    box-shadow: 1px 1px 5px #999;
+    border-radius: 1.25rem;
+    box-shadow: 0.0625rem 0.0625rem 0.3125rem #999;
     display: block;
 }
 
@@ -198,7 +264,7 @@ body {
     padding-bottom: 56.25%;
     height: 0;
     overflow: hidden;
-    margin: 20px 0;
+    margin: 1.25rem 0;
 }
 
 .map-container iframe {
@@ -213,17 +279,17 @@ body {
 /* whatsapp */
 .whatsapp-float {
     position: fixed;
-    width: 60px;
-    height: 60px;
-    bottom: 80px;
-    right: 15px;
+    width: 3.75rem;
+    height: 3.75rem;
+    bottom: 5rem;
+    right: 0.9375rem;
     background-color: #25d366;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1000;
-    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0.125rem 0.125rem 0.5rem rgba(0, 0, 0, 0.3);
     transition: transform 0.2s ease;
 }
 
@@ -231,29 +297,49 @@ body {
     transform: scale(1.1);
 }
 
-/*  TABLET hasta 768px */
-@media (max-width: 768px) {
+/*  TABLET hasta 48rem */
+@media (max-width: 48rem) {
+
+    .nav-links {
+        width: 100%;
+        justify-content: center;
+    }
 
     .nav-titulo {
-        font-size: 24px;
+        font-size: 1.5rem;
     }
 
     .boton {
-        font-size: 13px;
-        padding: 8px 14px;
+        font-size: 0.8125rem;
+        padding: 0.5rem 0.875rem;
     }
 
     .carrusel {
-        height: 380px;
+        height: 23.75rem;
     }
 
     .logo {
-        width: 120px;
+        width: 7.5rem;
     }
 }
 
-/* RESPONSIVE — CELULAR hasta 480px */
-@media (max-width: 480px) {
+@media (max-width: 23rem) {
+    .navbar {
+        justify-content: center;
+    }
+
+    .nav-links {
+        gap: 0.5rem;
+    }
+
+    .boton {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+/* RESPONSIVE — CELULAR hasta 30rem */
+@media (max-width: 30rem) {
 
     /* Muestra hamburguesa, oculta links */
     .hamburguesa {
@@ -265,37 +351,132 @@ body {
     }
 
     .nav-titulo {
-        font-size: 22px;
+        font-size: 1.375rem;
     }
 
     .carrusel {
-        height: 220px;
-        border-radius: 10px;
+        height: 13.75rem;
+        border-radius: 0.625rem;
     }
 
     .prev,
     .next {
-        padding: 8px 10px;
-        font-size: 14px;
+        padding: 0.5rem 0.625rem;
+        font-size: 0.875rem;
     }
 
     .logo {
-        width: 90px;
+        width: 5.625rem;
     }
 
     .logo-container {
-        padding: 8px 0 14px;
+        padding: 0.5rem 0 0.875rem;
     }
 
     .whatsapp-float {
-        width: 50px;
-        height: 50px;
-        bottom: 15px;
-        right: 10px;
+        width: 3.125rem;
+        height: 3.125rem;
+        bottom: 0.9375rem;
+        right: 0.625rem;
     }
 
     .whatsapp-float img {
-        width: 30px !important;
-        height: 30px !important;
+        width: 1.875rem !important;
+        height: 1.875rem !important;
     }
+}
+
+/* MENÚ FLOTANTE REDES SOCIALES */
+.floating-menu {
+    position: fixed;
+    bottom: 1.25rem;
+    right: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    z-index: 999;
+}
+
+.social-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: auto;
+    padding: 0.75rem 1rem;
+    border-radius: 2rem;
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: bold;
+    color: white;
+    transition: all 0.3s ease;
+    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.2);
+}
+
+.social-btn span:first-child {
+    font-size: 1.5rem;
+}
+
+.social-btn.instagram {
+    background: linear-gradient(135deg, #833ab4 0%, #fd1d1d 100%);
+}
+
+.social-btn.instagram:hover {
+    transform: translateY(-0.3125rem);
+    box-shadow: 0 0.5rem 1rem rgba(253, 29, 29, 0.4);
+}
+
+.social-btn.tiktok {
+    background: linear-gradient(135deg, #000000 0%, #25f4ee 100%);
+}
+
+.social-btn.tiktok:hover {
+    transform: translateY(-0.3125rem);
+    box-shadow: 0 0.5rem 1rem rgba(37, 244, 238, 0.4);
+}
+
+.social-btn.facebook {
+    background: linear-gradient(135deg, #1877f2 0%, #e7f3ff 100%);
+}
+
+.social-btn.facebook:hover {
+    transform: translateY(-0.3125rem);
+    box-shadow: 0 0.5rem 1rem rgba(24, 119, 242, 0.4);
+}
+
+@media (max-width: 48rem) {
+    .floating-menu {
+        bottom: 1rem;
+        right: 1rem;
+    }
+
+    .social-btn {
+        padding: 0.625rem 0.875rem;
+        font-size: 0.875rem;
+    }
+
+    .social-btn span:first-child {
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 30rem) {
+    .floating-menu {
+        bottom: 0.75rem;
+        right: 0.75rem;
+    }
+
+    .social-btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.75rem;
+    }
+
+    .social-btn span:first-child {
+        font-size: 1rem;
+    }
+
+    .social-btn span:last-child {
+        display: none;
+    }
+}
 }

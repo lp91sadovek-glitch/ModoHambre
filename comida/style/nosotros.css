@@ -66,11 +66,11 @@ html, body {
 /*  TEXTO */
 .conteiner-texto {
     z-index: 1;
-    max-width: 680px;
+    width: min(100%, 42.5rem);
     padding: 0 2rem;
     animation: fadeUp 1s ease both;
 }
- 
+
 .conteiner-texto h1 {
     font-family: var(--font-titulo);
     font-size: clamp(2.8rem, 7vw, 5rem);
@@ -89,10 +89,10 @@ html, body {
     bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 60px;
-    height: 3px;
+    width: 3.75rem;
+    height: 0.1875rem;
     background: var(--color-accent);
-    border-radius: 2px;
+    border-radius: 0.125rem;
 }
  
 .conteiner-texto p {
@@ -117,9 +117,9 @@ html, body {
     text-transform: uppercase;
     text-decoration: none;
     color: var(--color-blanco);
-    border: 2px solid var(--color-accent);
+    border: 0.125rem solid var(--color-accent);
     background: transparent;
-    border-radius: 3px;
+    border-radius: 0.1875rem;
     transition: background 0.3s ease, color 0.3s ease, transform 0.2s ease;
     animation: fadeUp 1s 0.3s ease both;
 }
@@ -127,7 +127,7 @@ html, body {
 .boton:hover {
     background: var(--color-accent);
     color: #fff;
-    transform: translateY(-2px);
+    transform: translateY(-0.125rem);
 }
  
 .boton:active {
@@ -138,7 +138,7 @@ html, body {
 @keyframes fadeUp {
     from {
         opacity: 0;
-        transform: translateY(24px);
+        transform: translateY(1.5rem);
     }
     to {
         opacity: 1;
@@ -147,7 +147,7 @@ html, body {
 }
  
 /* RESPONSIVE */
-@media (max-width: 480px) {
+@media (max-width: 30rem) {
     .conteiner-texto {
         padding: 0 1.5rem;
     }
@@ -155,5 +155,105 @@ html, body {
     .boton {
         padding: 0.75rem 1.6rem;
         font-size: 0.85rem;
+        width: 100%;
     }
+
+    .conteiner-texto h1 {
+        font-size: clamp(2.2rem, 8vw, 3rem);
+    }
+}
+
+/* MENÚ FLOTANTE REDES SOCIALES */
+.floating-menu {
+    position: fixed;
+    bottom: 1.25rem;
+    right: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    z-index: 999;
+}
+
+.social-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: auto;
+    padding: 0.75rem 1rem;
+    border-radius: 2rem;
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: bold;
+    color: white;
+    transition: all 0.3s ease;
+    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.2);
+}
+
+.social-btn span:first-child {
+    font-size: 1.5rem;
+}
+
+.social-btn.instagram {
+    background: linear-gradient(135deg, #833ab4 0%, #fd1d1d 100%);
+}
+
+.social-btn.instagram:hover {
+    transform: translateY(-0.3125rem);
+    box-shadow: 0 0.5rem 1rem rgba(253, 29, 29, 0.4);
+}
+
+.social-btn.tiktok {
+    background: linear-gradient(135deg, #000000 0%, #25f4ee 100%);
+}
+
+.social-btn.tiktok:hover {
+    transform: translateY(-0.3125rem);
+    box-shadow: 0 0.5rem 1rem rgba(37, 244, 238, 0.4);
+}
+
+.social-btn.facebook {
+    background: linear-gradient(135deg, #1877f2 0%, #e7f3ff 100%);
+}
+
+.social-btn.facebook:hover {
+    transform: translateY(-0.3125rem);
+    box-shadow: 0 0.5rem 1rem rgba(24, 119, 242, 0.4);
+}
+
+@media (max-width: 48rem) {
+    .floating-menu {
+        bottom: 1rem;
+        right: 1rem;
+    }
+
+    .social-btn {
+        padding: 0.625rem 0.875rem;
+        font-size: 0.875rem;
+    }
+
+    .social-btn span:first-child {
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 30rem) {
+    .floating-menu {
+        bottom: 0.75rem;
+        right: 0.75rem;
+    }
+
+    .social-btn {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.75rem;
+    }
+
+    .social-btn span:first-child {
+        font-size: 1rem;
+    }
+
+    .social-btn span:last-child {
+        display: none;
+    }
+}
 }

@@ -7,13 +7,6 @@
     <title>Platos</title>
 
     <link rel="stylesheet" href="style/platos.css">
-
-    <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&display=swap" rel="stylesheet">
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
-
 </head>
 
 <body>
@@ -22,13 +15,34 @@
     <header class="header">
 
         <img class="logo" src="imagenes/modo hambre.png" alt="Logo de la empresa">
+
+        <div class="header-actions">
+            <button class="action-btn" id="menu-toggle" type="button" aria-label="Abrir menú">☰ Menú</button>
+            <button class="action-btn" id="cart-toggle" type="button" aria-label="Abrir carrito">🛒 <span class="cart-count" id="cart-count">0</span></button>
+        </div>
         
     </header>
+
+    <!-- MENÚ FLOTANTE REDES SOCIALES -->
+    <div class="floating-menu">
+        <a href="https://www.instagram.com" target="_blank" class="social-btn instagram" aria-label="Instagram">
+            <span>📷</span>
+            <span>Instagram</span>
+        </a>
+        <a href="https://www.tiktok.com" target="_blank" class="social-btn tiktok" aria-label="TikTok">
+            <span>🎵</span>
+            <span>TikTok</span>
+        </a>
+        <a href="https://www.facebook.com" target="_blank" class="social-btn facebook" aria-label="Facebook">
+            <span>👍</span>
+            <span>Facebook</span>
+        </a>
+    </div>
 
     <!-- TÍTULO -->
     <section class="container-titulo">
 
-        <h1>¡Los Mejores Platos para Vos!</h1>
+        <h1>Los mejores platos para vos</h1>
 
     </section>
 
@@ -39,7 +53,12 @@
 
             <img class="img-platos" src="imagenes/plato1.jpeg" alt="Pollo al espiedo">
 
-            <p>Super Pollo Especial</p>
+            <p>Pollo al espiedo con papas, cheddar y ensaladas.</p>
+
+                <div class="plato-footer">
+            <span class="plato-price">$850</span>
+            <button class="boton add-cart" type="button" data-name="Pollo al espiedo" data-price="850">Agregar</button>
+        </div>
 
         </article>
 
@@ -47,7 +66,12 @@
 
             <img class="img-platos" src="imagenes/plato2.jpeg" alt="Pollo con arroz">
 
-            <p>Pollo al espiedo con papas y arroz. </p>
+            <p>Pollo al espiedo con papas y arroz.</p>
+
+                <div class="plato-footer">
+            <span class="plato-price">$780</span>
+            <button class="boton add-cart" type="button" data-name="Pollo con arroz" data-price="780">Agregar</button>
+        </div>
 
         </article>
 
@@ -57,6 +81,11 @@
 
             <p>Pollo bañado con salsa de mostaza y papas al horno.</p>
 
+                <div class="plato-footer">
+            <span class="plato-price">$820</span>
+            <button class="boton add-cart" type="button" data-name="Pollo con mostaza" data-price="820">Agregar</button>
+        </div>
+
         </article>
 
         <article class="plato">
@@ -64,6 +93,11 @@
             <img class="img-platos" src="imagenes/plato4.jpeg" alt="Chorizo con papas">
 
             <p>Chorizo de pollo con papas fritas, mayonesa y salsa de tomate.</p>
+
+                <div class="plato-footer">
+            <span class="plato-price">$760</span>
+            <button class="boton add-cart" type="button" data-name="Chorizo con papas" data-price="760">Agregar</button>
+        </div>
 
         </article>
 
@@ -73,6 +107,11 @@
 
             <p>Hamburguesa de pollo con lechuga, queso, tomate, cebolla y papas fritas.</p>
 
+                <div class="plato-footer">
+            <span class="plato-price">$890</span>
+            <button class="boton add-cart" type="button" data-name="Hamburguesa de pollo" data-price="890">Agregar</button>
+        </div>
+
         </article>
 
         <article class="plato">
@@ -80,6 +119,11 @@
             <img class="img-platos" src="imagenes/plato6.jpeg" alt="Chorizo al espiedo">
 
             <p>Chorizo al espiedo con ensalada.</p>
+
+                <div class="plato-footer">
+            <span class="plato-price">$700</span>
+            <button class="boton add-cart" type="button" data-name="Chorizo al espiedo" data-price="700">Agregar</button>
+        </div>
 
         </article>
 
@@ -89,13 +133,23 @@
 
             <p>hamburgesa  con lechuga, queso, tomate, cebolla, papas fritas.</p>
 
+                <div class="plato-footer">
+            <span class="plato-price">$880</span>
+            <button class="boton add-cart" type="button" data-name="Hamburguesa con lechuga" data-price="880">Agregar</button>
+        </div>
+
         </article>
 
         <article class="plato">
 
             <img class="img-platos" src="imagenes/asadp argento.png" alt="azado argentino">
 
-            <p>Asado Argento con papas y ensalada.</p>
+            <p>Azado Argento con papas y ensalada.</p>
+
+                <div class="plato-footer">
+            <span class="plato-price">$950</span>
+            <button class="boton add-cart" type="button" data-name="Azado Argento" data-price="950">Agregar</button>
+        </div>
 
         </article>
 
@@ -110,6 +164,49 @@
 
     </section>
 
+
+    <!-- MENU FLOTANTE -->
+    <div class="nav-overlay" id="nav-overlay" aria-hidden="true">
+        <div class="nav-panel">
+            <button class="close-panel" id="nav-close" aria-label="Cerrar menú">×</button>
+            <nav class="nav-panel-links">
+                <a href="index.html">Inicio</a>
+                <a href="platos.html">Platos</a>
+                <a href="sobre nosotros.html">Sobre nosotros</a>
+                <a href="contactos.html">Contactanos</a>
+                <div class="social-panel-links">
+                    <span>Redes</span>
+                    <a href="https://www.instagram.com" target="_blank">Instagram</a>
+                    <a href="https://www.tiktok.com" target="_blank">TikTok</a>
+                    <a href="https://www.facebook.com" target="_blank">Facebook</a>
+                </div>
+            </nav>
+        </div>
+    </div>
+
+    <!-- CARRITO DE COMPRAS -->
+    <div class="cart-panel" id="cart-panel" aria-hidden="true">
+        <div class="cart-panel-content">
+            <div class="cart-panel-header">
+                <h2>Tu carrito</h2>
+                <button class="close-panel" id="cart-close" aria-label="Cerrar carrito">×</button>
+            </div>
+            <div class="cart-items" id="cart-items">
+                <p class="empty-cart">Aún no hay platos en el carrito.</p>
+            </div>
+            <div class="cart-summary">
+                <div class="summary-row">
+                    <span>Total</span>
+                    <strong id="cart-total">$0</strong>
+                </div>
+                <button class="boton clear-cart" id="clear-cart" type="button">Vaciar carrito</button>
+                <button class="boton whatsapp-order" id="whatsapp-order" type="button">Enviar pedido por WhatsApp</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="api-client.js"></script>
+    <script src="platos-cart.js"></script>
 </body>
 
 </html>
