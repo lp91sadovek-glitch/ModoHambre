@@ -75,16 +75,11 @@ clearCart.addEventListener('click', () => {
   updateCart();
 });
 
-whatsappOrderBtn.addEventListener('click', async () => {
+whatsappOrderBtn.addEventListener('click', () => {
   if (cart.length === 0) return;
 
-  try {
-    await saveOrder(cart);
-    const message = `Hola, quiero hacer este pedido:%0A%0A${cart.map((item) => `- ${item.name}: ${formatPrice(item.price)}`).join('%0A')}%0A%0ATotal: ${formatPrice(cart.reduce((sum, item) => sum + item.price, 0))}`;
-    window.open(`https://wa.me/${whatsappNumber}?text=${message}`, '_blank', 'noopener');
-  } catch (error) {
-    alert(error.message);
-  }
+  const message = `Hola, quiero hacer este pedido:%0A%0A${cart.map((item) => `- ${item.name}: ${formatPrice(item.price)}`).join('%0A')}%0A%0ATotal: ${formatPrice(cart.reduce((sum, item) => sum + item.price, 0))}`;
+  window.open(`https://wa.me/${whatsappNumber}?text=${message}`, '_blank', 'noopener');
 });
 
 cartItemsEl.addEventListener('click', (event) => {

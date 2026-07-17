@@ -115,6 +115,15 @@ a:hover{
     box-shadow: 0 0.5rem 1rem rgba(24, 119, 242, 0.4);
 }
 
+.social-btn.whatsapp {
+    background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
+}
+
+.social-btn.whatsapp:hover {
+    transform: translateY(-0.3125rem);
+    box-shadow: 0 0.5rem 1rem rgba(37, 211, 102, 0.4);
+}
+
 @media (max-width: 48rem) {
     .floating-menu {
         bottom: 1rem;

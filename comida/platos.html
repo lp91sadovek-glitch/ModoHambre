@@ -14,7 +14,7 @@
     <!-- HEADER -->
     <header class="header">
 
-        <img class="logo" src="imagenes/modo hambre.png" alt="Logo de la empresa">
+        <a href="index.html"><img class="logo" src="imagenes/modo hambre.png" alt="Logo de la empresa"></a>
 
         <div class="header-actions">
             <button class="action-btn" id="menu-toggle" type="button" aria-label="Abrir menú">☰ Menú</button>
@@ -22,22 +22,6 @@
         </div>
         
     </header>
-
-    <!-- MENÚ FLOTANTE REDES SOCIALES -->
-    <div class="floating-menu">
-        <a href="https://www.instagram.com" target="_blank" class="social-btn instagram" aria-label="Instagram">
-            <span>📷</span>
-            <span>Instagram</span>
-        </a>
-        <a href="https://www.tiktok.com" target="_blank" class="social-btn tiktok" aria-label="TikTok">
-            <span>🎵</span>
-            <span>TikTok</span>
-        </a>
-        <a href="https://www.facebook.com" target="_blank" class="social-btn facebook" aria-label="Facebook">
-            <span>👍</span>
-            <span>Facebook</span>
-        </a>
-    </div>
 
     <!-- TÍTULO -->
     <section class="container-titulo">
@@ -153,17 +137,20 @@
 
         </article>
 
+        <article class="plato">
+
+            <img class="img-platos" src="imagenes/sanguchedemila.png" alt="Sanguche de milanesa completo">
+
+            <p>Sanguche de milanesa completo con lechuga, tomate, huevo y queso.</p>
+
+                <div class="plato-footer">
+            <span class="plato-price">$600</span>
+            <button class="boton add-cart" type="button" data-name="Sanguche de milanesa completo" data-price="600">Agregar</button>
+        </div>
+
+        </article>
+
     </section>
-
-    <!-- BOTÓN -->
-    <section class="container-boton">
-
-        <a href="index.html" class="boton">
-            Volver a la página principal
-        </a>
-
-    </section>
-
 
     <!-- MENU FLOTANTE -->
     <div class="nav-overlay" id="nav-overlay" aria-hidden="true">
@@ -205,7 +192,6 @@
         </div>
     </div>
 
-    <script src="api-client.js"></script>
     <script src="platos-cart.js"></script>
 </body>
 

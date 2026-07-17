@@ -38,6 +38,10 @@ body {
     display: block;
 }
 
+.header a {
+    text-decoration: none;
+}
+
 /* CARRUSEL */
 
 .container-titulo {
@@ -428,99 +432,5 @@ body {
     .boton {
         width: 90%;
         text-align: center;
-    }
-}
-
-/* MENÚ FLOTANTE REDES SOCIALES */
-.floating-menu {
-    position: fixed;
-    bottom: 1.25rem;
-    right: 1.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    z-index: 999;
-}
-
-.social-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    width: auto;
-    padding: 0.75rem 1rem;
-    border-radius: 2rem;
-    text-decoration: none;
-    font-size: 1rem;
-    font-weight: bold;
-    color: white;
-    transition: all 0.3s ease;
-    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.2);
-}
-
-.social-btn span:first-child {
-    font-size: 1.5rem;
-}
-
-.social-btn.instagram {
-    background: linear-gradient(135deg, #833ab4 0%, #fd1d1d 100%);
-}
-
-.social-btn.instagram:hover {
-    transform: translateY(-0.3125rem);
-    box-shadow: 0 0.5rem 1rem rgba(253, 29, 29, 0.4);
-}
-
-.social-btn.tiktok {
-    background: linear-gradient(135deg, #000000 0%, #25f4ee 100%);
-}
-
-.social-btn.tiktok:hover {
-    transform: translateY(-0.3125rem);
-    box-shadow: 0 0.5rem 1rem rgba(37, 244, 238, 0.4);
-}
-
-.social-btn.facebook {
-    background: linear-gradient(135deg, #1877f2 0%, #e7f3ff 100%);
-}
-
-.social-btn.facebook:hover {
-    transform: translateY(-0.3125rem);
-    box-shadow: 0 0.5rem 1rem rgba(24, 119, 242, 0.4);
-}
-
-@media (max-width: 48rem) {
-    .floating-menu {
-        bottom: 1rem;
-        right: 1rem;
-    }
-
-    .social-btn {
-        padding: 0.625rem 0.875rem;
-        font-size: 0.875rem;
-    }
-
-    .social-btn span:first-child {
-        font-size: 1.25rem;
-    }
-}
-
-@media (max-width: 30rem) {
-    .floating-menu {
-        bottom: 0.75rem;
-        right: 0.75rem;
-    }
-
-    .social-btn {
-        padding: 0.5rem 0.75rem;
-        font-size: 0.75rem;
-    }
-
-    .social-btn span:first-child {
-        font-size: 1rem;
-    }
-
-    .social-btn span:last-child {
-        display: none;
     }
 }
