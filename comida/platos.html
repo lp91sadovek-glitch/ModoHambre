@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Platos</title>
+    <title>Ordenar</title>
 
     <link rel="stylesheet" href="style/platos.css">
 </head>
@@ -17,8 +17,8 @@
         <a href="index.html"><img class="logo" src="imagenes/modo hambre.png" alt="Logo de la empresa"></a>
 
         <div class="header-actions">
-            <button class="action-btn" id="menu-toggle" type="button" aria-label="Abrir menú">☰ Menú</button>
             <button class="action-btn" id="cart-toggle" type="button" aria-label="Abrir carrito">🛒 <span class="cart-count" id="cart-count">0</span></button>
+            <button class="action-btn" id="menu-toggle" type="button" aria-label="Abrir menú">☰ Menú</button>
         </div>
         
     </header>
@@ -30,165 +30,643 @@
 
     </section>
 
-    <!-- GALERÍA -->
-    <section class="container-platos">
+    <!-- CATEGORÍAS -->
+    <section class="container-categorias">
 
-        <article class="plato">
+        <!-- ENTRADAS -->
+        <div class="categoria">
 
-            <img class="img-platos" src="imagenes/plato1.jpeg" alt="Pollo al espiedo">
+            <button class="categoria-toggle" type="button" aria-expanded="false">
+                <span>Entradas</span>
+                <span class="categoria-icono">▼</span>
+            </button>
 
-            <p>Pollo al espiedo con papas, cheddar y ensaladas.</p>
+            <div class="categoria-contenido">
+                <div class="categoria-inner">
+                    <div class="container-platos">
 
-                <div class="plato-footer">
-            <span class="plato-price">$850</span>
-            <button class="boton add-cart" type="button" data-name="Pollo al espiedo" data-price="850">Agregar</button>
+                        <article class="plato">
+
+                            <img class="img-platos img-completa" src="imagenes/entradasbunuelos_de_verdura.png" alt="Buñuelos de verdura">
+
+                            <p>Buñuelos de verdura.</p>
+
+                                <div class="plato-footer">
+                            <span class="plato-price">$450</span>
+                            <button class="boton add-cart" type="button" data-name="Buñuelos de verdura" data-price="450">Agregar</button>
+                        </div>
+
+                        </article>
+
+                        <article class="plato">
+
+                            <img class="img-platos img-completa" src="imagenes/entradasempanadas-carne-pollo-jamon_y_queso.png" alt="Empanadas de carne, pollo y jamón y queso">
+
+                            <p>Empanadas de carne, pollo o jamón y queso.</p>
+
+                                <div class="plato-footer">
+                            <span class="plato-price">$150 c/u</span>
+                            <button class="boton variantes-toggle" type="button" aria-expanded="false">Agregar</button>
+                        </div>
+
+                            <div class="selector-variantes" hidden>
+                                <button class="cerrar-selector" type="button" aria-label="Cerrar">×</button>
+                                <p class="selector-titulo">Elegí el gusto</p>
+                                <div class="variante">
+                                    <span>Carne · $150</span>
+                                    <button class="variante-add" type="button" data-name="Empanada de carne" data-price="150">Agregar</button>
+                                </div>
+                                <div class="variante">
+                                    <span>Pollo · $150</span>
+                                    <button class="variante-add" type="button" data-name="Empanada de pollo" data-price="150">Agregar</button>
+                                </div>
+                                <div class="variante">
+                                    <span>Jamón y queso · $150</span>
+                                    <button class="variante-add" type="button" data-name="Empanada de jamón y queso" data-price="150">Agregar</button>
+                                </div>
+                            </div>
+
+                        </article>
+
+                        <article class="plato">
+
+                            <img class="img-platos img-completa" src="imagenes/entradaspapascon_chedar_y_panceta.png" alt="Papas con cheddar y panceta">
+
+                            <p>Papas con cheddar y panceta.</p>
+
+                                <div class="plato-footer">
+                            <span class="plato-price">$650</span>
+                            <button class="boton add-cart" type="button" data-name="Papas con cheddar y panceta" data-price="650">Agregar</button>
+                        </div>
+
+                        </article>
+
+                        <article class="plato">
+
+                            <img class="img-platos img-completa" src="imagenes/entradastarta_de_pollo.png" alt="Porción de tarta">
+
+                            <p>Porción de tarta de jamón y queso, pollo, pescado o calabaza.</p>
+
+                                <div class="plato-footer">
+                            <span class="plato-price">$550</span>
+                            <button class="boton variantes-toggle" type="button" aria-expanded="false">Agregar</button>
+                        </div>
+
+                            <div class="selector-variantes" hidden>
+                                <button class="cerrar-selector" type="button" aria-label="Cerrar">×</button>
+                                <p class="selector-titulo">Elegí el gusto</p>
+                                <div class="variante">
+                                    <span>Jamón y queso · $550</span>
+                                    <button class="variante-add" type="button" data-name="Tarta de jamón y queso" data-price="550">Agregar</button>
+                                </div>
+                                <div class="variante">
+                                    <span>Pollo · $550</span>
+                                    <button class="variante-add" type="button" data-name="Tarta de pollo" data-price="550">Agregar</button>
+                                </div>
+                                <div class="variante">
+                                    <span>Pescado · $550</span>
+                                    <button class="variante-add" type="button" data-name="Tarta de pescado" data-price="550">Agregar</button>
+                                </div>
+                                <div class="variante">
+                                    <span>Calabaza · $550</span>
+                                    <button class="variante-add" type="button" data-name="Tarta de calabaza" data-price="550">Agregar</button>
+                                </div>
+                            </div>
+
+                        </article>
+
+                        <article class="plato">
+
+                            <img class="img-platos img-completa" src="imagenes/entradastortilla_de_papa.png" alt="Tortilla de papa">
+
+                            <p>Tortilla de papa.</p>
+
+                                <div class="plato-footer">
+                            <span class="plato-price">$500</span>
+                            <button class="boton add-cart" type="button" data-name="Tortilla de papa" data-price="500">Agregar</button>
+                        </div>
+
+                        </article>
+
+                    </div>
+                </div>
+            </div>
+
         </div>
 
-        </article>
+        <!-- PIZZAS -->
+        <div class="categoria">
 
-        <article class="plato">
+            <button class="categoria-toggle" type="button" aria-expanded="false">
+                <span>Pizzas</span>
+                <span class="categoria-icono">▼</span>
+            </button>
 
-            <img class="img-platos" src="imagenes/plato2.jpeg" alt="Pollo con arroz">
+            <div class="categoria-contenido">
+                <div class="categoria-inner">
+                    <div class="container-platos">
 
-            <p>Pollo al espiedo con papas y arroz.</p>
+                        <article class="plato">
 
-                <div class="plato-footer">
-            <span class="plato-price">$780</span>
-            <button class="boton add-cart" type="button" data-name="Pollo con arroz" data-price="780">Agregar</button>
+                            <img class="img-platos img-completa" src="imagenes/pizzaspizza_4_quesos.png" alt="Pizza 4 quesos">
+
+                            <p>Pizza 4 quesos.</p>
+
+                                <div class="plato-footer">
+                            <span class="plato-price">$850</span>
+                            <button class="boton add-cart" type="button" data-name="Pizza 4 quesos" data-price="850">Agregar</button>
+                        </div>
+
+                        </article>
+
+                        <article class="plato">
+
+                            <img class="img-platos img-completa" src="imagenes/pizzaspizza_napolitana.png" alt="Pizza napolitana">
+
+                            <p>Pizza napolitana.</p>
+
+                                <div class="plato-footer">
+                            <span class="plato-price">$850</span>
+                            <button class="boton add-cart" type="button" data-name="Pizza napolitana" data-price="850">Agregar</button>
+                        </div>
+
+                        </article>
+
+                        <article class="plato">
+
+                            <img class="img-platos img-completa" src="imagenes/pizzaspizza_primavera.png" alt="Pizza primavera">
+
+                            <p>Pizza primavera.</p>
+
+                                <div class="plato-footer">
+                            <span class="plato-price">$850</span>
+                            <button class="boton add-cart" type="button" data-name="Pizza primavera" data-price="850">Agregar</button>
+                        </div>
+
+                        </article>
+
+                    </div>
+                </div>
+            </div>
+
         </div>
 
-        </article>
+        <!-- PASTAS -->
+        <div class="categoria">
 
-        <article class="plato">
+            <button class="categoria-toggle" type="button" aria-expanded="false">
+                <span>Pastas</span>
+                <span class="categoria-icono">▼</span>
+            </button>
 
-            <img class="img-platos" src="imagenes/plato3.jpeg" alt="Pollo con mostaza">
+            <div class="categoria-contenido">
+                <div class="categoria-inner">
+                    <div class="container-platos">
 
-            <p>Pollo bañado con salsa de mostaza y papas al horno.</p>
+                        <article class="plato">
 
-                <div class="plato-footer">
-            <span class="plato-price">$820</span>
-            <button class="boton add-cart" type="button" data-name="Pollo con mostaza" data-price="820">Agregar</button>
+                            <img class="img-platos img-completa" src="imagenes/pastas_fideos_con_salsa_filetto.png" alt="Fideos con salsa filetto">
+
+                            <p>Fideos con salsa filetto.</p>
+
+                                <div class="plato-footer">
+                            <span class="plato-price">$600</span>
+                            <button class="boton add-cart" type="button" data-name="Fideos con salsa filetto" data-price="600">Agregar</button>
+                        </div>
+
+                        </article>
+
+                        <article class="plato">
+
+                            <img class="img-platos img-completa" src="imagenes/pastas_noquis_caseros.png" alt="Ñoquis caseros">
+
+                            <p>Ñoquis caseros.</p>
+
+                                <div class="plato-footer">
+                            <span class="plato-price">$800</span>
+                            <button class="boton add-cart" type="button" data-name="Ñoquis caseros" data-price="800">Agregar</button>
+                        </div>
+
+                        </article>
+
+                        <article class="plato">
+
+                            <img class="img-platos img-completa" src="imagenes/pastassorrentinos_de_pollo_y_espinaca.png" alt="Sorrentinos de pollo y espinaca">
+
+                            <p>Sorrentinos de pollo y espinaca.</p>
+
+                                <div class="plato-footer">
+                            <span class="plato-price">$700</span>
+                            <button class="boton add-cart" type="button" data-name="Sorrentinos de pollo y espinaca" data-price="700">Agregar</button>
+                        </div>
+
+                        </article>
+
+                    </div>
+                </div>
+            </div>
+
         </div>
 
-        </article>
+        <!-- POLLO -->
+        <div class="categoria">
 
-        <article class="plato">
+            <button class="categoria-toggle" type="button" aria-expanded="false">
+                <span>Pollo</span>
+                <span class="categoria-icono">▼</span>
+            </button>
 
-            <img class="img-platos" src="imagenes/plato4.jpeg" alt="Chorizo con papas">
+            <div class="categoria-contenido">
+                <div class="categoria-inner">
+                    <div class="container-platos">
 
-            <p>Chorizo de pollo con papas fritas, mayonesa y salsa de tomate.</p>
+                        <article class="plato">
 
-                <div class="plato-footer">
-            <span class="plato-price">$760</span>
-            <button class="boton add-cart" type="button" data-name="Chorizo con papas" data-price="760">Agregar</button>
+                            <img class="img-platos" src="imagenes/plato1.jpeg" alt="Pollo al espiedo">
+
+                            <p>Pollo al espiedo con papas, cheddar y ensaladas.</p>
+
+                                <div class="plato-footer">
+                            <span class="plato-price">$850</span>
+                            <button class="boton add-cart" type="button" data-name="Pollo al espiedo" data-price="850">Agregar</button>
+                        </div>
+
+                        </article>
+
+                        <article class="plato">
+
+                            <img class="img-platos" src="imagenes/plato2.jpeg" alt="Pollo con arroz">
+
+                            <p>Pollo al espiedo con papas y arroz.</p>
+
+                                <div class="plato-footer">
+                            <span class="plato-price">$780</span>
+                            <button class="boton add-cart" type="button" data-name="Pollo con arroz" data-price="780">Agregar</button>
+                        </div>
+
+                        </article>
+
+                        <article class="plato">
+
+                            <img class="img-platos" src="imagenes/plato3.jpeg" alt="Pollo con mostaza">
+
+                            <p>Pollo bañado con salsa de mostaza y papas al horno.</p>
+
+                                <div class="plato-footer">
+                            <span class="plato-price">$820</span>
+                            <button class="boton add-cart" type="button" data-name="Pollo con mostaza" data-price="820">Agregar</button>
+                        </div>
+
+                        </article>
+
+                    </div>
+                </div>
+            </div>
+
         </div>
 
-        </article>
+        <!-- PARRILLA -->
+        <div class="categoria">
 
-        <article class="plato">
+            <button class="categoria-toggle" type="button" aria-expanded="false">
+                <span>Parrilla</span>
+                <span class="categoria-icono">▼</span>
+            </button>
 
-            <img class="img-platos" src="imagenes/plato5.jpeg" alt="Hamburguesa de pollo">
+            <div class="categoria-contenido">
+                <div class="categoria-inner">
+                    <div class="container-platos">
 
-            <p>Hamburguesa de pollo con lechuga, queso, tomate, cebolla y papas fritas.</p>
+                        <article class="plato">
 
-                <div class="plato-footer">
-            <span class="plato-price">$890</span>
-            <button class="boton add-cart" type="button" data-name="Hamburguesa de pollo" data-price="890">Agregar</button>
+                            <img class="img-platos" src="imagenes/asadp argento.png" alt="azado argentino">
+
+                            <p>Azado Argento con papas y ensalada.</p>
+
+                                <div class="plato-footer">
+                            <span class="plato-price">$950</span>
+                            <button class="boton add-cart" type="button" data-name="Azado Argento" data-price="950">Agregar</button>
+                        </div>
+
+                        </article>
+
+                        <article class="plato">
+
+                            <img class="img-platos" src="imagenes/plato6.jpeg" alt="Chorizo al espiedo">
+
+                            <p>Chorizo al espiedo con ensalada.</p>
+
+                                <div class="plato-footer">
+                            <span class="plato-price">$700</span>
+                            <button class="boton add-cart" type="button" data-name="Chorizo al espiedo" data-price="700">Agregar</button>
+                        </div>
+
+                        </article>
+
+                        <article class="plato">
+
+                            <img class="img-platos" src="imagenes/plato4.jpeg" alt="Chorizo con papas">
+
+                            <p>Chorizo de pollo con papas fritas, mayonesa y salsa de tomate.</p>
+
+                                <div class="plato-footer">
+                            <span class="plato-price">$760</span>
+                            <button class="boton add-cart" type="button" data-name="Chorizo con papas" data-price="760">Agregar</button>
+                        </div>
+
+                        </article>
+
+                    </div>
+                </div>
+            </div>
+
         </div>
 
-        </article>
+        <!-- HAMBURGUESAS -->
+        <div class="categoria">
 
-        <article class="plato">
+            <button class="categoria-toggle" type="button" aria-expanded="false">
+                <span>Hamburguesas</span>
+                <span class="categoria-icono">▼</span>
+            </button>
 
-            <img class="img-platos" src="imagenes/plato6.jpeg" alt="Chorizo al espiedo">
+            <div class="categoria-contenido">
+                <div class="categoria-inner">
+                    <div class="container-platos">
 
-            <p>Chorizo al espiedo con ensalada.</p>
+                        <article class="plato">
 
-                <div class="plato-footer">
-            <span class="plato-price">$700</span>
-            <button class="boton add-cart" type="button" data-name="Chorizo al espiedo" data-price="700">Agregar</button>
+                            <img class="img-platos img-completa" src="imagenes/plato5.jpeg" alt="Hamburguesa de pollo">
+
+                            <p>Hamburguesa de pollo con lechuga, queso, tomate, cebolla y papas fritas.</p>
+
+                                <div class="plato-footer">
+                            <span class="plato-price">$890</span>
+                            <button class="boton add-cart" type="button" data-name="Hamburguesa de pollo" data-price="890">Agregar</button>
+                        </div>
+
+                        </article>
+
+                         <article class="plato">
+
+                            <img class="img-platos img-completa" src="imagenes/hamburguesa 2.jpeg" alt="hamburguesa">
+
+                            <p>hamburgesa  con lechuga, queso, tomate, cebolla, papas fritas.</p>
+
+                                <div class="plato-footer">
+                            <span class="plato-price">$880</span>
+                            <button class="boton add-cart" type="button" data-name="Hamburguesa con lechuga" data-price="880">Agregar</button>
+                        </div>
+
+                        </article>
+
+                        <article class="plato">
+
+                            <img class="img-platos img-completa" src="imagenes/hamburguesashamburguesa_vegana.webp" alt="Hamburguesa vegana con papas fritas">
+
+                            <p>Hamburguesa vegana con lechuga, tomate, cebolla y papas fritas.</p>
+
+                                <div class="plato-footer">
+                            <span class="plato-price">$800</span>
+                            <button class="boton add-cart" type="button" data-name="Hamburguesa vegana" data-price="800">Agregar</button>
+                        </div>
+
+                        </article>
+
+                    </div>
+                </div>
+            </div>
+
         </div>
 
-        </article>
+        <!-- MILANESAS -->
+        <div class="categoria">
 
-         <article class="plato">
+            <button class="categoria-toggle" type="button" aria-expanded="false">
+                <span>Milanesas</span>
+                <span class="categoria-icono">▼</span>
+            </button>
 
-            <img class="img-platos" src="imagenes/hamburguesa 2.jpeg" alt="hamburguesa">
+            <div class="categoria-contenido">
+                <div class="categoria-inner">
+                    <div class="container-platos">
 
-            <p>hamburgesa  con lechuga, queso, tomate, cebolla, papas fritas.</p>
+                        <article class="plato">
 
-                <div class="plato-footer">
-            <span class="plato-price">$880</span>
-            <button class="boton add-cart" type="button" data-name="Hamburguesa con lechuga" data-price="880">Agregar</button>
+                            <img class="img-platos img-completa" src="imagenes/milanesas_milanesas_de_carne_o_pollo_con_papas_fritas.png" alt="Milanesas de carne o pollo con papas fritas">
+
+                            <p>Milanesas de carne o pollo con papas fritas.</p>
+
+                                <div class="plato-footer">
+                            <span class="plato-price">$750</span>
+                            <button class="boton variantes-toggle" type="button" aria-expanded="false">Agregar</button>
+                        </div>
+
+                            <div class="selector-variantes" hidden>
+                                <button class="cerrar-selector" type="button" aria-label="Cerrar">×</button>
+                                <p class="selector-titulo">¿De carne o de pollo?</p>
+                                <div class="variante">
+                                    <span>De pollo · $750</span>
+                                    <button class="variante-add" type="button" data-name="Milanesa de pollo con papas fritas" data-price="750">Agregar</button>
+                                </div>
+                                <div class="variante">
+                                    <span>De carne · $750</span>
+                                    <button class="variante-add" type="button" data-name="Milanesa de carne con papas fritas" data-price="750">Agregar</button>
+                                </div>
+                            </div>
+
+                        </article>
+
+                        <article class="plato">
+
+                            <img class="img-platos img-completa" src="imagenes/sanguchedemiladepollo.png" alt="Sanguche de milanesa de pollo completo">
+
+                            <p>Sanguche de milanesa de pollo completo con lechuga, tomate, huevo y queso.</p>
+
+                                <div class="plato-footer">
+                            <span class="plato-price">$600</span>
+                            <button class="boton add-cart" type="button" data-name="Sanguche de milanesa de pollo completo" data-price="600">Agregar</button>
+                        </div>
+
+                        </article>
+
+                        <article class="plato">
+
+                            <img class="img-platos img-completa" src="imagenes/milanesassanguche_de_milanesa_de_carne.png" alt="Sanguche de milanesa de carne completo">
+
+                            <p>Sanguche de milanesa de carne completo con lechuga, tomate, huevo y queso.</p>
+
+                                <div class="plato-footer">
+                            <span class="plato-price">$700</span>
+                            <button class="boton add-cart" type="button" data-name="Sanguche de milanesa de carne completo" data-price="700">Agregar</button>
+                        </div>
+
+                        </article>
+
+                    </div>
+                </div>
+            </div>
+
         </div>
 
-        </article>
+        <!-- POSTRES -->
+        <div class="categoria">
 
-        <article class="plato">
+            <button class="categoria-toggle" type="button" aria-expanded="false">
+                <span>Postres</span>
+                <span class="categoria-icono">▼</span>
+            </button>
 
-            <img class="img-platos" src="imagenes/asadp argento.png" alt="azado argentino">
+            <div class="categoria-contenido">
+                <div class="categoria-inner">
+                    <div class="container-platos">
 
-            <p>Azado Argento con papas y ensalada.</p>
+                        <article class="plato">
 
-                <div class="plato-footer">
-            <span class="plato-price">$950</span>
-            <button class="boton add-cart" type="button" data-name="Azado Argento" data-price="950">Agregar</button>
+                            <img class="img-platos img-completa" src="imagenes/postres_ensalada_de_frutas.png" alt="Ensalada de frutas">
+
+                            <p>Ensalada de frutas.</p>
+
+                                <div class="plato-footer">
+                            <span class="plato-price">$450</span>
+                            <button class="boton add-cart" type="button" data-name="Ensalada de frutas" data-price="450">Agregar</button>
+                        </div>
+
+                        </article>
+
+                        <article class="plato">
+
+                            <img class="img-platos img-completa" src="imagenes/postres_flan_casero.png" alt="Flan casero">
+
+                            <p>Flan casero.</p>
+
+                                <div class="plato-footer">
+                            <span class="plato-price">$500</span>
+                            <button class="boton add-cart" type="button" data-name="Flan casero" data-price="500">Agregar</button>
+                        </div>
+
+                        </article>
+
+                        <article class="plato">
+
+                            <img class="img-platos img-completa" src="imagenes/postres_tiramizu.png" alt="Tiramisú">
+
+                            <p>Tiramisú.</p>
+
+                                <div class="plato-footer">
+                            <span class="plato-price">$650</span>
+                            <button class="boton add-cart" type="button" data-name="Tiramisú" data-price="650">Agregar</button>
+                        </div>
+
+                        </article>
+
+                    </div>
+                </div>
+            </div>
+
         </div>
-
-        </article>
-
-        <article class="plato">
-
-            <img class="img-platos" src="imagenes/sanguchedemila.png" alt="Sanguche de milanesa completo">
-
-            <p>Sanguche de milanesa completo con lechuga, tomate, huevo y queso.</p>
-
-                <div class="plato-footer">
-            <span class="plato-price">$600</span>
-            <button class="boton add-cart" type="button" data-name="Sanguche de milanesa completo" data-price="600">Agregar</button>
-        </div>
-
-        </article>
 
     </section>
 
     <!-- MENU FLOTANTE -->
     <div class="nav-overlay" id="nav-overlay" aria-hidden="true">
         <div class="nav-panel">
-            <button class="close-panel" id="nav-close" aria-label="Cerrar menú">×</button>
+
+            <div class="nav-cabecera">
+                <img class="nav-logo-menu" src="imagenes/modo hambre.png" alt="Modo Hambre">
+                <button class="close-panel" id="nav-close" aria-label="Cerrar menú">×</button>
+            </div>
+
             <nav class="nav-panel-links">
-                <a href="index.html">Inicio</a>
-                <a href="platos.html">Platos</a>
-                <a href="sobre nosotros.html">Sobre nosotros</a>
-                <a href="contactos.html">Contactanos</a>
-                <div class="social-panel-links">
-                    <span>Redes</span>
-                    <a href="https://www.instagram.com" target="_blank">Instagram</a>
-                    <a href="https://www.tiktok.com" target="_blank">TikTok</a>
-                    <a href="https://www.facebook.com" target="_blank">Facebook</a>
-                </div>
+                <a href="index.html" class="nav-item">
+                    <span class="nav-item-icono">🏠</span>
+                    <span class="nav-item-texto">Inicio</span>
+                    <span class="nav-item-flecha">›</span>
+                </a>
+                <a href="platos.html" class="nav-item activo">
+                    <span class="nav-item-icono">🍽️</span>
+                    <span class="nav-item-texto">Ordenar</span>
+                    <span class="nav-item-flecha">›</span>
+                </a>
+                <a href="sobre nosotros.html" class="nav-item">
+                    <span class="nav-item-icono">👥</span>
+                    <span class="nav-item-texto">Sobre nosotros</span>
+                    <span class="nav-item-flecha">›</span>
+                </a>
+                <a href="contactos.html" class="nav-item">
+                    <span class="nav-item-icono">✉️</span>
+                    <span class="nav-item-texto">Contactanos</span>
+                    <span class="nav-item-flecha">›</span>
+                </a>
             </nav>
+
+            <div class="separador-comida" aria-hidden="true">
+                <span></span>
+                👨‍🍳
+                <span></span>
+            </div>
+
+            <p class="titulo-redes">REDES SOCIALES</p>
+
+            <div class="redes-menu">
+                <a class="red-social whatsapp" href="https://wa.me/2215012289" target="_blank" rel="noopener">
+                    <span class="red-icono">💬</span>
+                    <span class="red-nombre">WhatsApp</span>
+                    <span class="red-flecha">↗</span>
+                </a>
+                <a class="red-social instagram" href="https://www.instagram.com/mati.andino/" target="_blank" rel="noopener">
+                    <span class="red-icono">📷</span>
+                    <span class="red-nombre">Instagram</span>
+                    <span class="red-flecha">↗</span>
+                </a>
+                <a class="red-social tiktok" href="https://www.tiktok.com" target="_blank" rel="noopener">
+                    <span class="red-icono">🎵</span>
+                    <span class="red-nombre">TikTok</span>
+                    <span class="red-flecha">↗</span>
+                </a>
+                <a class="red-social facebook" href="https://www.facebook.com" target="_blank" rel="noopener">
+                    <span class="red-icono">👍</span>
+                    <span class="red-nombre">Facebook</span>
+                    <span class="red-flecha">↗</span>
+                </a>
+            </div>
+
+            <div class="decoracion-comida" aria-hidden="true">🍕 🍔 🍟 🥤</div>
+
         </div>
     </div>
 
     <!-- CARRITO DE COMPRAS -->
-    <div class="cart-panel" id="cart-panel" aria-hidden="true">
-        <div class="cart-panel-content">
-            <div class="cart-panel-header">
-                <h2>Tu carrito</h2>
-                <button class="close-panel" id="cart-close" aria-label="Cerrar carrito">×</button>
+    <div class="cart-overlay" id="cart-overlay"></div>
+    <div class="cart-drawer" id="cart-panel" aria-hidden="true">
+        <div class="cart-header">
+            <img class="cart-logo" src="imagenes/modo hambre.png" alt="Modo Hambre">
+            <div class="cart-header-info">
+                <h2 class="cart-title">Tu carrito</h2>
+                <p class="cart-subtitle" id="cart-subtitle"></p>
             </div>
-            <div class="cart-items" id="cart-items">
-                <p class="empty-cart">Aún no hay platos en el carrito.</p>
-            </div>
+            <button class="cart-close-btn" id="cart-close" aria-label="Cerrar carrito">×</button>
+        </div>
+        <div class="cart-body" id="cart-items"></div>
+        <div class="cart-footer">
             <div class="cart-summary">
                 <div class="summary-row">
-                    <span>Total</span>
-                    <strong id="cart-total">$0</strong>
+                    <span>Subtotal</span>
+                    <span id="cart-subtotal">$0</span>
                 </div>
-                <button class="boton clear-cart" id="clear-cart" type="button">Vaciar carrito</button>
-                <button class="boton whatsapp-order" id="whatsapp-order" type="button">Enviar pedido por WhatsApp</button>
+                <div class="summary-row">
+                    <span>Envío</span>
+                    <span id="cart-envio">—</span>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-row summary-total">
+                    <span>Total</span>
+                    <span id="cart-total">$0</span>
+                </div>
             </div>
+            <button class="clear-cart-button" id="clear-cart" type="button">🗑 Vaciar carrito</button>
+            <button class="whatsapp-button" id="whatsapp-order" type="button" disabled>Enviar pedido por WhatsApp</button>
+            <p class="cart-security">🔒 Tus datos están protegidos</p>
         </div>
     </div>
 

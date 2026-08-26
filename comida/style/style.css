@@ -211,11 +211,12 @@ body {
 /* mapa */
 .map-container {
     position: relative;
-    width: 100%;
-    padding-bottom: 56.25%;
-    height: 0;
+    width: min(calc(100% - 1.875rem), 48rem);
+    aspect-ratio: 1 / 1;
     overflow: hidden;
-    margin: 1.25rem 0;
+    margin: 1.25rem auto;
+    border-radius: 1.25rem;
+    box-shadow: 0.0625rem 0.0625rem 0.3125rem #999;
 }
 
 .map-container iframe {

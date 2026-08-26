@@ -3,11 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Sobre nosotros</title>
+    <link rel="stylesheet" href="style/platos.css">
     <link rel="stylesheet" href="style/nosotros.css">
+    <style>
+        /* el header flota sobre el video sin ocupar espacio */
+        .header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+        }
+    </style>
 </head>
 <body>
-    
+
+    <!-- HEADER -->
+    <header class="header">
+
+        <a href="index.html"><img class="logo" src="imagenes/modo hambre.png" alt="Logo de la empresa"></a>
+
+        <div class="header-actions">
+            <button class="action-btn" id="cart-toggle" type="button" aria-label="Abrir carrito">🛒 <span class="cart-count" id="cart-count">0</span></button>
+            <button class="action-btn" id="menu-toggle" type="button" aria-label="Abrir menú">☰ Menú</button>
+        </div>
+
+    </header>
+
     <div class="container-principal">
 
         <!--video publicitario-->
@@ -29,5 +51,109 @@
         <!--boton-->
         <a href="index.html" class="boton">Volver a la página principal</a>
     </div>
+
+    <!-- MENU FLOTANTE -->
+    <div class="nav-overlay" id="nav-overlay" aria-hidden="true">
+        <div class="nav-panel">
+
+            <div class="nav-cabecera">
+                <img class="nav-logo-menu" src="imagenes/modo hambre.png" alt="Modo Hambre">
+                <button class="close-panel" id="nav-close" aria-label="Cerrar menú">×</button>
+            </div>
+
+            <nav class="nav-panel-links">
+                <a href="index.html" class="nav-item">
+                    <span class="nav-item-icono">🏠</span>
+                    <span class="nav-item-texto">Inicio</span>
+                    <span class="nav-item-flecha">›</span>
+                </a>
+                <a href="platos.html" class="nav-item">
+                    <span class="nav-item-icono">🍽️</span>
+                    <span class="nav-item-texto">Ordenar</span>
+                    <span class="nav-item-flecha">›</span>
+                </a>
+                <a href="sobre nosotros.html" class="nav-item activo">
+                    <span class="nav-item-icono">👥</span>
+                    <span class="nav-item-texto">Sobre nosotros</span>
+                    <span class="nav-item-flecha">›</span>
+                </a>
+                <a href="contactos.html" class="nav-item">
+                    <span class="nav-item-icono">✉️</span>
+                    <span class="nav-item-texto">Contactanos</span>
+                    <span class="nav-item-flecha">›</span>
+                </a>
+            </nav>
+
+            <div class="separador-comida" aria-hidden="true">
+                <span></span>
+                👨‍🍳
+                <span></span>
+            </div>
+
+            <p class="titulo-redes">REDES SOCIALES</p>
+
+            <div class="redes-menu">
+                <a class="red-social whatsapp" href="https://wa.me/2215012289" target="_blank" rel="noopener">
+                    <span class="red-icono">💬</span>
+                    <span class="red-nombre">WhatsApp</span>
+                    <span class="red-flecha">↗</span>
+                </a>
+                <a class="red-social instagram" href="https://www.instagram.com/mati.andino/" target="_blank" rel="noopener">
+                    <span class="red-icono">📷</span>
+                    <span class="red-nombre">Instagram</span>
+                    <span class="red-flecha">↗</span>
+                </a>
+                <a class="red-social tiktok" href="https://www.tiktok.com" target="_blank" rel="noopener">
+                    <span class="red-icono">🎵</span>
+                    <span class="red-nombre">TikTok</span>
+                    <span class="red-flecha">↗</span>
+                </a>
+                <a class="red-social facebook" href="https://www.facebook.com" target="_blank" rel="noopener">
+                    <span class="red-icono">👍</span>
+                    <span class="red-nombre">Facebook</span>
+                    <span class="red-flecha">↗</span>
+                </a>
+            </div>
+
+            <div class="decoracion-comida" aria-hidden="true">🍕 🍔 🍟 🥤</div>
+
+        </div>
+    </div>
+
+    <!-- CARRITO DE COMPRAS -->
+    <div class="cart-overlay" id="cart-overlay"></div>
+    <div class="cart-drawer" id="cart-panel" aria-hidden="true">
+        <div class="cart-header">
+            <img class="cart-logo" src="imagenes/modo hambre.png" alt="Modo Hambre">
+            <div class="cart-header-info">
+                <h2 class="cart-title">Tu carrito</h2>
+                <p class="cart-subtitle" id="cart-subtitle"></p>
+            </div>
+            <button class="cart-close-btn" id="cart-close" aria-label="Cerrar carrito">×</button>
+        </div>
+        <div class="cart-body" id="cart-items"></div>
+        <div class="cart-footer">
+            <div class="cart-summary">
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <span id="cart-subtotal">$0</span>
+                </div>
+                <div class="summary-row">
+                    <span>Envío</span>
+                    <span id="cart-envio">—</span>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-row summary-total">
+                    <span>Total</span>
+                    <span id="cart-total">$0</span>
+                </div>
+            </div>
+            <button class="clear-cart-button" id="clear-cart" type="button">🗑 Vaciar carrito</button>
+            <button class="whatsapp-button" id="whatsapp-order" type="button" disabled>Enviar pedido por WhatsApp</button>
+            <p class="cart-security">🔒 Tus datos están protegidos</p>
+        </div>
+    </div>
+
+    <script src="platos-cart.js"></script>
 </body>
 </html>

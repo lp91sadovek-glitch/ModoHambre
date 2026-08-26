@@ -3,69 +3,256 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>consulta</title>
-</head>
+    <title>Déjanos tu comentario</title>
 
-<link rel="stylesheet" href="style/contactos.css">
+    <link rel="stylesheet" href="style/style.css">
+    <link rel="stylesheet" href="style/platos.css">
+    <link rel="stylesheet" href="style/contactos.css">
+</head>
 <body>
 
-    <!-- REDES SOCIALES -->
-    <div class="floating-menu">
-        <a href="https://www.instagram.com" target="_blank" class="social-btn instagram" aria-label="Instagram">
-            <span>📷</span>
-            <span>Instagram</span>
-        </a>
-        <a href="https://www.tiktok.com" target="_blank" class="social-btn tiktok" aria-label="TikTok">
-            <span>🎵</span>
-            <span>TikTok</span>
-        </a>
-        <a href="https://www.facebook.com" target="_blank" class="social-btn facebook" aria-label="Facebook">
-            <span>👍</span>
-            <span>Facebook</span>
-        </a>
-        <a href="https://wa.me/2215012289" target="_blank" class="social-btn whatsapp" aria-label="WhatsApp">
-            <span>💬</span>
-            <span>WhatsApp</span>
-        </a>
+    <!-- HEADER -->
+    <header class="header">
+
+        <a href="index.html"><img class="logo" src="imagenes/modo hambre.png" alt="Logo de la empresa"></a>
+
+        <div class="header-actions">
+            <button class="action-btn" id="cart-toggle" type="button" aria-label="Abrir carrito">🛒 <span class="cart-count" id="cart-count">0</span></button>
+            <button class="action-btn" id="menu-toggle" type="button" aria-label="Abrir menú">☰ Menú</button>
+        </div>
+
+    </header>
+
+    <!-- HEADER DECORATIVO -->
+    <header class="banda-comida">
+        <div class="comida-iconos" aria-hidden="true">
+            <span>🍔</span>
+            <span>🍕</span>
+            <span>🍟</span>
+            <span>🥤</span>
+            <span>🍗</span>
+            <span>🌮</span>
+            <span>🍩</span>
+            <span>🥩</span>
+        </div>
+        <div class="circulo-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#ff9800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+            </svg>
+        </div>
+    </header>
+
+    <!-- TÍTULO -->
+    <section class="titulo-comentario">
+        <h1>Déjanos tu comentario</h1>
+        <p>Tu opinión nos ayuda a mejorar cada día</p>
+        <span class="linea-naranja"></span>
+    </section>
+
+    <!-- TARJETA DEL FORMULARIO -->
+    <main class="tarjeta-comentario">
+
+        <form id="form-comentario">
+
+            <div class="fila-inputs">
+
+                <div class="input-wrap">
+                    <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="#ff9800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                        <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    <input type="text" name="nombre" placeholder="Nombre" aria-label="Nombre" required>
+                </div>
+
+                <div class="input-wrap">
+                    <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="#ff9800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                        <polyline points="22,6 12,13 2,6"/>
+                    </svg>
+                    <input type="email" name="email" placeholder="Correo electrónico" aria-label="Correo electrónico" required>
+                </div>
+
+            </div>
+
+            <div class="fila-inputs">
+
+                <div class="input-wrap">
+                    <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="#ff9800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    </svg>
+                    <input type="tel" name="telefono" placeholder="Teléfono (opcional)" aria-label="Teléfono opcional">
+                </div>
+
+                <div class="input-wrap select-wrap">
+                    <svg class="icono" viewBox="0 0 24 24" fill="none" stroke="#ff9800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.83z"/>
+                        <line x1="7" y1="7" x2="7.01" y2="7"/>
+                    </svg>
+                    <select name="asunto" aria-label="Asunto opcional">
+                        <option value="" selected>Asunto (opcional)</option>
+                        <option value="consulta">Consulta</option>
+                        <option value="sugerencia">Sugerencia</option>
+                        <option value="felicitacion">Felicitación</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                    <svg class="flecha" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                </div>
+
+            </div>
+
+            <label class="textarea-titulo" for="mensaje">Tu mensaje *</label>
+            <div class="textarea-wrap">
+                <textarea id="mensaje" name="mensaje" maxlength="500" placeholder="Cuéntanos tu experiencia, sugerencias o cualquier comentario que quieras compartir..." required></textarea>
+                <span class="contador" id="contador">0/500</span>
+            </div>
+
+            <button type="submit" class="btn-enviar" id="btn-enviar">✈ Enviar comentario</button>
+
+            <p class="privacidad">🔒 Tu información está segura y no será compartida.</p>
+
+        </form>
+
+    </main>
+
+    <!-- MENU FLOTANTE -->
+    <div class="nav-overlay" id="nav-overlay" aria-hidden="true">
+        <div class="nav-panel">
+
+            <div class="nav-cabecera">
+                <img class="nav-logo-menu" src="imagenes/modo hambre.png" alt="Modo Hambre">
+                <button class="close-panel" id="nav-close" aria-label="Cerrar menú">×</button>
+            </div>
+
+            <nav class="nav-panel-links">
+                <a href="index.html" class="nav-item">
+                    <span class="nav-item-icono">🏠</span>
+                    <span class="nav-item-texto">Inicio</span>
+                    <span class="nav-item-flecha">›</span>
+                </a>
+                <a href="platos.html" class="nav-item">
+                    <span class="nav-item-icono">🍽️</span>
+                    <span class="nav-item-texto">Ordenar</span>
+                    <span class="nav-item-flecha">›</span>
+                </a>
+                <a href="sobre nosotros.html" class="nav-item">
+                    <span class="nav-item-icono">👥</span>
+                    <span class="nav-item-texto">Sobre nosotros</span>
+                    <span class="nav-item-flecha">›</span>
+                </a>
+                <a href="contactos.html" class="nav-item activo">
+                    <span class="nav-item-icono">✉️</span>
+                    <span class="nav-item-texto">Contactanos</span>
+                    <span class="nav-item-flecha">›</span>
+                </a>
+            </nav>
+
+            <div class="separador-comida" aria-hidden="true">
+                <span></span>
+                👨‍🍳
+                <span></span>
+            </div>
+
+            <p class="titulo-redes">REDES SOCIALES</p>
+
+            <div class="redes-menu">
+                <a class="red-social whatsapp" href="https://wa.me/2215012289" target="_blank" rel="noopener">
+                    <span class="red-icono">💬</span>
+                    <span class="red-nombre">WhatsApp</span>
+                    <span class="red-flecha">↗</span>
+                </a>
+                <a class="red-social instagram" href="https://www.instagram.com/mati.andino/" target="_blank" rel="noopener">
+                    <span class="red-icono">📷</span>
+                    <span class="red-nombre">Instagram</span>
+                    <span class="red-flecha">↗</span>
+                </a>
+                <a class="red-social tiktok" href="https://www.tiktok.com" target="_blank" rel="noopener">
+                    <span class="red-icono">🎵</span>
+                    <span class="red-nombre">TikTok</span>
+                    <span class="red-flecha">↗</span>
+                </a>
+                <a class="red-social facebook" href="https://www.facebook.com" target="_blank" rel="noopener">
+                    <span class="red-icono">👍</span>
+                    <span class="red-nombre">Facebook</span>
+                    <span class="red-flecha">↗</span>
+                </a>
+            </div>
+
+            <div class="decoracion-comida" aria-hidden="true">🍕 🍔 🍟 🥤</div>
+
+        </div>
     </div>
 
-    <h1>consulta</h1>
-
-    <form>
-
-        <div class="nombre">
-        <label for="nombre">Nombre:</label>
-        <input type="text" id="nombre" name="nombre"><required>
+    <!-- CARRITO DE COMPRAS -->
+    <div class="cart-overlay" id="cart-overlay"></div>
+    <div class="cart-drawer" id="cart-panel" aria-hidden="true">
+        <div class="cart-header">
+            <img class="cart-logo" src="imagenes/modo hambre.png" alt="Modo Hambre">
+            <div class="cart-header-info">
+                <h2 class="cart-title">Tu carrito</h2>
+                <p class="cart-subtitle" id="cart-subtitle"></p>
+            </div>
+            <button class="cart-close-btn" id="cart-close" aria-label="Cerrar carrito">×</button>
         </div>
-       
-        <div class="correo">
-        <label for="email">Correo electrónico:</label>
-        <input type="email" id="email" name="email"><required> 
+        <div class="cart-body" id="cart-items"></div>
+        <div class="cart-footer">
+            <div class="cart-summary">
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <span id="cart-subtotal">$0</span>
+                </div>
+                <div class="summary-row">
+                    <span>Envío</span>
+                    <span id="cart-envio">—</span>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-row summary-total">
+                    <span>Total</span>
+                    <span id="cart-total">$0</span>
+                </div>
+            </div>
+            <button class="clear-cart-button" id="clear-cart" type="button">🗑 Vaciar carrito</button>
+            <button class="whatsapp-button" id="whatsapp-order" type="button" disabled>Enviar pedido por WhatsApp</button>
+            <p class="cart-security">🔒 Tus datos están protegidos</p>
         </div>
+    </div>
 
-        <div class="telefono">
-        <label for="telefono">Teléfono:</label>
-        <input type="tel" id="telefono" name="telefono"><required>
-        </div>
+    <!-- PIE -->
+    <footer class="footer-contacto">
+        <p>© Modo Hambre — La Plata, Buenos Aires, Argentina</p>
+    </footer>
 
-        <div class="mensaje">
-        <label for="mensaje">Mensaje</label>
-        <textarea 
-        id="mensaje" 
-        name="mensaje" 
-        rows="4" 
-        cols="50" 
-        placeholder="Escribe tu mensaje aquí...">
-    </textarea>
-        </div>
+    <!-- SCRIPTS -->
+    <script src="platos-cart.js"></script>
 
-        <div class="boton">
-        <button type="submit">Enviar</button>
-        </div>
+    <script>
+        const mensaje = document.getElementById('mensaje');
+        const contador = document.getElementById('contador');
+        if (mensaje && contador) {
+            const actualizarContador = () => {
+                contador.textContent = mensaje.value.length + '/500';
+            };
+            mensaje.addEventListener('input', actualizarContador);
+            actualizarContador();
+        }
 
-    </form>
-
-      <a href="index.html" class="boton">Volver a la página principal</a>
+        const formComentario = document.getElementById('form-comentario');
+        const btnEnviar = document.getElementById('btn-enviar');
+        if (formComentario) {
+            formComentario.addEventListener('submit', (event) => {
+                event.preventDefault();
+                btnEnviar.textContent = '✓ ¡Comentario enviado!';
+                btnEnviar.disabled = true;
+                formComentario.reset();
+                if (contador) contador.textContent = '0/500';
+                setTimeout(() => {
+                    btnEnviar.textContent = '✈ Enviar comentario';
+                    btnEnviar.disabled = false;
+                }, 3000);
+            });
+        }
+    </script>
 
 </body>
 </html>

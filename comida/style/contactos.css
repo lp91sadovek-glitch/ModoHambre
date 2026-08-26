@@ -1,161 +1,284 @@
-body{
+/* DÉJANOS TU COMENTARIO */
 
-   
-    background-color: orange;
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-}
-h1{
-    text-align: center;
-    color: black;
-    margin-top: 1.25rem;
-}
-form{
-    background-color: orange;
-    width: min(100%, 25rem);
-    margin: 1.25rem auto;
-    padding: 1.25rem;
-    border-radius: 0.5rem;
-    box-shadow: 0 0 0.625rem rgba(0, 0, 0, 0.1);
-}
-button{
-    
-    
-    background-color: black;
-    color: white;
-    border: none;
-    padding: 0.625rem 1.25rem;
-    border-radius: 0.9375rem;
-    cursor: pointer;
-}
-a{
-    text-align: center;
-    display: block;
-    margin-top: 1.25rem;
-    color: black;
-    text-decoration: none;
-}
-a:hover{
-    text-decoration: underline;
+body {
+    background-color: #fffdf9;
+    overflow-x: hidden;
 }
 
-@media (max-width: 30rem) {
-    h1 {
-        margin-top: 1rem;
-        font-size: 1.5rem;
-    }
+/* HEADER DECORATIVO */
 
-    form {
-        margin: 1rem 1rem 0;
-        padding: 1rem;
-    }
-
-    button {
-        width: 100%;
-        padding: 0.75rem 1rem;
-    }
-}
-
-/* MENÚ FLOTANTE REDES SOCIALES */
-.floating-menu {
-    position: fixed;
-    bottom: 1.25rem;
-    right: 1.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    z-index: 999;
-}
-
-.social-btn {
+.banda-comida {
+    position: relative;
+    width: 100%;
+    height: 68px;
+    background: linear-gradient(90deg, #ff9800, #f57c00);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    width: auto;
-    padding: 0.75rem 1rem;
-    border-radius: 2rem;
-    text-decoration: none;
-    font-size: 1rem;
-    font-weight: bold;
+}
+
+.comida-iconos {
+    display: flex;
+    align-items: center;
+    gap: clamp(1.25rem, 5vw, 3.75rem);
+    font-size: 1.6rem;
+    opacity: 0.3;
+    user-select: none;
+}
+
+.circulo-header {
+    position: absolute;
+    left: 50%;
+    bottom: -40px;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: white;
+    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.circulo-header svg,
+.circulo-tarjeta svg {
+    width: 34px;
+    height: 34px;
+}
+
+/* TÍTULO */
+
+.titulo-comentario {
+    text-align: center;
+    margin-top: 22px;
+    padding: 0 1rem;
+}
+
+.titulo-comentario h1 {
+    color: #171717;
+    font-size: clamp(1.875rem, 5vw, 2.625rem);
+    font-weight: 800;
+}
+
+.titulo-comentario p {
+    color: #6b7280;
+    font-size: clamp(1.0625rem, 2.5vw, 1.25rem);
+    margin-top: 0.5rem;
+}
+
+.linea-naranja {
+    display: block;
+    width: 78px;
+    height: 4px;
+    border-radius: 10px;
+    background-color: #ff9800;
+    margin: 25px auto 0;
+}
+
+/* TARJETA DEL FORMULARIO */
+
+.tarjeta-comentario {
+    position: relative;
+    width: min(800px, 90%);
+    margin: 25px auto 0;
+    background-color: white;
+    border: 1px solid #f7e3c8;
+    border-radius: 18px;
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.06);
+    padding: 35px 25px;
+}
+
+/* FORMULARIO */
+
+.fila-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.input-wrap {
+    position: relative;
+}
+
+.input-wrap .icono {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    pointer-events: none;
+}
+
+.input-wrap input,
+.input-wrap select {
+    width: 100%;
+    height: 58px;
+    padding: 0 18px 0 48px;
+    background-color: white;
+    border: 1px solid #e5ddd4;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 17px;
+    color: #374151;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input-wrap input::placeholder {
+    color: #9ca3af;
+}
+
+.input-wrap input:focus,
+.input-wrap select:focus,
+.textarea-wrap textarea:focus {
+    outline: none;
+    border-color: #ff9800;
+    box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.15);
+}
+
+.select-wrap select {
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    padding-right: 44px;
+}
+
+.select-wrap .flecha {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    pointer-events: none;
+}
+
+.textarea-titulo {
+    display: block;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #171717;
+    margin-bottom: 0.5rem;
+}
+
+.textarea-wrap {
+    position: relative;
+}
+
+.textarea-wrap textarea {
+    width: 100%;
+    height: 190px;
+    padding: 18px;
+    background-color: white;
+    border: 1px solid #e5ddd4;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 17px;
+    color: #374151;
+    resize: vertical;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.contador {
+    position: absolute;
+    right: 14px;
+    bottom: 12px;
+    font-size: 0.85rem;
+    color: #9ca3af;
+    background-color: rgba(255, 255, 255, 0.85);
+    padding: 0 0.35rem;
+    border-radius: 0.5rem;
+    pointer-events: none;
+}
+
+.btn-enviar {
+    display: block;
+    width: min(420px, 100%);
+    height: 58px;
+    margin: 25px auto 0;
+    border: none;
+    border-radius: 30px;
+    background-color: #ff9800;
     color: white;
-    transition: all 0.3s ease;
-    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.2);
+    font-family: inherit;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 0.35rem 1rem rgba(255, 152, 0, 0.3);
+    transition: filter 0.3s ease, transform 0.3s ease;
 }
 
-.social-btn span:first-child {
-    font-size: 1.5rem;
+.btn-enviar:hover {
+    filter: brightness(1.05);
+    transform: scale(1.02);
 }
 
-.social-btn.instagram {
-    background: linear-gradient(135deg, #833ab4 0%, #fd1d1d 100%);
+.btn-enviar:disabled {
+    opacity: 0.85;
+    cursor: default;
+    transform: none;
 }
 
-.social-btn.instagram:hover {
-    transform: translateY(-0.3125rem);
-    box-shadow: 0 0.5rem 1rem rgba(253, 29, 29, 0.4);
+.privacidad {
+    text-align: center;
+    color: #6b7280;
+    font-size: 1rem;
+    margin-top: 1rem;
 }
 
-.social-btn.tiktok {
-    background: linear-gradient(135deg, #000000 0%, #25f4ee 100%);
+/* PIE */
+
+.footer-contacto {
+    background-color: #111;
+    color: rgba(255, 255, 255, 0.85);
+    text-align: center;
+    padding: 1.1rem 1.25rem;
+    font-size: 0.875rem;
+    margin-top: 60px;
 }
 
-.social-btn.tiktok:hover {
-    transform: translateY(-0.3125rem);
-    box-shadow: 0 0.5rem 1rem rgba(37, 244, 238, 0.4);
-}
-
-.social-btn.facebook {
-    background: linear-gradient(135deg, #1877f2 0%, #e7f3ff 100%);
-}
-
-.social-btn.facebook:hover {
-    transform: translateY(-0.3125rem);
-    box-shadow: 0 0.5rem 1rem rgba(24, 119, 242, 0.4);
-}
-
-.social-btn.whatsapp {
-    background: linear-gradient(135deg, #25d366 0%, #128c7e 100%);
-}
-
-.social-btn.whatsapp:hover {
-    transform: translateY(-0.3125rem);
-    box-shadow: 0 0.5rem 1rem rgba(37, 211, 102, 0.4);
-}
+/* RESPONSIVE */
 
 @media (max-width: 48rem) {
-    .floating-menu {
-        bottom: 1rem;
-        right: 1rem;
+    .banda-comida {
+        height: 70px;
     }
 
-    .social-btn {
-        padding: 0.625rem 0.875rem;
-        font-size: 0.875rem;
+    .comida-iconos {
+        font-size: 1.15rem;
+        gap: clamp(0.75rem, 4vw, 1.75rem);
     }
 
-    .social-btn span:first-child {
-        font-size: 1.25rem;
-    }
-}
-
-@media (max-width: 30rem) {
-    .floating-menu {
-        bottom: 0.75rem;
-        right: 0.75rem;
+    .circulo-header {
+        width: 64px;
+        height: 64px;
+        bottom: -32px;
     }
 
-    .social-btn {
-        padding: 0.5rem 0.75rem;
-        font-size: 0.75rem;
+    .titulo-comentario h1 {
+        font-size: 1.875rem;
     }
 
-    .social-btn span:first-child {
-        font-size: 1rem;
+    .titulo-comentario p {
+        font-size: 1.0625rem;
     }
 
-    .social-btn span:last-child {
-        display: none;
+    .titulo-comentario {
+        margin-top: 40px;
+    }
+
+    .tarjeta-comentario {
+        width: 92%;
+        padding: 45px 16px 25px;
+    }
+
+    .fila-inputs {
+        grid-template-columns: 1fr;
+    }
+
+    .btn-enviar {
+        width: 100%;
     }
 }

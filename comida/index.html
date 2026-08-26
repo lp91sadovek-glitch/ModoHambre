@@ -5,34 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modo Hambre</title>
     <link rel="stylesheet" href="style/style.css">
+    <link rel="stylesheet" href="style/platos.css">
+    <style>
+        body {
+            background-color: orange;
+        }
+    </style>
 </head>
 <body>
 
-    <!-- NAVBAR -->
-    <nav class="navbar">
+    <!-- HEADER -->
+    <header class="header">
 
-        <a href="index.html"><img class="nav-logo" src="imagenes/modo hambre.png" alt="Logo de la empresa"></a>
+        <a href="index.html"><img class="logo" src="imagenes/modo hambre.png" alt="Logo de la empresa"></a>
 
-        <div class="nav-links">
-            <a href="platos.html" class="boton">Ver nuestros platos</a>
-            <a href="sobre nosotros.html" class="boton">Sobre nosotros</a>
-            <a href="contactos.html" class="boton">Contactanos</a>
+        <div class="header-actions">
+            <button class="action-btn" id="cart-toggle" type="button" aria-label="Abrir carrito">🛒 <span class="cart-count" id="cart-count">0</span></button>
+            <button class="action-btn" id="menu-toggle" type="button" aria-label="Abrir menú">☰ Menú</button>
         </div>
 
-        <button class="hamburguesa" id="btn-menu" aria-label="Abrir menú" onclick="toggleMenu()">
-            <span></span>
-            <span></span>
-            <span></span>
-        </button>
-
-    </nav>
-
-    <!-- MENÚ DESPLEGABLE MOBILE -->
-    <div class="menu-mobile" id="menu-mobile">
-        <a href="platos.html">Ver nuestros platos</a>
-        <a href="sobre nosotros.html">Sobre nosotros</a>
-        <a href="contactos.html">Contactanos</a>
-    </div>
+    </header>
 
     <!-- TITULO -->
     <div class="titulo-home">
@@ -62,20 +54,114 @@
 
     <!-- MAPA -->
     <div class="map-container">
-        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3650.1234567890123!2d-46.1234567890123!3d-23.1234567890123!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94ce123456789012%3A0x1234567890123456!2sPollo%20al%20Espiedo%20Delicioso!5e0!3m2!1ses-419!2sve!4v1234567890123" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+        <iframe src="https://maps.google.com/maps?q=La%20Plata%2C%20Buenos%20Aires%2C%20Argentina&z=13&output=embed" title="Ubicación en La Plata, Buenos Aires, Argentina" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+    </div>
+
+    <!-- MENU FLOTANTE -->
+    <div class="nav-overlay" id="nav-overlay" aria-hidden="true">
+        <div class="nav-panel">
+
+            <div class="nav-cabecera">
+                <img class="nav-logo-menu" src="imagenes/modo hambre.png" alt="Modo Hambre">
+                <button class="close-panel" id="nav-close" aria-label="Cerrar menú">×</button>
+            </div>
+
+            <nav class="nav-panel-links">
+                <a href="index.html" class="nav-item activo">
+                    <span class="nav-item-icono">🏠</span>
+                    <span class="nav-item-texto">Inicio</span>
+                    <span class="nav-item-flecha">›</span>
+                </a>
+                <a href="platos.html" class="nav-item">
+                    <span class="nav-item-icono">🍽️</span>
+                    <span class="nav-item-texto">Ordenar</span>
+                    <span class="nav-item-flecha">›</span>
+                </a>
+                <a href="sobre nosotros.html" class="nav-item">
+                    <span class="nav-item-icono">👥</span>
+                    <span class="nav-item-texto">Sobre nosotros</span>
+                    <span class="nav-item-flecha">›</span>
+                </a>
+                <a href="contactos.html" class="nav-item">
+                    <span class="nav-item-icono">✉️</span>
+                    <span class="nav-item-texto">Contactanos</span>
+                    <span class="nav-item-flecha">›</span>
+                </a>
+            </nav>
+
+            <div class="separador-comida" aria-hidden="true">
+                <span></span>
+                👨‍🍳
+                <span></span>
+            </div>
+
+            <p class="titulo-redes">REDES SOCIALES</p>
+
+            <div class="redes-menu">
+                <a class="red-social whatsapp" href="https://wa.me/2215012289" target="_blank" rel="noopener">
+                    <span class="red-icono">💬</span>
+                    <span class="red-nombre">WhatsApp</span>
+                    <span class="red-flecha">↗</span>
+                </a>
+                <a class="red-social instagram" href="https://www.instagram.com/mati.andino/" target="_blank" rel="noopener">
+                    <span class="red-icono">📷</span>
+                    <span class="red-nombre">Instagram</span>
+                    <span class="red-flecha">↗</span>
+                </a>
+                <a class="red-social tiktok" href="https://www.tiktok.com" target="_blank" rel="noopener">
+                    <span class="red-icono">🎵</span>
+                    <span class="red-nombre">TikTok</span>
+                    <span class="red-flecha">↗</span>
+                </a>
+                <a class="red-social facebook" href="https://www.facebook.com" target="_blank" rel="noopener">
+                    <span class="red-icono">👍</span>
+                    <span class="red-nombre">Facebook</span>
+                    <span class="red-flecha">↗</span>
+                </a>
+            </div>
+
+            <div class="decoracion-comida" aria-hidden="true">🍕 🍔 🍟 🥤</div>
+
+        </div>
+    </div>
+
+    <!-- CARRITO DE COMPRAS -->
+    <div class="cart-overlay" id="cart-overlay"></div>
+    <div class="cart-drawer" id="cart-panel" aria-hidden="true">
+        <div class="cart-header">
+            <img class="cart-logo" src="imagenes/modo hambre.png" alt="Modo Hambre">
+            <div class="cart-header-info">
+                <h2 class="cart-title">Tu carrito</h2>
+                <p class="cart-subtitle" id="cart-subtitle"></p>
+            </div>
+            <button class="cart-close-btn" id="cart-close" aria-label="Cerrar carrito">×</button>
+        </div>
+        <div class="cart-body" id="cart-items"></div>
+        <div class="cart-footer">
+            <div class="cart-summary">
+                <div class="summary-row">
+                    <span>Subtotal</span>
+                    <span id="cart-subtotal">$0</span>
+                </div>
+                <div class="summary-row">
+                    <span>Envío</span>
+                    <span id="cart-envio">—</span>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-row summary-total">
+                    <span>Total</span>
+                    <span id="cart-total">$0</span>
+                </div>
+            </div>
+            <button class="clear-cart-button" id="clear-cart" type="button">🗑 Vaciar carrito</button>
+            <button class="whatsapp-button" id="whatsapp-order" type="button" disabled>Enviar pedido por WhatsApp</button>
+            <p class="cart-security">🔒 Tus datos están protegidos</p>
+        </div>
     </div>
 
     <!-- SCRIPTS -->
     <script src="carrusel.js"></script>
-
-    <script>
-        function toggleMenu() {
-            const menu = document.getElementById('menu-mobile');
-            const btn = document.getElementById('btn-menu');
-            menu.classList.toggle('visible');
-            btn.classList.toggle('abierto');
-        }
-    </script>
+    <script src="platos-cart.js"></script>
 
 </body>
 </html>
