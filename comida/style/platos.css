@@ -3,7 +3,7 @@
 body {
     margin: 0;
     font-family: Arial, Helvetica, sans-serif;
-    background-color: #f5f5f5;
+    background-color: #FC8F02;
 }
 
 /* HEADER */
@@ -49,20 +49,6 @@ body {
 
 /* CARRUSEL */
 
-.container-titulo {
-    text-align: center;
-    background-color: orange;
-    color: white;
-    padding: 1.25rem;
-    margin-bottom: 1.25rem;
-}
-
-.container-titulo h1 {
-    margin: 0;
-    font-size: clamp(1.8rem, 6vw, 3rem);
-    padding: 0 0.625rem;
-}
-
 /* PLATOS */
 
 .container-platos {
@@ -78,7 +64,9 @@ body {
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
-    padding: 0 1.25rem 1.25rem;
+    padding: 1.5rem 1.25rem 1.25rem;
+    max-width: 1280px;
+    margin: 0 auto;
 }
 
 .categoria {
@@ -91,26 +79,39 @@ body {
 .categoria-toggle {
     width: 100%;
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    gap: 0.75rem;
+    gap: 1rem;
     padding: 1.3rem 1.4rem;
     border: none;
-    background: linear-gradient(90deg, #ff9800, #f57c00);
-    color: white;
+    background: #FFFDF9;
+    color: #171717;
     font-family: inherit;
     font-size: clamp(1.2rem, 3.2vw, 1.55rem);
     font-weight: 700;
     cursor: pointer;
-    transition: filter 0.2s ease;
+    transition: background-color 0.2s ease;
 }
 
 .categoria-toggle:hover {
-    filter: brightness(0.95);
+    background: #FFF4E5;
+}
+
+.categoria-icono-circulo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #ff9800, #f57c00);
+    font-size: 1.4rem;
+    flex-shrink: 0;
 }
 
 .categoria-icono {
-    font-size: 0.85em;
+    margin-left: auto;
+    font-size: 1rem;
+    color: #f57c00;
     transition: transform 0.3s ease;
 }
 
@@ -1112,6 +1113,12 @@ body.panel-abierto {
 
     .nav-item-texto {
         font-size: 1.05rem;
+    }
+
+    .categoria-icono-circulo {
+        width: 42px;
+        height: 42px;
+        font-size: 1.15rem;
     }
 
     .container-platos {

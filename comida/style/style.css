@@ -179,6 +179,18 @@ body {
     z-index: 1;
 }
 
+/* imágenes de presentación se ven completas, sin recorte */
+.slide-completa {
+    object-fit: contain;
+}
+
+/* la foto del pollo es más ancha, se limita para quedar como las demás */
+.slide-pollo {
+    left: 9%;
+    right: 9%;
+    width: auto;
+}
+
 .prev,
 .next {
     position: absolute;

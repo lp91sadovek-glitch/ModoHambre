@@ -5,17 +5,7 @@ body {
     overflow-x: hidden;
 }
 
-/* HEADER DECORATIVO */
-
-.banda-comida {
-    position: relative;
-    width: 100%;
-    height: 68px;
-    background: linear-gradient(90deg, #ff9800, #f57c00);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
+/* EMojis decorativos en el header */
 
 .comida-iconos {
     display: flex;
@@ -26,23 +16,24 @@ body {
     user-select: none;
 }
 
+/* GLOBO DE TEXTO CENTRADO SOBRE EL FONDO BLANCO */
+
 .circulo-header {
-    position: absolute;
-    left: 50%;
-    bottom: -40px;
-    transform: translateX(-50%);
+    position: relative;
     width: 80px;
     height: 80px;
+    margin: 18px auto 0;
     border-radius: 50%;
     background-color: white;
     box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.12);
+    border: 2px solid #171717;
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 2;
 }
 
-.circulo-header svg,
-.circulo-tarjeta svg {
+.circulo-header svg {
     width: 34px;
     height: 34px;
 }
@@ -51,7 +42,7 @@ body {
 
 .titulo-comentario {
     text-align: center;
-    margin-top: 22px;
+    margin-top: -4px;
     padding: 0 1rem;
 }
 
@@ -242,10 +233,6 @@ body {
 /* RESPONSIVE */
 
 @media (max-width: 48rem) {
-    .banda-comida {
-        height: 70px;
-    }
-
     .comida-iconos {
         font-size: 1.15rem;
         gap: clamp(0.75rem, 4vw, 1.75rem);
@@ -254,7 +241,12 @@ body {
     .circulo-header {
         width: 64px;
         height: 64px;
-        bottom: -32px;
+        margin-top: 14px;
+    }
+
+    .circulo-header svg {
+        width: 28px;
+        height: 28px;
     }
 
     .titulo-comentario h1 {
@@ -266,7 +258,7 @@ body {
     }
 
     .titulo-comentario {
-        margin-top: 40px;
+        margin-top: 14px;
     }
 
     .tarjeta-comentario {

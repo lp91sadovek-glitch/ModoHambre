@@ -1,6 +1,7 @@
 const slides = document.querySelectorAll(".slide");
 
 let current = 0;
+let timer;
 
 /* Mostrar slide */
 function showSlide(index){
@@ -10,6 +11,12 @@ function showSlide(index){
     });
 
     slides[index].classList.add("active");
+}
+
+/* Reiniciar temporizador */
+function reiniciarTemporizador(){
+    clearInterval(timer);
+    timer = setInterval(nextSlide, 6000);
 }
 
 /* Siguiente */
@@ -36,4 +43,16 @@ function prevSlide(){
     showSlide(current);
 }
 
-setInterval(nextSlide, 3000); 
+/* Los botones manuales reinician el temporizador para que la imagen no se cambie enseguida */
+function siguienteManual(){
+    nextSlide();
+    reiniciarTemporizador();
+}
+
+function anteriorManual(){
+    prevSlide();
+    reiniciarTemporizador();
+}
+
+/* Iniciar automático */
+timer = setInterval(nextSlide, 6000);
