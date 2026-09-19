@@ -313,28 +313,6 @@ body {
     line-height: 1.4;
 }
 
-.mas-vendido-flecha {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2rem;
-    height: 2rem;
-    border-radius: 50%;
-    background: #FFF1DE;
-    color: #FC8F02;
-    font-size: 1.25rem;
-    font-weight: 700;
-    line-height: 1;
-    flex-shrink: 0;
-    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
-}
-
-.mas-vendido-item:hover .mas-vendido-flecha {
-    background: #FC8F02;
-    color: #fff;
-    transform: translateX(0.0625rem);
-}
-
 .mas-vendido-footer {
     display: flex;
     align-items: center;
@@ -550,12 +528,6 @@ body {
         width: 3.5rem;
         height: 3.5rem;
         border-width: 0.125rem;
-    }
-
-    .mas-vendido-flecha {
-        width: 1.625rem;
-        height: 1.625rem;
-        font-size: 1rem;
     }
 
     .mas-vendido-boton {
