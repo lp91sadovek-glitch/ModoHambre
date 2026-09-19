@@ -10,6 +10,7 @@ body {
     font-family: Arial, sans-serif;
     background-color: #FC8F02;;
     color: #333;
+    position: relative;
 }
 
 /* navbar */
@@ -157,11 +158,12 @@ body {
 .carrusel {
     position: relative;
     width: 100%;
-    height: 37.5rem;
+    max-width: 56.34rem;
+    aspect-ratio: 1537 / 1023;
+    margin: 0 auto 1.25rem;
     overflow: hidden;
     border-radius: 1.25rem;
     box-shadow: 0.0625rem 0.0625rem 0.3125rem #999;
-    margin-bottom: 1.25rem;
 }
 
 .slide {
@@ -182,13 +184,6 @@ body {
 /* imágenes de presentación se ven completas, sin recorte */
 .slide-completa {
     object-fit: contain;
-}
-
-/* la foto del pollo es más ancha, se limita para quedar como las demás */
-.slide-pollo {
-    left: 9%;
-    right: 9%;
-    width: auto;
 }
 
 .prev,
@@ -215,29 +210,232 @@ body {
     background-color: rgba(0, 0, 0, 0.8);
 }
 
-/* foto única */
-.foto-unica {
+/* LO MÁS VENDIDO */
+.mas-vendido {
     width: 100%;
-    overflow: hidden;
+    max-width: 56.34rem;
+    margin: 1.25rem auto 2rem;
+    background: linear-gradient(180deg, #FFFDF8 0%, #FFF9ED 100%);
+    border-radius: 1.5rem;
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.22);
+    padding: 1.875rem 1.25rem;
+    box-sizing: border-box;
 }
 
-.foto-unica img {
+.mas-vendido-cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin: 0 0 1.375rem;
+}
+
+.mas-vendido-deco {
+    flex: 1;
+    min-width: 1rem;
+    height: 0.1875rem;
+    background: linear-gradient(90deg, transparent, #FC8F02);
+    border-radius: 0.1875rem;
+}
+
+.mas-vendido-cabecera .mas-vendido-deco:last-child {
+    background: linear-gradient(90deg, #FC8F02, transparent);
+}
+
+.mas-vendido-icono {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    background: #FFF0D6;
+    box-shadow: inset 0 0 0 0.0625rem rgba(252, 143, 2, 0.35);
+    font-size: 1.125rem;
+    flex-shrink: 0;
+}
+
+.mas-vendido-titulo {
+    margin: 0;
+    text-align: center;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(1.25rem, 4.5vw, 2.1rem);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: #B4550A;
+    white-space: nowrap;
+}
+
+.mas-vendido-lista {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+}
+
+.mas-vendido-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    background: #ffffff;
+    border: 0.0625rem solid #F3E3D3;
+    border-radius: 0.875rem;
+    box-shadow: 0 0.125rem 0.375rem rgba(180, 85, 10, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.mas-vendido-item:hover {
+    transform: translateY(-0.125rem);
+    border-color: #FC8F02;
+    box-shadow: 0 0.25rem 0.625rem rgba(252, 143, 2, 0.18);
+}
+
+.mas-vendido-miniatura {
+    width: 4.375rem;
+    height: 4.375rem;
+    object-fit: cover;
+    border: 0.1875rem solid #FC8F02;
+    border-radius: 0.625rem;
+    background: #fff;
+    flex-shrink: 0;
+}
+
+.mas-vendido-nombre {
+    flex: 1;
+    min-width: 0;
+    text-align: center;
+    font-size: clamp(0.9375rem, 2.5vw, 1.0625rem);
+    font-weight: 600;
+    color: #333;
+    line-height: 1.4;
+}
+
+.mas-vendido-flecha {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: #FFF1DE;
+    color: #FC8F02;
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.mas-vendido-item:hover .mas-vendido-flecha {
+    background: #FC8F02;
+    color: #fff;
+    transform: translateX(0.0625rem);
+}
+
+.mas-vendido-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.9375rem;
+    margin-top: 1.5rem;
+}
+
+.mas-vendido-footer .mas-vendido-deco {
+    height: 0.1875rem;
+}
+
+.mas-vendido-boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+    text-align: center;
+    padding: 0.875rem 2.25rem;
+    background: linear-gradient(135deg, #FF9A1F, #FC8F02 55%, #F57C00);
+    color: #fff;
+    text-decoration: none;
+    font-family: Arial, sans-serif;
+    font-size: clamp(1rem, 3vw, 1.125rem);
+    font-weight: 700;
+    border-radius: 999px;
+    box-shadow: 0 0.375rem 0.875rem rgba(252, 143, 2, 0.4);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.mas-vendido-boton:hover {
+    transform: translateY(-0.125rem);
+    box-shadow: 0 0.5rem 1.125rem rgba(252, 143, 2, 0.6);
+}
+
+/* UBICACIÓN */
+.ubicacion {
     width: 100%;
-    height: auto;
-    border-radius: 1.25rem;
-    box-shadow: 0.0625rem 0.0625rem 0.3125rem #999;
-    display: block;
+    max-width: 56.34rem;
+    margin: 0 auto 2rem;
+    background: linear-gradient(180deg, #FFFDF8 0%, #FFF9ED 100%);
+    border-radius: 1.5rem;
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.22);
+    padding: 1.875rem 1.25rem;
+    box-sizing: border-box;
+}
+
+.ubicacion-cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin: 0 0 0.5rem;
+}
+
+.ubicacion-deco {
+    flex: 1;
+    min-width: 1rem;
+    height: 0.1875rem;
+    background: linear-gradient(90deg, transparent, #FC8F02);
+    border-radius: 0.1875rem;
+}
+
+.ubicacion-cabecera .ubicacion-deco:last-child {
+    background: linear-gradient(90deg, #FC8F02, transparent);
+}
+
+.ubicacion-icono {
+    font-size: 1.375rem;
+    flex-shrink: 0;
+}
+
+.ubicacion-titulo {
+    margin: 0;
+    text-align: center;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(1.25rem, 4.5vw, 2.1rem);
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: #B4550A;
+    white-space: nowrap;
+}
+
+.ubicacion-texto {
+    margin: 0 0 1.25rem;
+    text-align: center;
+    font-size: clamp(0.9375rem, 2.5vw, 1.0625rem);
+    color: #555;
 }
 
 /* mapa */
 .map-container {
     position: relative;
-    width: min(calc(100% - 1.875rem), 48rem);
+    width: 100%;
     aspect-ratio: 1 / 1;
     overflow: hidden;
-    margin: 1.25rem auto;
-    border-radius: 1.25rem;
-    box-shadow: 0.0625rem 0.0625rem 0.3125rem #999;
+    margin: 0 auto;
+    border-radius: 1.125rem;
+    border: 0.1875rem solid #FC8F02;
+    box-shadow: 0 0.25rem 0.75rem rgba(252, 143, 2, 0.25);
 }
 
 .map-container iframe {
@@ -267,7 +465,8 @@ body {
     }
 
     .carrusel {
-        height: 23.75rem;
+        aspect-ratio: 1537 / 1023;
+        height: auto;
     }
 
     .nav-logo {
@@ -307,7 +506,8 @@ body {
     }
 
     .carrusel {
-        height: 13.75rem;
+        aspect-ratio: 1537 / 1023;
+        height: auto;
         border-radius: 0.625rem;
     }
 
@@ -323,5 +523,470 @@ body {
 
     .titulo-home {
         padding: 0.5rem 0 0.875rem;
+    }
+
+    /* LO MÁS VENDIDO */
+    .mas-vendido {
+        padding: 1.25rem 0.9375rem;
+    }
+
+    .mas-vendido-cabecera {
+        gap: 0.5rem;
+        margin-bottom: 1.125rem;
+    }
+
+    .mas-vendido-icono {
+        width: 1.75rem;
+        height: 1.75rem;
+        font-size: 0.9375rem;
+    }
+
+    .mas-vendido-item {
+        gap: 0.75rem;
+        padding: 0.625rem 0.75rem;
+    }
+
+    .mas-vendido-miniatura {
+        width: 3.5rem;
+        height: 3.5rem;
+        border-width: 0.125rem;
+    }
+
+    .mas-vendido-flecha {
+        width: 1.625rem;
+        height: 1.625rem;
+        font-size: 1rem;
+    }
+
+    .mas-vendido-boton {
+        padding: 0.75rem 1.5rem;
+    }
+
+    /* UBICACIÓN */
+    .ubicacion {
+        width: calc(100% - 1.875rem);
+        padding: 1.25rem 0.9375rem 0.625rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .ubicacion-cabecera {
+        gap: 0.5rem;
+    }
+
+    .ubicacion-icono {
+        font-size: 1.125rem;
+    }
+
+    .map-container {
+        width: 94%;
+        aspect-ratio: 4 / 3;
+        border-width: 0.125rem;
+    }
+}
+
+/* ========================================
+   DECORACIÓN DE FONDO — PÁGINA PRINCIPAL
+   La altura la sincroniza un pequeño script
+   con la altura real de todo el documento.
+   ======================================== */
+
+.fondo-decorativo {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100vh;
+    overflow: hidden;
+    z-index: -1;
+    pointer-events: none;
+}
+
+.fd-elem {
+    position: absolute;
+    width: 10rem;
+    height: 10rem;
+    color: #A84300;
+    opacity: 0.18;
+}
+
+.fd-elem svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/* formas pequeñas alrededor del logo/título principal */
+.fd-titulo {
+    position: absolute;
+    width: 6rem;
+    height: 6rem;
+    color: #A84300;
+    opacity: 0.22;
+    z-index: -1;
+    pointer-events: none;
+}
+
+.fd-titulo svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.fd-titulo-izq {
+    top: 44%;
+    left: 1.5%;
+    transform: translateY(-50%) rotate(-8deg);
+}
+
+.fd-titulo-der {
+    top: 44%;
+    right: 1.5%;
+    transform: translateY(-50%) rotate(10deg);
+}
+
+.fd-titulo-izq2 {
+    top: 74%;
+    left: 15%;
+    transform: translateY(-50%) rotate(-6deg);
+}
+
+.fd-titulo-der2 {
+    top: 74%;
+    right: 15%;
+    transform: translateY(-50%) rotate(8deg);
+}
+
+/* posiciones — distribuidas a lo largo de todo el documento */
+.fd-1 {
+    top: 14%;
+    left: 3%;
+    width: 13rem;
+    height: 13rem;
+    opacity: 0.22;
+}
+
+.fd-2 {
+    top: 7%;
+    right: 3.5%;
+    width: 8.5rem;
+    height: 8.5rem;
+    opacity: 0.17;
+    transform: rotate(14deg);
+}
+
+.fd-3 {
+    top: 24%;
+    left: 3.5%;
+    width: 10rem;
+    height: 10rem;
+    opacity: 0.19;
+}
+
+.fd-4 {
+    top: 22%;
+    right: 4%;
+    width: 8rem;
+    height: 8rem;
+    opacity: 0.18;
+    transform: rotate(-10deg);
+}
+
+.fd-5 {
+    top: 43%;
+    left: 3%;
+    width: 8rem;
+    height: 8rem;
+    opacity: 0.19;
+    transform: rotate(-6deg);
+}
+
+.fd-6 {
+    top: 41%;
+    right: 3%;
+    width: 11rem;
+    height: 11rem;
+    opacity: 0.17;
+    transform: rotate(8deg);
+}
+
+.fd-7 {
+    top: 60%;
+    left: 2.5%;
+    width: 9rem;
+    height: 9rem;
+    opacity: 0.18;
+    transform: rotate(6deg);
+}
+
+.fd-8 {
+    top: 58%;
+    right: 3.5%;
+    width: 8rem;
+    height: 8rem;
+    opacity: 0.19;
+    transform: rotate(-8deg);
+}
+
+.fd-9 {
+    bottom: 3%;
+    left: 4%;
+    width: 12rem;
+    height: 12rem;
+    opacity: 0.19;
+}
+
+.fd-10 {
+    top: 14%;
+    right: 7%;
+    width: 7rem;
+    height: 7rem;
+    opacity: 0.18;
+    transform: rotate(10deg);
+}
+
+.fd-11 {
+    top: 46%;
+    left: 8%;
+    width: 5.5rem;
+    height: 5.5rem;
+    opacity: 0.15;
+    transform: rotate(-14deg);
+}
+
+.fd-12 {
+    top: 30%;
+    right: 7%;
+    width: 6rem;
+    height: 6rem;
+    opacity: 0.15;
+    transform: rotate(-18deg);
+}
+
+.fd-13 {
+    bottom: 11%;
+    right: 4%;
+    width: 9rem;
+    height: 9rem;
+    opacity: 0.18;
+    transform: rotate(12deg);
+}
+
+.fd-14 {
+    bottom: 22%;
+    left: 6.5%;
+    width: 6rem;
+    height: 6rem;
+    opacity: 0.17;
+    transform: rotate(-8deg);
+}
+
+.fd-15 {
+    bottom: 34%;
+    right: 7%;
+    width: 6rem;
+    height: 6rem;
+    opacity: 0.16;
+    transform: rotate(8deg);
+}
+
+.fd-16 {
+    top: 50%;
+    left: 1.5%;
+    width: 6.5rem;
+    height: 6.5rem;
+    opacity: 0.15;
+    transform: rotate(-12deg);
+}
+
+.fd-17 {
+    bottom: 4%;
+    right: 1%;
+    width: 6rem;
+    height: 6rem;
+    opacity: 0.16;
+    transform: rotate(10deg);
+}
+
+.fd-18 {
+    top: 66%;
+    left: 0.5%;
+    width: 6rem;
+    height: 6rem;
+    opacity: 0.15;
+    transform: rotate(14deg);
+}
+
+.fd-19 {
+    bottom: 27%;
+    left: 2%;
+    width: 5.5rem;
+    height: 5.5rem;
+    opacity: 0.16;
+    transform: rotate(-16deg);
+}
+
+.fd-20 {
+    bottom: 46%;
+    right: 1.5%;
+    width: 6rem;
+    height: 6rem;
+    opacity: 0.15;
+    transform: rotate(-10deg);
+}
+
+/* chispas */
+.fd-chispa {
+    position: absolute;
+    width: 1.75rem;
+    height: 1.75rem;
+    color: rgba(160, 60, 0, 0.55);
+    opacity: 0.6;
+}
+
+.fd-chispa svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.fd-s1 { top: 15%; left: 12%; transform: rotate(20deg); }
+.fd-s2 { top: 26%; right: 12%; transform: rotate(-25deg); }
+.fd-s3 { top: 48%; left: 12%; transform: rotate(35deg); }
+.fd-s4 { top: 55%; right: 11%; transform: rotate(-15deg); }
+.fd-s5 { top: 76%; left: 10%; transform: rotate(25deg); }
+.fd-s6 { top: 84%; right: 10%; transform: rotate(-30deg); }
+
+/* partículas */
+.fd-punto {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(160, 60, 0, 0.34);
+}
+
+.fd-p1 { top: 30%; left: 9%; width: 0.5rem; height: 0.5rem; }
+.fd-p2 { top: 38%; right: 8%; width: 0.75rem; height: 0.75rem; }
+.fd-p3 { top: 52%; left: 15%; width: 0.4rem; height: 0.4rem; }
+.fd-p4 { top: 8%; right: 19%; width: 0.6rem; height: 0.6rem; }
+.fd-p5 { top: 66%; right: 8%; width: 0.55rem; height: 0.55rem; }
+.fd-p6 { top: 73%; left: 8%; width: 0.7rem; height: 0.7rem; }
+.fd-p7 { top: 90%; left: 13%; width: 0.45rem; height: 0.45rem; }
+.fd-p8 { top: 94%; right: 13%; width: 0.6rem; height: 0.6rem; }
+
+/* líneas curvas suaves */
+.fd-linea {
+    position: absolute;
+    width: 8rem;
+    height: 8rem;
+    border: 0.1875rem solid rgba(160, 60, 0, 0.4);
+    border-radius: 50%;
+    border-top-color: transparent;
+    border-right-color: transparent;
+}
+
+.fd-l1 { top: 23%; left: -2rem; transform: rotate(10deg); }
+.fd-l2 { bottom: 18%; right: -2rem; transform: rotate(200deg); }
+.fd-l3 { top: 62%; left: -2.5rem; transform: rotate(160deg); }
+.fd-l4 { top: 78%; right: -2.5rem; transform: rotate(30deg); }
+
+/* responsive — reduce elementos decorativos */
+@media (max-width: 48rem) {
+
+    .fd-2,
+    .fd-4,
+    .fd-5,
+    .fd-7,
+    .fd-8,
+    .fd-10,
+    .fd-12,
+    .fd-15,
+    .fd-18,
+    .fd-20,
+    .fd-s4,
+    .fd-s5,
+    .fd-p5,
+    .fd-p6,
+    .fd-l4 {
+        display: none;
+    }
+
+    .fd-elem {
+        width: 6rem;
+        height: 6rem;
+        opacity: 0.1;
+    }
+
+    .fd-1,
+    .fd-3,
+    .fd-6,
+    .fd-9 {
+        width: 7rem;
+        height: 7rem;
+    }
+
+    .fd-titulo {
+        width: 5.5rem;
+        height: 5.5rem;
+        opacity: 0.18;
+    }
+
+    .fd-chispa {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+}
+
+@media (max-width: 40rem) {
+
+    .fd-titulo {
+        display: none;
+    }
+}
+
+@media (max-width: 30rem) {
+
+    .fd-3,
+    .fd-6,
+    .fd-11,
+    .fd-13,
+    .fd-14,
+    .fd-16,
+    .fd-17,
+    .fd-19,
+    .fd-s1,
+    .fd-s2,
+    .fd-s3,
+    .fd-p2,
+    .fd-p4,
+    .fd-p8,
+    .fd-l1,
+    .fd-l2,
+    .fd-l3 {
+        display: none;
+    }
+
+    .fd-1 {
+        top: 13%;
+        left: 2%;
+        width: 5rem;
+        height: 5rem;
+    }
+
+    .fd-9 {
+        bottom: 18%;
+        left: 2%;
+        width: 5rem;
+        height: 5rem;
+    }
+
+    .fd-p1 {
+        left: 6%;
+    }
+
+    .fd-p3 {
+        top: 50%;
+    }
+
+    .fd-s6 {
+        right: 6%;
     }
 }

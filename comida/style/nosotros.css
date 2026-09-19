@@ -155,7 +155,7 @@ html, body {
     .boton {
         padding: 0.75rem 1.6rem;
         font-size: 0.85rem;
-        width: 100%;
+        width: auto;
     }
 
     .conteiner-texto h1 {

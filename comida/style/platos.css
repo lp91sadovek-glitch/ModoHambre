@@ -25,8 +25,13 @@ body {
 /* TITULO HEADER */
 
 .titulo {
-    color: white;
-    font-size: clamp(1.5rem, 5vw, 2.5rem);
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-46%, -25%);
+    width: clamp(14rem, 32vw, 26rem);
+    height: clamp(3.5rem, 13vw, 7rem);
     margin: 0;
 }
 
@@ -141,19 +146,50 @@ body {
 }
 
 .selector-variantes {
-    position: absolute;
-    left: 0.75rem;
-    right: 0.75rem;
-    bottom: 4.25rem;
-    z-index: 20;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1250;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    padding: 1rem 0.875rem 0.875rem;
+    width: min(20rem, calc(100vw - 4rem));
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+    padding: 1.5rem 1.5rem 1.25rem;
     background: white;
-    border: 0.0625rem solid rgba(0,0,0,0.08);
-    border-radius: 0.75rem;
-    box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.3);
+    border: 0.1875rem solid #111;
+    border-radius: 1rem;
+    box-shadow: 0 1.25rem 3rem rgba(0, 0, 0, 0.45);
+    animation: selectorPop 0.22s ease;
+}
+
+@keyframes selectorPop {
+    from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* fondo oscurecido detrás del menú de gustos */
+.gustos-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+    z-index: 1240;
+}
+
+.gustos-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* evita que el hover de las tarjetas mueva el menú abierto */
+body.gusto-abierto .plato {
+    transform: none !important;
+    transition: none !important;
 }
 
 .selector-variantes[hidden] {
@@ -204,11 +240,15 @@ body {
     font-weight: 700;
     font-size: 0.85rem;
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s ease, transform 0.12s ease;
 }
 
 .variante-add:hover {
     background-color: rgb(120, 70, 25);
+}
+
+.variante-add:active {
+    transform: scale(0.9);
 }
 
 /* PLATO INDIVIDUAL */
@@ -280,6 +320,11 @@ body {
     background-color: rgb(120, 70, 25);
 }
 
+.boton:active {
+    transform: scale(0.9);
+    transition-duration: 0.1s;
+}
+
 .plato-footer {
     display: flex;
     flex-wrap: wrap;
@@ -323,6 +368,12 @@ body {
 .action-btn:focus {
     background-color: #222;
     transform: translateY(-0.125rem);
+}
+
+/* botón "Pedir comida" un poco más ancho */
+a.action-btn {
+    padding-left: 1.6rem;
+    padding-right: 1.6rem;
 }
 
 .cart-count {
@@ -712,21 +763,23 @@ body.panel-abierto {
 }
 
 .cart-close-btn {
-    width: 40px;
-    height: 40px;
-    border: none;
+    padding: 0.55rem 1.1rem;
+    border: 0.125rem solid #f57c00;
+    border-radius: 999px;
     background: transparent;
-    font-size: 2.1rem;
-    line-height: 1;
-    color: #171717;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #f57c00;
     cursor: pointer;
     flex-shrink: 0;
-    transition: color 0.25s ease, transform 0.25s ease;
+    white-space: nowrap;
+    transition: background 0.25s ease, color 0.25s ease, transform 0.25s ease;
 }
 
 .cart-close-btn:hover {
-    color: #f57c00;
-    transform: scale(1.1);
+    background: #f57c00;
+    color: #fff;
+    transform: scale(1.05);
 }
 
 /* CUERPO SCROLLABLE */
@@ -907,14 +960,19 @@ body.panel-abierto {
     transition: background-color 200ms ease, transform 150ms ease, box-shadow 200ms ease;
 }
 
-.clear-cart-button:hover {
+.clear-cart-button:hover:not(:disabled) {
     background: #E86F00;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
     transform: translateY(-1px);
 }
 
-.clear-cart-button:active {
+.clear-cart-button:active:not(:disabled) {
     transform: translateY(0);
+}
+
+.clear-cart-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 /* BOTÓN WHATSAPP */
@@ -1097,9 +1155,25 @@ body.panel-abierto {
         text-align: center;
     }
 
-    .action-btn {
-        padding: 0.6rem 0.8rem;
-        font-size: 0.9rem;
+    .titulo {
+        position: static;
+        transform: none;
+        width: clamp(16rem, 35vw, 26rem);
+        height: clamp(4.375rem, 14.5vw, 7rem);
+        margin: 0.1875rem auto;
+    }
+
+    .header-actions {
+        width: 100%;
+        justify-content: center;
+        flex-wrap: nowrap;
+    }
+
+    .header-actions .action-btn {
+        flex: 1;
+        white-space: nowrap;
+        padding: 0.6rem 0.5rem;
+        font-size: 0.85rem;
     }
 
     .nav-panel {
@@ -1121,22 +1195,98 @@ body.panel-abierto {
         font-size: 1.15rem;
     }
 
+    /* PLATOS EN FILAS (como "Lo más vendido") para ahorrar espacio */
     .container-platos {
         grid-template-columns: 1fr;
         padding: 0.9375rem;
+        gap: 0.75rem;
     }
 
     .plato {
-        padding: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.625rem;
     }
 
-    .boton {
-        width: 90%;
-        text-align: center;
+    .img-platos {
+        width: 4.5rem;
+        height: 4.5rem;
+        flex-shrink: 0;
+        border-radius: 0.5rem;
+    }
+
+    .plato > p {
+        flex: 1;
+        min-width: 0;
+        margin: 0;
+        font-size: 0.95rem;
+        line-height: 1.3;
     }
 
     .plato-footer {
         flex-direction: column;
-        align-items: stretch;
+        align-items: flex-end;
+        gap: 0.25rem;
+        margin-top: 0;
+        flex-shrink: 0;
     }
+
+    .plato-price {
+        font-size: 0.9375rem;
+    }
+
+    .boton {
+        width: auto;
+        padding: 0.5rem 0.8rem;
+        font-size: 0.8125rem;
+        white-space: nowrap;
+    }
+}
+
+/* ========================================
+   ANIMACIÓN CONTADOR + TOAST
+   ======================================== */
+
+/* hundimiento al mantener pulsado (móvil + PC) */
+.boton.presionado,
+.variante-add.presionado {
+    transform: scale(0.9);
+    transition-duration: 0.1s;
+}
+
+@keyframes cart-count-pop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.55); }
+    70% { transform: scale(0.92); }
+    100% { transform: scale(1); }
+}
+
+.cart-count.animar {
+    animation: cart-count-pop 0.45s ease;
+}
+
+.toast-cart {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    max-width: min(30rem, calc(100% - 2rem));
+    padding: 0.9rem 1.5rem;
+    border-radius: 0.875rem;
+    background: rgba(17, 17, 17, 0.72);
+    color: #fff;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    text-align: center;
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.25);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    z-index: 9999;
+}
+
+.toast-cart.visible {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
 }

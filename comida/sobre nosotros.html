@@ -13,7 +13,7 @@
             top: 0;
             left: 0;
             right: 0;
-            background: linear-gradient(90deg, #FFB060, #FFA040);
+            background: #FFB060;
         }
     </style>
 </head>
@@ -25,6 +25,7 @@
         <a href="index.html"><img class="logo" src="imagenes/modo hambre.png" alt="Logo de la empresa"></a>
 
         <div class="header-actions">
+            <a class="action-btn" href="platos.html">🍽️ Pedir comida</a>
             <button class="action-btn" id="cart-toggle" type="button" aria-label="Abrir carrito">🛒 <span class="cart-count" id="cart-count">0</span></button>
             <button class="action-btn" id="menu-toggle" type="button" aria-label="Abrir menú">☰ Menú</button>
         </div>
@@ -50,7 +51,7 @@
         </div>
 
         <!--boton-->
-        <a href="index.html" class="boton">Volver a la página principal</a>
+        <a href="platos.html" class="boton">Ir a encargar</a>
     </div>
 
     <!-- MENU FLOTANTE -->
@@ -70,7 +71,7 @@
                 </a>
                 <a href="platos.html" class="nav-item">
                     <span class="nav-item-icono">🍽️</span>
-                    <span class="nav-item-texto">Ordenar</span>
+                    <span class="nav-item-texto">Pedir comida</span>
                     <span class="nav-item-flecha">›</span>
                 </a>
                 <a href="sobre nosotros.html" class="nav-item activo">
@@ -130,7 +131,7 @@
                 <h2 class="cart-title">Tu carrito</h2>
                 <p class="cart-subtitle" id="cart-subtitle"></p>
             </div>
-            <button class="cart-close-btn" id="cart-close" aria-label="Cerrar carrito">×</button>
+            <button class="cart-close-btn" id="cart-close" aria-label="Regresar al menú">← Regresar</button>
         </div>
         <div class="cart-body" id="cart-items"></div>
         <div class="cart-footer">

@@ -82,7 +82,7 @@ function updateCart() {
         '<div class="empty-cart-icon">🛒</div>' +
         '<h3 class="empty-cart-title">Tu carrito está vacío</h3>' +
         '<p class="empty-cart-text">Agregá tus platos favoritos<br>y comenzá tu pedido.</p>' +
-        (showVerMenu ? '<a href="platos.html" class="ver-menu-btn">🍴 Ver menú</a>' : '') +
+        (showVerMenu ? '<a href="platos.html" class="ver-menu-btn">🍴 Pedir comida</a>' : '') +
         '<div class="empty-cart-chef">👨‍🍳</div>' +
       '</div>';
   } else {
@@ -117,6 +117,7 @@ function updateCart() {
   cartTotalEl.textContent = formatPrice(subtotal);
   cartCountEl.textContent = getTotalItems();
   whatsappOrderBtn.disabled = cart.length === 0;
+  clearCart.disabled = cart.length === 0;
 }
 
 /* =====================
@@ -231,6 +232,30 @@ function getImageForPlato(button) {
   return img ? img.src : '';
 }
 
+function animarContadorCarrito() {
+  if (!cartCountEl) return;
+  cartCountEl.classList.remove('animar');
+  void cartCountEl.offsetWidth;
+  cartCountEl.classList.add('animar');
+}
+
+function mostrarToast(texto) {
+  var viejo = document.querySelector('.toast-cart');
+  if (viejo) viejo.remove();
+  var toast = document.createElement('div');
+  toast.className = 'toast-cart';
+  toast.setAttribute('role', 'status');
+  toast.textContent = texto;
+  document.body.appendChild(toast);
+  requestAnimationFrame(function () {
+    toast.classList.add('visible');
+  });
+  setTimeout(function () {
+    toast.classList.remove('visible');
+    setTimeout(function () { toast.remove(); }, 400);
+  }, 2000);
+}
+
 document.querySelectorAll('.add-cart').forEach(function (button) {
   button.addEventListener('click', function () {
     var name = button.dataset.name;
@@ -248,6 +273,7 @@ document.querySelectorAll('.variantes-toggle').forEach(function (button) {
     if (!estabaAbierto) {
       selector.hidden = false;
       button.setAttribute('aria-expanded', 'true');
+      abrirOverlayGustos();
     }
   });
 });
@@ -255,8 +281,24 @@ document.querySelectorAll('.variantes-toggle').forEach(function (button) {
 document.querySelectorAll('.variante-add').forEach(function (button) {
   button.addEventListener('click', function () {
     var image = getImageForPlato(button);
-    addToCart(button.dataset.name, Number(button.dataset.price), false, image);
+    var name = button.dataset.name;
+    addToCart(name, Number(button.dataset.price), false, image);
+    animarContadorCarrito();
+    mostrarToast('Su ' + name.charAt(0).toLowerCase() + name.slice(1) + ' ha sido agregada al carrito');
   });
+});
+
+/* hundimiento al mantener pulsado — funciona en móvil y PC */
+document.querySelectorAll('.boton, .variante-add').forEach(function (btn) {
+  btn.addEventListener('pointerdown', function () {
+    btn.classList.add('presionado');
+  });
+  function soltarPulsacion() {
+    btn.classList.remove('presionado');
+  }
+  btn.addEventListener('pointerup', soltarPulsacion);
+  btn.addEventListener('pointercancel', soltarPulsacion);
+  btn.addEventListener('pointerleave', soltarPulsacion);
 });
 
 /* =====================
@@ -315,6 +357,31 @@ whatsappOrderBtn.addEventListener('click', function () {
    SELECTORES DE VARIANTES
    ===================== */
 
+var overlayGustos = null;
+
+function crearOverlayGustos() {
+  if (overlayGustos) return;
+  overlayGustos = document.createElement('div');
+  overlayGustos.className = 'gustos-overlay';
+  overlayGustos.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(overlayGustos);
+  overlayGustos.addEventListener('click', closeAllSelectors);
+}
+
+function abrirOverlayGustos() {
+  crearOverlayGustos();
+  overlayGustos.classList.add('visible');
+  overlayGustos.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('gusto-abierto');
+}
+
+function cerrarOverlayGustos() {
+  if (!overlayGustos) return;
+  overlayGustos.classList.remove('visible');
+  overlayGustos.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('gusto-abierto');
+}
+
 function closeAllSelectors() {
   document.querySelectorAll('.selector-variantes').forEach(function (selector) {
     selector.hidden = true;
@@ -322,6 +389,7 @@ function closeAllSelectors() {
   document.querySelectorAll('.variantes-toggle').forEach(function (button) {
     button.setAttribute('aria-expanded', 'false');
   });
+  cerrarOverlayGustos();
 }
 
 document.querySelectorAll('.cerrar-selector').forEach(function (button) {
