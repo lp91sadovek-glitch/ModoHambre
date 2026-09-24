@@ -29,7 +29,7 @@ body {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-46%, -25%);
+    transform: translate(-46%, -19%);
     width: clamp(14rem, 32vw, 26rem);
     height: clamp(3.5rem, 13vw, 7rem);
     margin: 0;
@@ -1012,6 +1012,43 @@ body.panel-abierto {
     cursor: not-allowed;
 }
 
+/* BOTÓN ORDENAR AL SISTEMA */
+
+.system-button {
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 20px;
+    border-radius: 12px;
+    background: #111;
+    color: #fff;
+    border: none;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    transition: background-color 200ms ease, transform 150ms ease, box-shadow 200ms ease;
+}
+
+.system-button:hover:not(:disabled) {
+    background: #2b2b2b;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    transform: translateY(-1px);
+}
+
+.system-button:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.system-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 /* SEGURIDAD */
 
 .cart-security {
@@ -1160,7 +1197,7 @@ body.panel-abierto {
         transform: none;
         width: clamp(16rem, 35vw, 26rem);
         height: clamp(4.375rem, 14.5vw, 7rem);
-        margin: 0.1875rem auto;
+        margin: 0.5rem auto 0.1875rem;
     }
 
     .header-actions {
@@ -1289,4 +1326,241 @@ body.panel-abierto {
 .toast-cart.visible {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
+}
+
+/* ========================================
+   CHECKOUT — ELEGIR ENTREGA
+   ======================================== */
+
+.elegir-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    z-index: 2000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.elegir-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.elegir-panel {
+    position: relative;
+    width: min(30rem, 100%);
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+    background: #fff;
+    border: 0.1875rem solid #111;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 1.25rem 3rem rgba(0, 0, 0, 0.45);
+    animation: selectorPop 0.22s ease;
+}
+
+.elegir-cerrar {
+    position: absolute;
+    top: 0.4rem;
+    right: 0.6rem;
+    border: none;
+    background: none;
+    font-size: 1.6rem;
+    line-height: 1;
+    color: #333;
+    cursor: pointer;
+    z-index: 2;
+    padding: 0.25rem 0.4rem;
+}
+
+.elegir-titulo {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #171717;
+    text-align: center;
+    padding-right: 1.5rem;
+}
+
+.elegir-subtitulo {
+    margin: 0.25rem 0 1.25rem;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #777;
+}
+
+.elegir-opciones {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.elegir-opcion {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 1.5rem 0.75rem;
+    border: 0.1875rem solid #111;
+    border-radius: 0.9rem;
+    background: #FFF9F2;
+    font-family: inherit;
+    cursor: pointer;
+    transition: transform 0.15s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.elegir-opcion:hover,
+.elegir-opcion:focus {
+    transform: translateY(-0.25rem);
+    background: #fff;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.elegir-opcion:active {
+    transform: scale(0.96);
+}
+
+.elegir-emoji {
+    font-size: 2.75rem;
+    line-height: 1;
+}
+
+.elegir-texto {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #171717;
+    text-align: center;
+}
+
+.elegir-flecha {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: rgb(139, 86, 36);
+}
+
+/* formulario de datos */
+
+.elegir-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.elegir-campo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.elegir-campo input {
+    width: 100%;
+    padding: 0.7rem 0.85rem;
+    border: 0.125rem solid #ccc;
+    border-radius: 0.6rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: #171717;
+    background: #fff;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease;
+}
+
+.elegir-campo input:focus {
+    outline: none;
+    border-color: rgb(139, 86, 36);
+}
+
+.elegir-form-acciones {
+    display: flex;
+    gap: 0.6rem;
+    margin-top: 0.5rem;
+}
+
+.elegir-boton-volver,
+.elegir-boton-confirmar {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border-radius: 0.65rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.12s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.elegir-boton-volver {
+    background: #f1f1f1;
+    color: #333;
+    border: 0.125rem solid #ddd;
+}
+
+.elegir-boton-volver:hover {
+    background: #e6e6e6;
+}
+
+.elegir-boton-confirmar {
+    background: rgb(139, 86, 36);
+    color: #fff;
+    border: 0.125rem solid rgb(120, 70, 25);
+}
+
+.elegir-boton-confirmar:hover {
+    background: rgb(120, 70, 25);
+    box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.15);
+}
+
+.elegir-boton-volver:active,
+.elegir-boton-confirmar:active {
+    transform: scale(0.97);
+}
+
+.elegir-boton-confirmar:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+body.checkout-abierto {
+    overflow: hidden;
+}
+
+@media (max-width: 30rem) {
+    .elegir-opciones {
+        grid-template-columns: 1fr;
+    }
+
+    .elegir-opcion {
+        flex-direction: row;
+        justify-content: center;
+        padding: 1rem 0.75rem;
+    }
+
+    .elegir-emoji {
+        font-size: 2rem;
+    }
+}
+
+/* RESALTADO DEL PLATO AL VENIR DE "LO MÁS VENDIDO" */
+.plato.destacado {
+    animation: plato-destacado 2.5s ease;
+}
+
+@keyframes plato-destacado {
+    0%, 55% {
+        outline: 0.25rem solid #FC8F02;
+        outline-offset: 0.25rem;
+        border-radius: 1rem;
+        box-shadow: 0 0 0 0.5rem rgba(252, 143, 2, 0.25);
+    }
+    100% {
+        outline-color: transparent;
+        box-shadow: 0 0 0 0 transparent;
+    }
 }

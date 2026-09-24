@@ -1,8 +1,8 @@
-async function saveOrder(items) {
+async function saveOrder(items, envio, cliente) {
   const response = await fetch('/api/orders', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ items })
+    body: JSON.stringify({ items, envio, cliente })
   });
 
   if (!response.ok) {

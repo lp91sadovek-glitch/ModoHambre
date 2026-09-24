@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modo Hambre</title>
-    <link rel="stylesheet" href="style/style.css">
-    <link rel="stylesheet" href="style/platos.css">
+    <link rel="stylesheet" href="style/style.css?v=14">
+    <link rel="stylesheet" href="style/platos.css?v=5">
     <style>
         body {
             background-color: #FC8F02;
@@ -285,29 +285,79 @@
                 <span class="mas-vendido-deco" aria-hidden="true"></span>
             </div>
             <ul class="mas-vendido-lista">
-                <li class="mas-vendido-item">
+                <li class="mas-vendido-item" tabindex="0" role="button" aria-expanded="false">
                     <img class="mas-vendido-miniatura" src="imagenes/asadp argento.png" alt="Asado argentino con papas y ensalada">
-                    <span class="mas-vendido-nombre">Asado Argentino con papas y ensalada</span>
+                    <div class="mas-vendido-contenido">
+                        <span class="mas-vendido-nombre"><span class="mas-vendido-nombre-corto">Asado argentino</span><span class="mas-vendido-nombre-largo">Asado Argentino con papas y ensalada</span></span>
+                        <div class="mas-vendido-titulo">
+                            <span class="mas-vendido-icono-comida" aria-hidden="true">🍖</span>
+                            <span class="mas-vendido-titulo-texto mas-vendido-titulo-largo">Asado Argentino con papas y ensalada</span>
+                            <span class="mas-vendido-titulo-texto mas-vendido-titulo-corto">Asado argentino</span>
+                        </div>
+                        <p class="mas-vendido-descripcion-texto">Cortes seleccionados de carne, asados a la parrilla para lograr ese sabor ahumado y característico. Acompañado con papas doradas y una fresca ensalada para completar un plato abundante y lleno de sabor.</p>
+                        <a class="mas-vendido-ver" href="platos.html?plato=asado">🍽️ Ver en el menú</a>
+                    </div>
+                    <span class="mas-vendido-flecha" aria-hidden="true">▾</span>
                     
                 </li>
-                <li class="mas-vendido-item">
+                <li class="mas-vendido-item" tabindex="0" role="button" aria-expanded="false">
                     <img class="mas-vendido-miniatura" src="imagenes/entradasempanadas-carne-pollo-jamon_y_queso.png" alt="Empanadas">
-                    <span class="mas-vendido-nombre">Empanadas de carne, pollo y jamón y queso</span>
+                    <div class="mas-vendido-contenido">
+                        <span class="mas-vendido-nombre"><span class="mas-vendido-nombre-corto">Empanadas</span><span class="mas-vendido-nombre-largo">Empanadas de carne, pollo y jamón y queso</span></span>
+                        <div class="mas-vendido-titulo">
+                            <span class="mas-vendido-icono-comida" aria-hidden="true">🥟</span>
+                            <span class="mas-vendido-titulo-texto mas-vendido-titulo-largo">Empanadas de carne, pollo y jamón y queso</span>
+                            <span class="mas-vendido-titulo-texto mas-vendido-titulo-corto">Empanadas</span>
+                        </div>
+                        <p class="mas-vendido-descripcion-texto">Empanadas caseras, doradas y sabrosas, con opciones de carne, pollo y el clásico relleno de jamón y queso. Ideales para disfrutar como entrada o para compartir en cualquier momento.</p>
+                        <a class="mas-vendido-ver" href="platos.html?plato=empanadas">🍽️ Ver en el menú</a>
+                    </div>
+                    <span class="mas-vendido-flecha" aria-hidden="true">▾</span>
                     
                 </li>
-                <li class="mas-vendido-item">
+                <li class="mas-vendido-item" tabindex="0" role="button" aria-expanded="false">
                     <img class="mas-vendido-miniatura" src="imagenes/pizzaspizza_napolitana.png" alt="Pizza napolitana">
-                    <span class="mas-vendido-nombre">Pizza napolitana</span>
+                    <div class="mas-vendido-contenido">
+                        <span class="mas-vendido-nombre"><span class="mas-vendido-nombre-corto">Pizza napolitana</span><span class="mas-vendido-nombre-largo">Pizza napolitana</span></span>
+                        <div class="mas-vendido-titulo">
+                            <span class="mas-vendido-icono-comida" aria-hidden="true">🍕</span>
+                            <span class="mas-vendido-titulo-texto mas-vendido-titulo-largo">Pizza napolitana</span>
+                            <span class="mas-vendido-titulo-texto mas-vendido-titulo-corto">Pizza napolitana</span>
+                        </div>
+                        <p class="mas-vendido-descripcion-texto">Pizza de masa casera, cubierta con salsa de tomate, abundante queso y rodajas de tomate, terminada con un toque de orégano. Una combinación clásica, simple y llena de sabor.</p>
+                        <a class="mas-vendido-ver" href="platos.html?plato=pizza-napolitana">🍽️ Ver en el menú</a>
+                    </div>
+                    <span class="mas-vendido-flecha" aria-hidden="true">▾</span>
                     
                 </li>
-                <li class="mas-vendido-item">
+                <li class="mas-vendido-item" tabindex="0" role="button" aria-expanded="false">
                     <img class="mas-vendido-miniatura" src="imagenes/milanesassanguche_de_milanesa_de_carne.png" alt="Sanguche de milanesa de carne">
-                    <span class="mas-vendido-nombre">Sanguche de milanesa de carne</span>
+                    <div class="mas-vendido-contenido">
+                        <span class="mas-vendido-nombre"><span class="mas-vendido-nombre-corto">Sanguche de milanesa</span><span class="mas-vendido-nombre-largo">Sanguche de milanesa de carne</span></span>
+                        <div class="mas-vendido-titulo">
+                            <span class="mas-vendido-icono-comida" aria-hidden="true">🥪</span>
+                            <span class="mas-vendido-titulo-texto mas-vendido-titulo-largo">Sanguche de milanesa de carne completo con lechuga, tomate, huevo y queso</span>
+                            <span class="mas-vendido-titulo-texto mas-vendido-titulo-corto">Sanguche de milanesa</span>
+                        </div>
+                        <p class="mas-vendido-descripcion-texto">Milanesa de carne tierna y dorada, acompañada con lechuga fresca, tomate, huevo y queso, todo dentro de un pan suave. Un sanguche abundante y completo, preparado para disfrutar hasta el último bocado.</p>
+                        <a class="mas-vendido-ver" href="platos.html?plato=sanguche-milanesa">🍽️ Ver en el menú</a>
+                    </div>
+                    <span class="mas-vendido-flecha" aria-hidden="true">▾</span>
                     
                 </li>
-                <li class="mas-vendido-item">
+                <li class="mas-vendido-item" tabindex="0" role="button" aria-expanded="false">
                     <img class="mas-vendido-miniatura" src="imagenes/hamburguesa 2.jpeg" alt="Hamburguesa">
-                    <span class="mas-vendido-nombre">Hamburguesa</span>
+                    <div class="mas-vendido-contenido">
+                        <span class="mas-vendido-nombre"><span class="mas-vendido-nombre-corto">Hamburguesa</span><span class="mas-vendido-nombre-largo">Hamburguesa</span></span>
+                        <div class="mas-vendido-titulo">
+                            <span class="mas-vendido-icono-comida" aria-hidden="true">🍔</span>
+                            <span class="mas-vendido-titulo-texto mas-vendido-titulo-largo">Hamburguesa con lechuga, queso, tomate, cebolla, papas fritas</span>
+                            <span class="mas-vendido-titulo-texto mas-vendido-titulo-corto">Hamburguesa</span>
+                        </div>
+                        <p class="mas-vendido-descripcion-texto">Hamburguesa casera y jugosa, acompañada con queso, lechuga, tomate y cebolla fresca. Servida con una porción de papas fritas doradas para completar una combinación clásica y bien abundante.</p>
+                        <a class="mas-vendido-ver" href="platos.html?plato=hamburguesa">🍽️ Ver en el menú</a>
+                    </div>
+                    <span class="mas-vendido-flecha" aria-hidden="true">▾</span>
                     
                 </li>
             </ul>
@@ -432,13 +482,15 @@
             </div>
             <button class="clear-cart-button" id="clear-cart" type="button">🗑 Vaciar carrito</button>
             <button class="whatsapp-button" id="whatsapp-order" type="button" disabled>Enviar pedido por WhatsApp</button>
+            <button class="system-button" id="system-order" type="button" disabled>📦 Ordenar al sistema</button>
             <p class="cart-security">🔒 Tus datos están protegidos</p>
         </div>
     </div>
 
     <!-- SCRIPTS -->
     <script src="carrusel.js"></script>
-    <script src="platos-cart.js"></script>
+    <script src="api-client.js?v=3"></script>
+    <script src="platos-cart.js?v=3"></script>
 
     <script>
         // Ajusta la altura de la decoración al alto total del documento
@@ -454,6 +506,27 @@
             if (window.ResizeObserver) {
                 new ResizeObserver(ajustar).observe(document.body);
             }
+        })();
+    </script>
+
+    <script>
+        // Desplegar/plegar descripciones en "Lo más vendido"
+        (function () {
+            var items = document.querySelectorAll('.mas-vendido-item');
+            if (!items.length) return;
+            var toggle = function (item) {
+                var abierto = item.classList.toggle('abierto');
+                item.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+            };
+            items.forEach(function (item) {
+                item.addEventListener('click', function () { toggle(item); });
+                item.addEventListener('keydown', function (e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        toggle(item);
+                    }
+                });
+            });
         })();
     </script>
 

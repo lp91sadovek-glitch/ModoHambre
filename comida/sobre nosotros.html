@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sobre nosotros</title>
-    <link rel="stylesheet" href="style/platos.css">
+    <link rel="stylesheet" href="style/platos.css?v=5">
     <link rel="stylesheet" href="style/nosotros.css">
     <style>
         /* el header flota sobre el video sin ocupar espacio */
@@ -152,10 +152,12 @@
             </div>
             <button class="clear-cart-button" id="clear-cart" type="button">🗑 Vaciar carrito</button>
             <button class="whatsapp-button" id="whatsapp-order" type="button" disabled>Enviar pedido por WhatsApp</button>
+            <button class="system-button" id="system-order" type="button" disabled>📦 Ordenar al sistema</button>
             <p class="cart-security">🔒 Tus datos están protegidos</p>
         </div>
     </div>
 
-    <script src="platos-cart.js"></script>
+    <script src="api-client.js?v=3"></script>
+    <script src="platos-cart.js?v=3"></script>
 </body>
 </html>

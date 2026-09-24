@@ -44,6 +44,7 @@ const cartClose = document.getElementById('cart-close');
 const navClose = document.getElementById('nav-close');
 const clearCart = document.getElementById('clear-cart');
 const whatsappOrderBtn = document.getElementById('whatsapp-order');
+const systemOrderBtn = document.getElementById('system-order');
 const whatsappNumber = '2215012289';
 
 const isOrderingPage = window.location.pathname.includes('platos.html');
@@ -118,6 +119,9 @@ function updateCart() {
   cartCountEl.textContent = getTotalItems();
   whatsappOrderBtn.disabled = cart.length === 0;
   clearCart.disabled = cart.length === 0;
+  if (systemOrderBtn) {
+    systemOrderBtn.disabled = cart.length === 0;
+  }
 }
 
 /* =====================
@@ -340,17 +344,210 @@ clearCart.addEventListener('click', function () {
 
 whatsappOrderBtn.addEventListener('click', function () {
   if (cart.length === 0) return;
+  abrirCheckout(enviarPedidoWhatsApp);
+});
+
+function enviarPedidoWhatsApp(tipo, cliente) {
+  var esDomicilio = tipo === 'domicilio';
 
   var lines = cart.map(function (item) {
     var qty = item.quantity > 1 ? ' (x' + item.quantity + ')' : '';
     return '- ' + item.name + qty + ': ' + formatPrice(item.price * item.quantity);
   });
 
-  var message = 'Hola, quiero hacer este pedido:%0A%0A' +
+  var encabezado = esDomicilio
+    ? 'Hola, quiero pedir por delivery:%0A%0A'
+    : 'Hola, quiero retirar mi pedido en el local:%0A%0A';
+
+  var datosCliente = esDomicilio
+    ? 'Datos del cliente:%0A' +
+      'Nombre: ' + cliente.nombre + ' ' + cliente.apellido + '%0A' +
+      'Dirección: ' + cliente.calle + ' ' + cliente.numero +
+      (cliente.entre ? ' (entre ' + cliente.entre + ')' : '')
+    : 'Datos del cliente:%0A' +
+      'Nombre: ' + cliente.nombre + ' ' + cliente.apellido + '%0A' +
+      'Retiro en el local';
+
+  var message = encabezado +
     lines.join('%0A') +
-    '%0A%0ATotal: ' + formatPrice(getSubtotal());
+    '%0A%0ATotal: ' + formatPrice(getSubtotal()) +
+    '%0A%0A' + datosCliente;
 
   window.open('https://wa.me/' + whatsappNumber + '?text=' + message, '_blank', 'noopener');
+  cerrarCheckout();
+}
+
+/* =====================
+   CHECKOUT — ELEGIR DOMICILIO O RETIRO EN LOCAL
+   ===================== */
+
+var checkoutOverlay = null;
+var checkoutFinalizar = null;
+
+function abrirCheckout(finalizar) {
+  checkoutFinalizar = finalizar || function () {};
+  mostrarPasoElegir();
+}
+
+function crearCheckoutOverlay() {
+  if (checkoutOverlay) return;
+  checkoutOverlay = document.createElement('div');
+  checkoutOverlay.className = 'elegir-overlay';
+  checkoutOverlay.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(checkoutOverlay);
+}
+
+function cerrarCheckout() {
+  if (!checkoutOverlay) return;
+  checkoutOverlay.classList.remove('visible');
+  checkoutOverlay.setAttribute('aria-hidden', 'true');
+  checkoutOverlay.innerHTML = '';
+  document.body.classList.remove('checkout-abierto');
+}
+
+function mostrarPasoElegir() {
+  crearCheckoutOverlay();
+  checkoutOverlay.innerHTML =
+    '<div class="elegir-panel" role="dialog" aria-modal="true" aria-label="Elegir forma de entrega">' +
+      '<button class="elegir-cerrar" id="elegir-cerrar-paso" type="button" aria-label="Cerrar">×</button>' +
+      '<h2 class="elegir-titulo">¿Cómo querés recibir tu pedido?</h2>' +
+      '<p class="elegir-subtitulo">Elegí una opción para continuar</p>' +
+      '<div class="elegir-opciones">' +
+        '<button class="elegir-opcion" id="elegir-domicilio" type="button">' +
+          '<span class="elegir-emoji">🛵</span>' +
+          '<span class="elegir-texto">A domicilio</span>' +
+          '<span class="elegir-flecha">→</span>' +
+        '</button>' +
+        '<button class="elegir-opcion" id="elegir-local" type="button">' +
+          '<span class="elegir-emoji">🏪</span>' +
+          '<span class="elegir-texto">Retirar en el local</span>' +
+          '<span class="elegir-flecha">→</span>' +
+        '</button>' +
+      '</div>' +
+    '</div>';
+
+  checkoutOverlay.classList.add('visible');
+  checkoutOverlay.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('checkout-abierto');
+
+  checkoutOverlay.querySelector('#elegir-domicilio').addEventListener('click', function () {
+    mostrarPasoFormulario('domicilio');
+  });
+  checkoutOverlay.querySelector('#elegir-local').addEventListener('click', function () {
+    mostrarPasoFormulario('local');
+  });
+  checkoutOverlay.querySelector('#elegir-cerrar-paso').addEventListener('click', cerrarCheckout);
+  checkoutOverlay.addEventListener('click', function (event) {
+    if (event.target === checkoutOverlay) cerrarCheckout();
+  });
+}
+
+function mostrarPasoFormulario(tipo) {
+  var esDomicilio = tipo === 'domicilio';
+  var camposDomicilio = esDomicilio
+    ? '<label class="elegir-campo">' +
+        '<span>Calle principal</span>' +
+        '<input type="text" name="calle" placeholder="Ej: Av. 7" required>' +
+      '</label>' +
+      '<label class="elegir-campo">' +
+        '<span>Entre qué calles</span>' +
+        '<input type="text" name="entre" placeholder="Ej: entre 44 y 45" required>' +
+      '</label>' +
+      '<label class="elegir-campo">' +
+        '<span>Número de casa</span>' +
+        '<input type="text" name="numero" placeholder="Ej: 1234" required>' +
+      '</label>'
+    : '';
+
+  crearCheckoutOverlay();
+  checkoutOverlay.innerHTML =
+    '<div class="elegir-panel" role="dialog" aria-modal="true" aria-label="Datos del cliente">' +
+      '<button class="elegir-cerrar" id="elegir-cerrar-paso" type="button" aria-label="Cerrar">×</button>' +
+      '<h2 class="elegir-titulo">' + (esDomicilio ? '🛵 Datos del envío' : '🏪 Datos para retirar') + '</h2>' +
+      '<p class="elegir-subtitulo">Necesitamos tus datos para confirmar el pedido</p>' +
+      '<form class="elegir-form" id="elegir-form">' +
+        '<label class="elegir-campo">' +
+          '<span>Nombre</span>' +
+          '<input type="text" name="nombre" placeholder="Tu nombre" required autocomplete="given-name">' +
+        '</label>' +
+        '<label class="elegir-campo">' +
+          '<span>Apellido</span>' +
+          '<input type="text" name="apellido" placeholder="Tu apellido" required autocomplete="family-name">' +
+        '</label>' +
+        camposDomicilio +
+        '<div class="elegir-form-acciones">' +
+          '<button class="elegir-boton-volver" id="elegir-volver" type="button">← Volver</button>' +
+          '<button class="elegir-boton-confirmar" type="submit">Confirmar pedido</button>' +
+        '</div>' +
+      '</form>' +
+    '</div>';
+
+  checkoutOverlay.classList.add('visible');
+  checkoutOverlay.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('checkout-abierto');
+
+  var form = checkoutOverlay.querySelector('#elegir-form');
+  form.addEventListener('submit', function (event) {
+    event.preventDefault();
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+    checkoutFinalizar(tipo, leerDatosCliente(tipo));
+  });
+  checkoutOverlay.querySelector('#elegir-volver').addEventListener('click', mostrarPasoElegir);
+  checkoutOverlay.querySelector('#elegir-cerrar-paso').addEventListener('click', cerrarCheckout);
+  checkoutOverlay.addEventListener('click', function (event) {
+    if (event.target === checkoutOverlay) cerrarCheckout();
+  });
+}
+
+function leerDatosCliente(tipo) {
+  var form = checkoutOverlay.querySelector('#elegir-form');
+  var cliente = {
+    nombre: (form.elements.nombre.value || '').trim(),
+    apellido: (form.elements.apellido.value || '').trim()
+  };
+  if (tipo === 'domicilio') {
+    cliente.calle = (form.elements.calle.value || '').trim();
+    cliente.entre = (form.elements.entre.value || '').trim();
+    cliente.numero = (form.elements.numero.value || '').trim();
+  }
+  return cliente;
+}
+
+function enviarPedidoSistema(tipo, cliente) {
+  var botonConfirmar = checkoutOverlay.querySelector('.elegir-boton-confirmar');
+  botonConfirmar.disabled = true;
+
+  var pedidoDB = cart.map(function (item) {
+    return { name: item.name, price: item.price, quantity: item.quantity, image: item.image || '' };
+  });
+
+  saveOrder(pedidoDB, tipo, cliente)
+    .then(function () {
+      cart.length = 0;
+      guardarCarrito();
+      updateCart();
+      cerrarCheckout();
+      closeCartDrawer();
+      mostrarToast('Su pedido se ha enviado correctamente');
+      setTimeout(function () {
+        if (!isOrderingPage) {
+          window.location.href = 'platos.html';
+        }
+      }, 1400);
+    })
+    .catch(function (e) {
+      console.error(e);
+      botonConfirmar.disabled = false;
+      mostrarToast('No se pudo enviar el pedido. Intentá de nuevo.');
+    });
+}
+
+systemOrderBtn.addEventListener('click', function () {
+  if (cart.length === 0) return;
+  abrirCheckout(enviarPedidoSistema);
 });
 
 /* =====================

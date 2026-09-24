@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de pedidos · Modo Hambre</title>
+    <link rel="stylesheet" href="style/admin.css">
+</head>
+<body>
+
+    <header class="admin-header">
+        <div class="admin-header-inner">
+            <h1 class="admin-titulo">🍽️ Panel de pedidos</h1>
+            <div class="admin-header-acciones">
+                <span class="admin-conexion" id="estado-conexion">Conectando…</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="admin-main">
+
+        <div class="admin-resumen">
+            <div class="resumen-card resumen-nuevos">
+                <span class="resumen-numero" id="contador-nuevos">0</span>
+                <span class="resumen-etiqueta">Nuevos</span>
+            </div>
+            <div class="resumen-card resumen-recibidos">
+                <span class="resumen-numero" id="contador-recibidos">0</span>
+                <span class="resumen-etiqueta">Recibidos</span>
+            </div>
+            <div class="resumen-card resumen-listos">
+                <span class="resumen-numero" id="contador-listos">0</span>
+                <span class="resumen-etiqueta">Listos</span>
+            </div>
+        </div>
+
+        <div class="admin-banner" id="banner-nuevo" hidden>🔔 ¡Nuevo pedido recibido!</div>
+
+        <section class="pedidos-lista" id="pedidos-lista"></section>
+
+    </main>
+
+    <div class="ticket-print" id="ticket-print" aria-hidden="true"></div>
+
+    <script src="admin.js"></script>
+</body>
+</html>

@@ -13,6 +13,12 @@ DB_PATH = BASE_DIR / "orders.db"
 app = Flask(__name__, static_folder=".", static_url_path="")
 
 
+@app.after_request
+def no_cache(response):
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -41,6 +47,22 @@ def init_db():
         """
     )
     conn.commit()
+
+    cols = [row["name"] for row in conn.execute("PRAGMA table_info(orders)").fetchall()]
+    if "estado" not in cols:
+        conn.execute(
+            "ALTER TABLE orders ADD COLUMN estado TEXT NOT NULL DEFAULT 'nuevo'"
+        )
+        conn.commit()
+
+    if "envio" not in cols:
+        conn.execute(
+            "ALTER TABLE orders ADD COLUMN envio TEXT NOT NULL DEFAULT 'local'"
+        )
+        conn.execute(
+            "ALTER TABLE orders ADD COLUMN cliente TEXT NOT NULL DEFAULT '{}'"
+        )
+        conn.commit()
 
     existing = conn.execute("SELECT COUNT(*) AS count FROM platos").fetchone()["count"]
     if existing == 0:
@@ -83,7 +105,7 @@ def get_platos():
 def orders():
     if request.method == "GET":
         conn = get_db_connection()
-        rows = conn.execute("SELECT id, items, total, created_at FROM orders ORDER BY id DESC").fetchall()
+        rows = conn.execute("SELECT id, items, total, created_at, estado, envio, cliente FROM orders ORDER BY id DESC").fetchall()
         conn.close()
         return jsonify(
             [
@@ -91,6 +113,9 @@ def orders():
                     "id": row["id"],
                     "items": json.loads(row["items"]),
                     "total": row["total"],
+                    "estado": row["estado"],
+                    "envio": row["envio"],
+                    "cliente": json.loads(row["cliente"] or "{}"),
                     "created_at": row["created_at"],
                 }
                 for row in rows
@@ -102,19 +127,66 @@ def orders():
     if not isinstance(items, list) or not items:
         return jsonify({"error": "Se requiere al menos un plato"}), 400
 
-    total = sum(int(item.get("price", 0)) for item in items if isinstance(item, dict))
+    envio = data.get("envio", "local")
+    if envio not in ("domicilio", "local"):
+        return jsonify({"error": "Tipo de envío inválido"}), 400
+
+    cliente = data.get("cliente", {})
+    if not isinstance(cliente, dict):
+        return jsonify({"error": "Datos del cliente inválidos"}), 400
+
+    total = sum(
+        int(item.get("price", 0)) * int(item.get("quantity", 1) or 1)
+        for item in items
+        if isinstance(item, dict)
+    )
     payload = json.dumps(items)
+    cliente_payload = json.dumps(cliente, ensure_ascii=False)
 
     conn = get_db_connection()
     conn.execute(
-        "INSERT INTO orders (items, total) VALUES (?, ?)",
-        (payload, total),
+        "INSERT INTO orders (items, total, envio, cliente) VALUES (?, ?, ?, ?)",
+        (payload, total, envio, cliente_payload),
     )
     conn.commit()
     order_id = conn.execute("SELECT last_insert_rowid() AS id").fetchone()["id"]
     conn.close()
 
     return jsonify({"ok": True, "order_id": order_id, "total": total})
+
+
+@app.route("/api/orders/<int:order_id>/estado", methods=["POST"])
+def update_estado(order_id):
+    data = request.get_json(silent=True) or {}
+    estado = data.get("estado")
+    if estado not in ("nuevo", "recibido", "listo"):
+        return jsonify({"error": "Estado inválido"}), 400
+
+    conn = get_db_connection()
+    cur = conn.execute(
+        "UPDATE orders SET estado = ? WHERE id = ?",
+        (estado, order_id),
+    )
+    conn.commit()
+    conn.close()
+
+    if cur.rowcount == 0:
+        return jsonify({"error": "Pedido no encontrado"}), 404
+
+    return jsonify({"ok": True, "order_id": order_id, "estado": estado})
+
+
+@app.route("/api/orders/<int:order_id>", methods=["DELETE"])
+def delete_order(order_id):
+    conn = get_db_connection()
+    cur = conn.execute("DELETE FROM orders WHERE id = ?", (order_id,))
+    conn.commit()
+    conn.close()
+
+    if cur.rowcount == 0:
+        return jsonify({"error": "Pedido no encontrado"}), 404
+
+    return jsonify({"ok": True, "order_id": order_id})
 
 
 def run_http_server():

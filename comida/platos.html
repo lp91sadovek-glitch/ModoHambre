@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ordenar</title>
 
-    <link rel="stylesheet" href="style/platos.css">
+    <link rel="stylesheet" href="style/platos.css?v=5">
     <style>
         .header {
             background: #FFB060;
@@ -59,7 +59,7 @@
 
                         </article>
 
-                        <article class="plato">
+                        <article class="plato" id="menu-empanadas">
 
                             <img class="img-platos img-completa" src="imagenes/entradasempanadas-carne-pollo-jamon_y_queso.png" alt="Empanadas de carne, pollo y jamón y queso">
 
@@ -181,7 +181,7 @@
 
                         </article>
 
-                        <article class="plato">
+                        <article class="plato" id="menu-pizza-napolitana">
 
                             <img class="img-platos img-completa" src="imagenes/pizzaspizza_napolitana.png" alt="Pizza napolitana">
 
@@ -342,7 +342,7 @@
                 <div class="categoria-inner">
                     <div class="container-platos">
 
-                        <article class="plato">
+                        <article class="plato" id="menu-asado">
 
                             <img class="img-platos" src="imagenes/asadp argento.png" alt="azado argentino">
 
@@ -413,7 +413,7 @@
 
                         </article>
 
-                         <article class="plato">
+                         <article class="plato" id="menu-hamburguesa">
 
                             <img class="img-platos img-completa" src="imagenes/hamburguesa 2.jpeg" alt="hamburguesa">
 
@@ -497,7 +497,7 @@
 
                         </article>
 
-                        <article class="plato">
+                        <article class="plato" id="menu-sanguche-milanesa">
 
                             <img class="img-platos img-completa" src="imagenes/milanesassanguche_de_milanesa_de_carne.png" alt="Sanguche de milanesa de carne completo">
 
@@ -674,11 +674,42 @@
             </div>
             <button class="clear-cart-button" id="clear-cart" type="button">🗑 Vaciar carrito</button>
             <button class="whatsapp-button" id="whatsapp-order" type="button" disabled>Enviar pedido por WhatsApp</button>
+            <button class="system-button" id="system-order" type="button" disabled>📦 Ordenar al sistema</button>
             <p class="cart-security">🔒 Tus datos están protegidos</p>
         </div>
     </div>
 
-    <script src="platos-cart.js"></script>
+    <script src="api-client.js?v=3"></script>
+    <script src="platos-cart.js?v=3"></script>
+
+    <script>
+        // Abre la categoría y resalta el plato pedido desde "Lo más vendido"
+        (function () {
+            var params = new URLSearchParams(window.location.search);
+            var plato = params.get('plato');
+            if (!plato) return;
+            var target = document.getElementById('menu-' + plato);
+            if (!target) return;
+
+            var categoria = target.closest('.categoria');
+            if (categoria) {
+                var toggle = categoria.querySelector('.categoria-toggle');
+                if (toggle && toggle.getAttribute('aria-expanded') !== 'true') {
+                    categoria.classList.add('abierta');
+                    toggle.setAttribute('aria-expanded', 'true');
+                }
+            }
+
+            setTimeout(function () {
+                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 120);
+
+            target.classList.add('destacado');
+            setTimeout(function () {
+                target.classList.remove('destacado');
+            }, 2500);
+        })();
+    </script>
 </body>
 
 </html>
