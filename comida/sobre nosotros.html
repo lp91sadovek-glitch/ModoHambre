@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sobre nosotros</title>
     <link rel="stylesheet" href="style/platos.css?v=6">
-    <link rel="stylesheet" href="style/nosotros.css">
+    <link rel="stylesheet" href="style/nosotros.css?v=3">
     <style>
         /* el header flota sobre el video sin ocupar espacio */
         .header {
@@ -105,7 +105,7 @@
                     <span class="red-nombre">Instagram</span>
                     <span class="red-flecha">↗</span>
                 </a>
-                <a class="red-social tiktok" href="https://www.tiktok.com" target="_blank" rel="noopener">
+                <a class="red-social tiktok" href="https://youtu.be/GBIIQ0kP15E?si=naH1oD5rXX_rzg_v" target="_blank" rel="noopener">
                     <span class="red-icono">🎵</span>
                     <span class="red-nombre">TikTok</span>
                     <span class="red-flecha">↗</span>
@@ -159,5 +159,37 @@
 
     <script src="api-client.js?v=3"></script>
     <script src="platos-cart.js?v=3"></script>
+    <script>
+        // MÓVIL: si no tocás nada, el texto y el botón se atenúan para ver el fondo
+        (function () {
+            if (!('matchMedia' in window)) return;
+            var mq = window.matchMedia('(max-width: 48rem)');
+            if (!mq.matches) return;
+
+            var body = document.body;
+            var timer = null;
+            var TIEMPO = 10000;
+
+            function activar() {
+                body.classList.remove('pantalla-inactiva');
+                reiniciar();
+            }
+
+            function reiniciar() {
+                clearTimeout(timer);
+                timer = setTimeout(function () {
+                    if (mq.matches) {
+                        body.classList.add('pantalla-inactiva');
+                    }
+                }, TIEMPO);
+            }
+
+            ['touchstart', 'mousedown', 'click', 'keydown', 'mousemove'].forEach(function (ev) {
+                window.addEventListener(ev, activar, { passive: true });
+            });
+
+            reiniciar();
+        })();
+    </script>
 </body>
 </html>

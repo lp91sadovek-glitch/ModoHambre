@@ -1,11 +1,12 @@
 const slides = document.querySelectorAll(".slide");
 
 let current = 0;
-let timer;
+let autoplay = null;
+
+const INTERVALO = 4000;
 
 /* Mostrar slide */
-function showSlide(index){
-
+function showSlide(index) {
     slides.forEach(slide => {
         slide.classList.remove("active");
     });
@@ -13,18 +14,23 @@ function showSlide(index){
     slides[index].classList.add("active");
 }
 
-/* Reiniciar temporizador */
-function reiniciarTemporizador(){
-    clearInterval(timer);
-    timer = setInterval(nextSlide, 6000);
+/* Auto-avance */
+function arrancarAuto() {
+    if (autoplay === null) {
+        autoplay = setInterval(nextSlide, INTERVALO);
+    }
+}
+
+function detenerAuto() {
+    clearInterval(autoplay);
+    autoplay = null;
 }
 
 /* Siguiente */
-function nextSlide(){
-
+function nextSlide() {
     current++;
 
-    if(current >= slides.length){
+    if (current >= slides.length) {
         current = 0;
     }
 
@@ -32,11 +38,10 @@ function nextSlide(){
 }
 
 /* Anterior */
-function prevSlide(){
-
+function prevSlide() {
     current--;
 
-    if(current < 0){
+    if (current < 0) {
         current = slides.length - 1;
     }
 
@@ -44,15 +49,21 @@ function prevSlide(){
 }
 
 /* Los botones manuales reinician el temporizador para que la imagen no se cambie enseguida */
-function siguienteManual(){
+function siguienteManual() {
     nextSlide();
-    reiniciarTemporizador();
+    detenerAuto();
+    arrancarAuto();
 }
 
-function anteriorManual(){
+function anteriorManual() {
     prevSlide();
-    reiniciarTemporizador();
+    detenerAuto();
+    arrancarAuto();
 }
+
+/* La página (idle móvil) controla cuándo arranca o se detiene */
+window.carruselArrancar = arrancarAuto;
+window.carruselDetener = detenerAuto;
 
 /* Iniciar automático */
-timer = setInterval(nextSlide, 6000);
+arrancarAuto();

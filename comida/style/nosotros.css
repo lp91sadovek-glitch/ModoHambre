@@ -68,7 +68,7 @@ html, body {
     z-index: 1;
     width: min(100%, 42.5rem);
     padding: 0 2rem;
-    animation: fadeUp 1s ease both;
+    animation: fadeUp 1s ease backwards;
 }
 
 .conteiner-texto h1 {
@@ -121,7 +121,7 @@ html, body {
     background: transparent;
     border-radius: 0.1875rem;
     transition: background 0.3s ease, color 0.3s ease, transform 0.2s ease;
-    animation: fadeUp 1s 0.3s ease both;
+    animation: fadeUp 1s 0.3s ease backwards;
 }
  
 .boton:hover {
@@ -160,5 +160,18 @@ html, body {
 
     .conteiner-texto h1 {
         font-size: clamp(2.2rem, 8vw, 3rem);
+    }
+}
+
+/* MÓVIL: ATENUAR TEXTO Y BOTÓN EN REPOSO PARA VER EL VIDEO */
+@media (max-width: 48rem) {
+    .conteiner-texto,
+    .boton {
+        transition: opacity 0.6s ease;
+    }
+
+    body.pantalla-inactiva .conteiner-texto,
+    body.pantalla-inactiva .boton {
+        opacity: 0.4;
     }
 }
