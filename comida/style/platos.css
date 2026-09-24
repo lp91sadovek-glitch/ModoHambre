@@ -170,6 +170,12 @@ body {
     to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 
+/* aparición del panel "elegir entrega" (centrado, sin desplazarse) */
+@keyframes elegirPop {
+    from { opacity: 0; transform: scale(0.92) translateY(0.5rem); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
 /* fondo oscurecido detrás del menú de gustos */
 .gustos-overlay {
     position: fixed;
@@ -1361,7 +1367,7 @@ body.panel-abierto {
     border-radius: 1rem;
     padding: 1.5rem;
     box-shadow: 0 1.25rem 3rem rgba(0, 0, 0, 0.45);
-    animation: selectorPop 0.22s ease;
+    animation: elegirPop 0.22s ease;
 }
 
 .elegir-cerrar {
