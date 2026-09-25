@@ -1,0 +1,11 @@
+guardar datos en el cache del explorador : 
+nombre y apellido, dirección y numero de teléfono.
+usar alguna api que guarde estos datos por cada cliente.
+que cuando el cliente pida , en el panel figure esos datos que son guardados en el cache.
+
+apartado para editar el menú desde la pagina de admin, para esto tosdos los menus tienen que estar guardados en la base de datos
+el admin edita eso.
+
+acomodar fuente (elegir con serifa o sin serifa) , eliminar la transparencia por afk, sacar iconos del carrito para evitar el scrolleo,
+cambiar de host por ejemplo: netlify, porkboom, wix, neocities.
+
