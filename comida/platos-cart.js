@@ -233,7 +233,14 @@ function getImageForPlato(button) {
   var plato = button.closest('.plato');
   if (!plato) return '';
   var img = plato.querySelector('.img-platos');
-  return img ? img.src : '';
+  if (!img) return '';
+  /* Se manda solo el path relativo: si guardamos el src completo queda
+     "localhost:5000" en la base y el panel no encuentra la imagen. */
+  try {
+    return new URL(img.src).pathname;
+  } catch (e) {
+    return img.src;
+  }
 }
 
 function animarContadorCarrito() {

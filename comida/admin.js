@@ -1,5 +1,12 @@
 /* PANEL DE PEDIDOS — MODE HAMBRE */
 
+/* ---- DONDE BUSCA LOS PEDIDOS ----
+   Dejalo vacio ('') para que el panel use el servidor local.
+   Para leer de la web de OnRender, poné la URL entre comillas:
+       var API_REMOTA = 'https://modohambre.onrender.com';
+   (si lo activás y el navegador se queja, falta permitir CORS en el servidor) */
+var API_REMOTA = '';
+
 var lista = document.getElementById('pedidos-lista');
 var banner = document.getElementById('banner-nuevo');
 var estadoConexion = document.getElementById('estado-conexion');
@@ -156,16 +163,23 @@ function renderizar() {
   contadorRecibidos.textContent = String(contadores.recibido);
   contadorListos.textContent = String(contadores.listo);
 
+  var botonBorrar = document.getElementById('borrar-todos');
+  if (botonBorrar) botonBorrar.disabled = pedidos.length === 0;
+
   if (pedidos.length === 0) {
     var tipoDeseado = sinConexion ? 'sin-conexion' : 'sin-pedidos';
     var vacioExistente = lista.querySelector('.pedido-vacio');
     if (!vacioExistente || vacioExistente.dataset.tipo !== tipoDeseado) {
+      var mensajeSinConexion = API_REMOTA
+        ? 'No se pudo contactar a <b>' + API_REMOTA + '</b>.<br>' +
+          'Revisá tu internet o aguardá unos segundos.'
+        : 'No se pudo contactar al servidor local.<br>' +
+          'Verificá que Modo Hambre esté abierto en otra ventana.';
       lista.innerHTML = sinConexion
         ? '<div class="pedido-vacio" data-tipo="sin-conexion">' +
             '<span class="pedido-vacio-icono">🔌</span>' +
             '<strong>Sin conexión con el servidor.</strong><br>' +
-            'Abrí este panel desde <b>http://localhost:5000/admin.html</b><br>' +
-            'con el servidor encendido (ejecutá <b>py app.py</b>).' +
+            mensajeSinConexion +
           '</div>'
         : '<div class="pedido-vacio" data-tipo="sin-pedidos">' +
             '<span class="pedido-vacio-icono">🛎️</span>' +
@@ -224,11 +238,13 @@ function renderizar() {
 
 async function cargarPedidos() {
   try {
-    var response = await fetch('/api/orders');
+    var response = await fetch(API_REMOTA + '/api/orders');
     if (!response.ok) throw new Error('Respuesta no válida');
     var datos = await response.json();
 
-    estadoConexion.textContent = 'Conectado · se actualiza cada 4 segundos';
+    estadoConexion.textContent = API_REMOTA
+      ? 'Conectado a OnRender · cada 4 segundos'
+      : 'Conectado · cada 4 segundos';
     estadoConexion.classList.add('ok');
     sinConexion = false;
 
@@ -264,7 +280,7 @@ async function cargarPedidos() {
 
 async function cambiarEstado(id, estado) {
   try {
-    var response = await fetch('/api/orders/' + id + '/estado', {
+    var response = await fetch(API_REMOTA + '/api/orders/' + id + '/estado', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ estado: estado })
@@ -280,7 +296,7 @@ async function cambiarEstado(id, estado) {
 async function eliminarPedido(id) {
   if (!confirm('¿Eliminar el pedido #' + id + '?')) return;
   try {
-    var response = await fetch('/api/orders/' + id, { method: 'DELETE' });
+    var response = await fetch(API_REMOTA + '/api/orders/' + id, { method: 'DELETE' });
     if (!response.ok) throw new Error('Respuesta no válida');
     pedidos = pedidos.filter(function (p) { return p.id !== id; });
     var card = lista.querySelector('[data-pedido-id="' + id + '"]');
@@ -289,6 +305,33 @@ async function eliminarPedido(id) {
   } catch (e) {
     console.error(e);
     alert('No se pudo eliminar el pedido. ¿Está el servidor activo?');
+  }
+}
+
+/* =====================
+   BORRAR TODOS LOS PEDIDOS
+   ===================== */
+
+async function eliminarTodos() {
+  if (pedidos.length === 0) return;
+  var confirmacion = confirm(
+    'Se van a borrar los ' + pedidos.length + ' pedidos del día.\n\n' +
+    'Esta acción no se puede deshacer.\n\n¿Continuar?'
+  );
+  if (!confirmacion) return;
+
+  try {
+    var response = await fetch(API_REMOTA + '/api/orders', { method: 'DELETE' });
+    if (!response.ok) throw new Error('Respuesta no válida');
+    var datos = await response.json();
+
+    pedidos = [];
+    ultimoId = null;
+    renderizar();
+    alert('Se borraron ' + datos.eliminados + ' pedidos.');
+  } catch (e) {
+    console.error(e);
+    alert('No se pudieron borrar los pedidos. Revisá la conexión con el servidor.');
   }
 }
 
@@ -363,6 +406,11 @@ lista.addEventListener('click', function (event) {
   else if (accion === 'imprimir') imprimirTicket(id);
   else if (accion === 'eliminar') eliminarPedido(id);
 });
+
+var botonBorrarTodos = document.getElementById('borrar-todos');
+if (botonBorrarTodos) {
+  botonBorrarTodos.addEventListener('click', eliminarTodos);
+}
 
 /* =====================
    INICIALIZACIÓN

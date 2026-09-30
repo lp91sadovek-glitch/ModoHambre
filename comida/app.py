@@ -1,16 +1,20 @@
 import json
+import socket
 import sqlite3
-import threading
-import time
+import sys
 from pathlib import Path
 
 from flask import Flask, jsonify, request, send_from_directory
-from werkzeug.serving import make_server
+from flask_cors import CORS
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "orders.db"
 
 app = Flask(__name__, static_folder=".", static_url_path="")
+
+# El panel de pedidos corre en la PC del local y consulta esta API, que esta
+# en otro dominio. Sin esto el navegador bloquea la respuesta.
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 
 @app.after_request
@@ -101,8 +105,15 @@ def get_platos():
     return jsonify([{"nombre": p["nombre"], "precio": p["precio"]} for p in platos])
 
 
-@app.route("/api/orders", methods=["GET", "POST"])
+@app.route("/api/orders", methods=["GET", "POST", "DELETE"])
 def orders():
+    if request.method == "DELETE":
+        conn = get_db_connection()
+        cur = conn.execute("DELETE FROM orders")
+        conn.commit()
+        conn.close()
+        return jsonify({"ok": True, "eliminados": cur.rowcount})
+
     if request.method == "GET":
         conn = get_db_connection()
         rows = conn.execute("SELECT id, items, total, created_at, estado, envio, cliente FROM orders ORDER BY id DESC").fetchall()
@@ -189,24 +200,41 @@ def delete_order(order_id):
     return jsonify({"ok": True, "order_id": order_id})
 
 
+def puerto_ocupado(puerto):
+    """waitress no avisa si el puerto ya esta en uso, asi que lo comprobamos."""
+    conexion = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        conexion.bind(("0.0.0.0", puerto))
+    except OSError:
+        return True
+    finally:
+        conexion.close()
+    return False
+
+
 def run_http_server():
-    make_server("0.0.0.0", 5000, app, threaded=True).serve_forever()
+    from waitress import serve
 
-
-def run_https_server():
-    make_server("0.0.0.0", 5001, app, threaded=True, ssl_context="adhoc").serve_forever()
+    serve(app, host="0.0.0.0", port=5000, threads=8)
 
 
 if __name__ == "__main__":
-    threads = [
-        threading.Thread(target=run_http_server, daemon=True),
-        threading.Thread(target=run_https_server, daemon=True),
-    ]
-    for thread in threads:
-        thread.start()
+    if puerto_ocupado(5000):
+        print("")
+        print("El puerto 5000 ya esta en uso.")
+        print("")
+        print("Casi seguro ya hay otra ventana de Modo Hambre abierta.")
+        print("Cerrala con Ctrl+C o cerrando la ventana, y volve a abrir el programa.")
+        sys.exit(1)
 
     try:
-        while True:
-            time.sleep(1)
+        print("Servidor iniciado en http://localhost:5000")
+        run_http_server()
+    except ImportError:
+        print("")
+        print("Falta la dependencia 'waitress'.")
+        print("Ejecutá: pip install -r requirements.txt")
+        sys.exit(1)
     except KeyboardInterrupt:
+        print("")
         print("Servidor detenido")

@@ -58,6 +58,30 @@ body {
     border-color: #2e7d43;
 }
 
+/* BORRAR TODOS */
+
+.boton-borrar-todos {
+    font-size: 0.8rem;
+    color: #ff8a80;
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    background: #1c1c1c;
+    border: 0.0625rem solid #6b2b2b;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.boton-borrar-todos:hover {
+    background: #2a1a1a;
+    border-color: #a33;
+}
+
+.boton-borrar-todos:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
 /* MAIN */
 
 .admin-main {
