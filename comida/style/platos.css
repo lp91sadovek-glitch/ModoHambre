@@ -1589,6 +1589,17 @@ body.checkout-abierto {
     animation: plato-destacado 2.5s ease;
 }
 
+/* PIE */
+
+.footer-contacto {
+    background-color: #111;
+    color: rgba(255, 255, 255, 0.85);
+    text-align: center;
+    padding: 1.1rem 1.25rem;
+    font-size: 0.875rem;
+    margin-top: 60px;
+}
+
 @keyframes plato-destacado {
     0%, 55% {
         outline: 0.25rem solid #FC8F02;

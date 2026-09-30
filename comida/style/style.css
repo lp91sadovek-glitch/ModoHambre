@@ -263,7 +263,7 @@ body {
 .mas-vendido-titulo {
     margin: 0;
     text-align: center;
-    font-family: Georgia, 'Times New Roman', serif;
+    font-family: Helvetica, 'Roboto', serif;
     font-size: clamp(1.25rem, 4.5vw, 2.1rem);
     font-weight: 700;
     letter-spacing: 0.02em;
@@ -513,7 +513,7 @@ body {
 .ubicacion-titulo {
     margin: 0;
     text-align: center;
-    font-family: Georgia, 'Times New Roman', serif;
+    font-family: Helvetica, 'Roboto', serif;
     font-size: clamp(1.25rem, 4.5vw, 2.1rem);
     font-weight: 700;
     letter-spacing: 0.03em;
@@ -1169,3 +1169,4 @@ body {
         right: 6%;
     }
 }
+
