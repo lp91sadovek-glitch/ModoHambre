@@ -1,11 +1,12 @@
 /* PANEL DE PEDIDOS — MODE HAMBRE */
 
 /* ---- DONDE BUSCA LOS PEDIDOS ----
-   Dejalo vacio ('') para que el panel use el servidor local.
-   Para leer de la web de OnRender, poné la URL entre comillas:
+   Dejalo vacio ('') para que el panel use el servidor local (pruebas en la PC).
+   Para leer los pedidos de la web de OnRender, poné la URL entre comillas:
        var API_REMOTA = 'https://modohambre.onrender.com';
-   (si lo activás y el navegador se queja, falta permitir CORS en el servidor) */
-var API_REMOTA = '';
+   (si el navegador se queja, falta permitir CORS en el servidor: app.py ya lo
+   hace, pero el servidor tiene que estar desplegado con esa versión) */
+var API_REMOTA = 'https://modohambre.onrender.com';
 
 var lista = document.getElementById('pedidos-lista');
 var banner = document.getElementById('banner-nuevo');

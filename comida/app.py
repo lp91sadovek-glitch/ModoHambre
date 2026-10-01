@@ -14,7 +14,7 @@ app = Flask(__name__, static_folder=".", static_url_path="")
 
 # El panel de pedidos corre en la PC del local y consulta esta API, que esta
 # en otro dominio. Sin esto el navegador bloquea la respuesta.
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+CORS(app, resources={r"/api/.*": {"origins": "*"}})
 
 
 @app.after_request
