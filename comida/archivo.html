@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archivo de pedidos · Modo Hambre</title>
+    <link rel="stylesheet" href="style/admin.css">
+    <style>
+        /* esta pagina es solo de lectura: mira el archivo local, no el host */
+        .archivo-cabecera {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1.5rem 1.25rem 0.5rem;
+        }
+
+        .archivo-titulo {
+            font-size: 1.4rem;
+            color: #f5f5f5;
+        }
+
+        .archivo-nota {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 1.25rem 1rem;
+            font-size: 0.85rem;
+            color: #bbb;
+            line-height: 1.6;
+        }
+
+        .archivo-fila {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem;
+            background: #1c1c1c;
+            border: 0.0625rem solid #333;
+            border-radius: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .archivo-platos {
+            margin: 0;
+            padding-left: 1.1rem;
+            font-size: 0.9rem;
+            color: #ddd;
+        }
+
+        .archivo-total {
+            font-weight: 700;
+            color: #f5f5f5;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="archivo-cabecera">
+        <h1 class="archivo-titulo">🗂 Archivo local de pedidos</h1>
+        <a class="boton-borrar-todos" href="admin.html" style="text-decoration: none;">← Volver al panel</a>
+    </div>
+
+    <p class="archivo-nota">
+        Esta es la copia permanente de los pedidos: vive en el archivo
+        <b>pedidos.jsonl</b> de esta PC y no se pierde aunque el servidor se apague.
+        Tu PC lo actualiza sola cada 5 segundos.
+    </p>
+
+    <main class="admin-main">
+        <section class="pedidos-lista" id="lista-archivo"></section>
+    </main>
+
+    <script>
+        var lista = document.getElementById('lista-archivo');
+
+        function precio(valor) {
+            return '$' + Number(valor || 0).toLocaleString('es-AR');
+        }
+
+        function texto(valor) {
+            return String(valor == null ? '' : valor).replace(/[&<>]/g, function (caracter) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[caracter];
+            });
+        }
+
+        function mostrar(pedidos) {
+            if (pedidos.length === 0) {
+                lista.innerHTML = '<div class="pedido-vacio"><span class="pedido-vacio-icono">🗂</span>' +
+                  'Todavia no hay pedidos guardados en el archivo local.</div>';
+                return;
+            }
+
+            lista.innerHTML = pedidos.map(function (pedido) {
+                var cliente = pedido.cliente || {};
+                var platos = (pedido.items || []).map(function (item) {
+                    return texto(item.name) + ' x' + (item.quantity || 1) + ' — ' + precio((item.price || 0) * (item.quantity || 1));
+                }).join('');
+
+                return '<article class="archivo-fila">' +
+                    '<div>' +
+                      '<div><b>#' + texto(pedido.id) + '</b> — ' + texto(cliente.nombre || '') + ' ' + texto(cliente.apellido || '') + '</div>' +
+                      '<div class="archivo-platos"><ul>' + platos.split(' — ').map(function (plato) {
+                        return '<li>' + plato + '</li>';
+                      }).join('') + '</ul></div>' +
+                      '<div><small>' + texto(pedido.envio || '') + ' · ' + texto(pedido.estado || '') + ' · ' + texto(pedido.created_at || '') + '</small></div>' +
+                    '</div>' +
+                    '<div class="archivo-total">' + precio(pedido.total) + '</div>' +
+                  '</article>';
+            }).join('');
+        }
+
+        async function cargar() {
+            try {
+                var respuesta = await fetch('/api/archivo');
+                mostrar(await respuesta.json());
+            } catch (error) {
+                lista.innerHTML = '<div class="pedido-vacio"><span class="pedido-vacio-icono">🔌</span>' +
+                  'No se pudo leer el archivo. Verificá que Modo Hambre este abierto.</div>';
+            }
+        }
+
+        cargar();
+        setInterval(cargar, 5000);
+    </script>
+
+</body>
+</html>

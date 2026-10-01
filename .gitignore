@@ -1,0 +1,4 @@
+# archivo local de pedidos: tiene datos de clientes, no va al repositorio
+comida/pedidos.jsonl
+
+__pycache__/

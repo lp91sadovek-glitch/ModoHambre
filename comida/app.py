@@ -1,7 +1,11 @@
 import json
+import os
 import socket
 import sqlite3
 import sys
+import threading
+import time
+import urllib.request
 from pathlib import Path
 
 from flask import Flask, jsonify, request, send_from_directory
@@ -200,6 +204,109 @@ def delete_order(order_id):
     return jsonify({"ok": True, "order_id": order_id})
 
 
+# ---------------------------------------------------------------------------
+# ARCHIVO LOCAL DE PEDIDOS
+#
+# El host guarda los pedidos de forma temporal: cuando Render se duerme o se
+# redespliega, esa base se borra. Por eso esta PC baja los pedidos del host cada
+# 5 segundos y los copia a pedidos.jsonl, un archivo de texto que vive en el
+# disco y no se pierde nunca (se puede abrir con el Bloc de notas).
+# ---------------------------------------------------------------------------
+
+ARCHIVO_PEDIDOS = BASE_DIR / "pedidos.jsonl"
+URL_HOST = "https://modohambre.onrender.com"
+INTERVALO_SINCRONIZACION = 5
+
+# Render pone RENDER=true en el entorno. Ahi no hay nada que sincronizar, porque
+# el archivo del contenedor es temporal y no sirve como respaldo.
+EN_RENDER = os.environ.get("RENDER", "").lower() == "true"
+
+
+def clave_pedido(pedido):
+    return "{}|{}".format(pedido.get("id"), pedido.get("created_at"))
+
+
+def leer_archivo():
+    """Devuelve los pedidos guardados en el archivo local."""
+    if not ARCHIVO_PEDIDOS.exists():
+        return []
+
+    pedidos = []
+    for linea in ARCHIVO_PEDIDOS.read_text(encoding="utf-8").splitlines():
+        linea = linea.strip()
+        if not linea:
+            continue
+        try:
+            pedidos.append(json.loads(linea))
+        except ValueError:
+            # una linea rota no debe voltear el archivo entero
+            continue
+    return pedidos
+
+
+def guardar_en_archivo(pedidos_nuevos):
+    """Agrega pedidos al archivo. Si ya estaban, actualiza su estado."""
+    if not pedidos_nuevos:
+        return 0
+
+    por_clave = {clave_pedido(p): p for p in leer_archivo()}
+    agregados = 0
+
+    for pedido in pedidos_nuevos:
+        if not isinstance(pedido, dict) or pedido.get("id") is None:
+            continue
+        clave = clave_pedido(pedido)
+        if clave not in por_clave:
+            agregados += 1
+        por_clave[clave] = pedido
+
+    ordenados = sorted(
+        por_clave.values(),
+        key=lambda p: (p.get("created_at") or "", p.get("id") or 0),
+        reverse=True,
+    )
+
+    with ARCHIVO_PEDIDOS.open("w", encoding="utf-8") as archivo:
+        for pedido in ordenados:
+            archivo.write(json.dumps(pedido, ensure_ascii=False) + "\n")
+
+    return agregados
+
+
+def sincronizar_una_vez():
+    """Descarga los pedidos del host y los deja en el archivo local."""
+    try:
+        with urllib.request.urlopen(URL_HOST + "/api/orders", timeout=15) as respuesta:
+            pedidos = json.loads(respuesta.read().decode("utf-8"))
+    except Exception:
+        # si el host no responde no pasa nada, se reintenta en el proximo ciclo
+        return 0
+
+    return guardar_en_archivo(pedidos)
+
+
+def sincronizar_en_segundo_plano():
+    while True:
+        try:
+            sincronizar_una_vez()
+        except Exception as error:
+            print("No se pudo sincronizar con el host:", error)
+        time.sleep(INTERVALO_SINCRONIZACION)
+
+
+@app.route("/api/archivo", methods=["GET", "POST"])
+def archivo_pedidos():
+    """El archivo local: GET lo lee, POST agrega un pedido."""
+    if request.method == "POST":
+        data = request.get_json(silent=True) or {}
+        pedido = data.get("pedido", data)
+        if not isinstance(pedido, dict) or pedido.get("id") is None:
+            return jsonify({"error": "Pedido inválido"}), 400
+        return jsonify({"ok": True, "nuevos": guardar_en_archivo([pedido])})
+
+    return jsonify(leer_archivo())
+
+
 def puerto_ocupado(puerto):
     """waitress no avisa si el puerto ya esta en uso, asi que lo comprobamos."""
     conexion = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -216,6 +323,12 @@ def run_http_server():
     from waitress import serve
 
     serve(app, host="0.0.0.0", port=5000, threads=8)
+
+
+# En la PC del local el archivo se mantiene solo: no hace falta que el panel este
+# abierto para que los pedidos queden guardados en el disco.
+if not EN_RENDER:
+    threading.Thread(target=sincronizar_en_segundo_plano, daemon=True).start()
 
 
 if __name__ == "__main__":

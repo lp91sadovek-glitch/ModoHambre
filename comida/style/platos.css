@@ -20,18 +20,10 @@ body {
     background-size: cover;
 }
 
-/* MÓVIL: ATENUAR CONTENIDO DEL MENÚ EN REPOSO PARA VER EL FONDO */
+/* MÓVIL: FONDO DE PANTALLA COMPLETA EN EL MENÚ */
 @media (max-width: 48rem) {
     .fondo-menu {
         background-image: url('../imagenes/fondo-principal-movil-4.png');
-    }
-
-    .container-categorias {
-        transition: opacity 0.6s ease;
-    }
-
-    body.pantalla-inactiva .container-categorias {
-        opacity: 0.4;
     }
 }
 

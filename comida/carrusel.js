@@ -61,9 +61,5 @@ function anteriorManual() {
     arrancarAuto();
 }
 
-/* La página (idle móvil) controla cuándo arranca o se detiene */
-window.carruselArrancar = arrancarAuto;
-window.carruselDetener = detenerAuto;
-
 /* Iniciar automático */
 arrancarAuto();

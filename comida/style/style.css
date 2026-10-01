@@ -755,23 +755,6 @@ body {
     }
 }
 
-/* MÓVIL: ATENUAR EL CONTENIDO EN REPOSO PARA VER EL FONDO */
-@media (max-width: 48rem) {
-    .container-de-carrusel,
-    .mas-vendido,
-    .ubicacion,
-    .decoracion-comida {
-        transition: opacity 0.6s ease;
-    }
-
-    body.pantalla-inactiva .container-de-carrusel,
-    body.pantalla-inactiva .mas-vendido,
-    body.pantalla-inactiva .ubicacion,
-    body.pantalla-inactiva .decoracion-comida {
-        opacity: 0.4;
-    }
-}
-
 .fondo-decorativo .fd-elem {
     display: none;
 }
