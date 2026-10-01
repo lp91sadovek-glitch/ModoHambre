@@ -14,6 +14,22 @@ from flask_cors import CORS
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "orders.db"
 
+# Donde vive la web publica y la API (Render). La PC del local tambien corre este
+# mismo archivo, pero es la que avisa que sigue encendida.
+URL_HOST = "https://modohambre.onrender.com"
+
+# Render pone RENDER=true en el entorno. Ahi no hay nada que sincronizar, porque
+# el archivo del contenedor es temporal y no sirve como respaldo.
+EN_RENDER = os.environ.get("RENDER", "").lower() == "true"
+
+# Cada cuanto la PC del local le avisa al host que esta abierta.
+INTERVALO_LATIDO = 5
+
+# Si el local dejo de avisar durante 5 minutos se lo considera cerrado y el host
+# deja de aceptar pedidos. El margen es amplio a proposito: el local tiene que
+# cortar la pagina con tiempo antes de que el servicio termine.
+SEGUNDOS_PARA_CERRADO = 300
+
 app = Flask(__name__, static_folder=".", static_url_path="")
 
 # El panel de pedidos corre en la PC del local y consulta esta API, que esta
@@ -51,6 +67,14 @@ def init_db():
             items TEXT NOT NULL,
             total INTEGER NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS local (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            ultimo_latido REAL
         )
         """
     )
@@ -109,6 +133,63 @@ def get_platos():
     return jsonify([{"nombre": p["nombre"], "precio": p["precio"]} for p in platos])
 
 
+# ---------------------------------------------------------------------------
+# ESTADO DEL LOCAL
+#
+# La PC del local no esta siempre prendida: cuando cierra, la web sigue
+# funcionando y los clientes podrian hacer pedidos que nadie va a preparar. Para
+# evitarlo, la PC del local le avisa al host cada 5 segundos que sigue abierta
+# (un "latido") y el host deja de aceptar pedidos si pasan 5 minutos sin aviso.
+# ---------------------------------------------------------------------------
+
+
+def estado_del_local():
+    """Devuelve (local_abierto, segundos_desde_el_ultimo_latido)."""
+    if not EN_RENDER:
+        # esta soy la PC del local: si estas viendo la respuesta, el local
+        # esta abierto, no hace falta mirar la tabla
+        return True, None
+
+    conn = get_db_connection()
+    fila = conn.execute("SELECT ultimo_latido FROM local WHERE id = 1").fetchone()
+    conn.close()
+
+    if fila is None or fila["ultimo_latido"] is None:
+        return False, None
+
+    hace = time.time() - fila["ultimo_latido"]
+    return hace <= SEGUNDOS_PARA_CERRADO, hace
+
+
+@app.route("/api/local/latido", methods=["POST"])
+def latido_del_local():
+    """La PC del local avisa que sigue encendida."""
+    conn = get_db_connection()
+    conn.execute(
+        """
+        INSERT INTO local (id, ultimo_latido) VALUES (1, ?)
+        ON CONFLICT(id) DO UPDATE SET ultimo_latido = excluded.ultimo_latido
+        """,
+        (time.time(),),
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/local/estado")
+def estado_local():
+    """Si el local esta abierto ahora mismo."""
+    abierto, hace = estado_del_local()
+    return jsonify(
+        {
+            "abierto": abierto,
+            "hace_segundos": None if hace is None else int(hace),
+            "margen_segundos": SEGUNDOS_PARA_CERRADO,
+        }
+    )
+
+
 @app.route("/api/orders", methods=["GET", "POST", "DELETE"])
 def orders():
     if request.method == "DELETE":
@@ -138,6 +219,21 @@ def orders():
         )
 
     data = request.get_json(silent=True) or {}
+
+    # Si el local esta cerrado el pedido no se guarda: no hay nadie en el local
+    # para prepararlo, asi que es mejor avisarle al cliente antes de que pague.
+    abierto, hace = estado_del_local()
+    if not abierto:
+        return (
+            jsonify(
+                {
+                    "error": "El local esta cerrado ahora mismo. No se pudo enviar el pedido.",
+                    "codigo": "local_cerrado",
+                }
+            ),
+            503,
+        )
+
     items = data.get("items", [])
     if not isinstance(items, list) or not items:
         return jsonify({"error": "Se requiere al menos un plato"}), 400
@@ -214,12 +310,7 @@ def delete_order(order_id):
 # ---------------------------------------------------------------------------
 
 ARCHIVO_PEDIDOS = BASE_DIR / "pedidos.jsonl"
-URL_HOST = "https://modohambre.onrender.com"
-INTERVALO_SINCRONIZACION = 5
-
-# Render pone RENDER=true en el entorno. Ahi no hay nada que sincronizar, porque
-# el archivo del contenedor es temporal y no sirve como respaldo.
-EN_RENDER = os.environ.get("RENDER", "").lower() == "true"
+INTERVALO_SINCRONIZACION = INTERVALO_LATIDO
 
 
 def clave_pedido(pedido):
@@ -285,12 +376,30 @@ def sincronizar_una_vez():
     return guardar_en_archivo(pedidos)
 
 
+def avisar_que_el_local_esta_abierto():
+    """Le dice al host que esta PC sigue encendida."""
+    peticion = urllib.request.Request(
+        URL_HOST + "/api/local/latido",
+        data=b"{}",
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    with urllib.request.urlopen(peticion, timeout=15) as respuesta:
+        respuesta.read()
+
+
 def sincronizar_en_segundo_plano():
     while True:
         try:
             sincronizar_una_vez()
         except Exception as error:
             print("No se pudo sincronizar con el host:", error)
+        try:
+            # el latido va aparte de la descarga: asi el host se entera igual
+            # de que el local esta abierto aunque falle bajar los pedidos
+            avisar_que_el_local_esta_abierto()
+        except Exception as error:
+            print("No se pudo avisar al host que el local esta abierto:", error)
         time.sleep(INTERVALO_SINCRONIZACION)
 
 

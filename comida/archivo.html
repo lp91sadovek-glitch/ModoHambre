@@ -7,76 +7,320 @@
     <link rel="stylesheet" href="style/admin.css">
     <style>
         /* esta pagina es solo de lectura: mira el archivo local, no el host */
-        .archivo-cabecera {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1rem;
-            flex-wrap: wrap;
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 1.5rem 1.25rem 0.5rem;
+
+        /* VOLVER AL PANEL */
+
+        .archivo-volver {
+            font-family: inherit;
+            font-size: 0.8rem;
+            color: #ddd;
+            padding: 0.3rem 0.7rem;
+            border-radius: 999px;
+            background: #1c1c1c;
+            border: 0.0625rem solid #333;
+            white-space: nowrap;
+            transition: background-color 0.15s, border-color 0.15s;
         }
 
-        .archivo-titulo {
-            font-size: 1.4rem;
-            color: #f5f5f5;
+        .archivo-volver:hover {
+            color: #fff;
+            background: #2b2b2b;
+            border-color: #444;
         }
+
+        /* NOTA INFORMATIVA */
 
         .archivo-nota {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 0 1.25rem 1rem;
+            margin: 0 0 1rem;
+            padding: 0.85rem 1rem;
             font-size: 0.85rem;
-            color: #bbb;
             line-height: 1.6;
+            color: #555;
+            background: #FFFDF9;
+            border: 0.0625rem solid rgba(0, 0, 0, 0.08);
+            border-radius: 0.9375rem;
+            box-shadow: 0 0.125rem 0.625rem rgba(0, 0, 0, 0.15);
+        }
+
+        .archivo-nota b {
+            color: #171717;
+        }
+
+        .pedidos-lista {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
         }
 
         .archivo-fila {
+            margin-bottom: 0;
+        }
+
+        /* BUSCADOR Y FILTROS */
+
+        .archivo-buscador {
             display: flex;
-            justify-content: space-between;
-            gap: 1rem;
-            padding: 0.75rem 1rem;
-            margin-bottom: 0.5rem;
-            background: #1c1c1c;
-            border: 0.0625rem solid #333;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            padding: 0.75rem;
+            margin-bottom: 1.25rem;
+            background: #fff;
+            border: 0.0625rem solid rgba(0, 0, 0, 0.08);
+            border-radius: 0.9375rem;
+            box-shadow: 0 0.125rem 0.625rem rgba(0, 0, 0, 0.15);
+        }
+
+        .archivo-buscador input[type='search'] {
+            flex: 1 1 14rem;
+            min-width: 0;
+            padding: 0.55rem 0.8rem;
+            font-family: inherit;
+            font-size: 0.9rem;
+            color: #171717;
+            background: #FFFDF9;
+            border: 0.0625rem solid #e4e4e4;
             border-radius: 0.5rem;
+        }
+
+        .archivo-buscador input[type='search']::placeholder {
+            color: #9a9a9a;
+        }
+
+        .archivo-buscador input[type='search']:focus {
+            outline: 0;
+            border-color: #FC8F02;
+            box-shadow: 0 0 0 0.1875rem rgba(252, 143, 2, 0.25);
+        }
+
+        .archivo-chip {
+            font-family: inherit;
+            font-size: 0.8rem;
+            padding: 0.45rem 0.85rem;
+            color: #444;
+            background: #F5F5F5;
+            border: 0.0625rem solid #e4e4e4;
+            border-radius: 999px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+        }
+
+        .archivo-chip:hover {
+            background: #efefef;
+        }
+
+        .archivo-chip.activo {
+            color: #fff;
+            background: #FC8F02;
+            border-color: #FC8F02;
+        }
+
+        .archivo-conteo {
+            width: 100%;
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        /* TARJETA DE PEDIDO */
+
+        .archivo-fila {
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+            padding: 1rem 1.1rem;
+            background: #fff;
+            border: 0.0625rem solid rgba(0, 0, 0, 0.08);
+            border-radius: 0.9375rem;
+            box-shadow: 0 0.125rem 0.625rem rgba(0, 0, 0, 0.15);
+        }
+
+        .archivo-cabecera {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 0.5rem 1rem;
             flex-wrap: wrap;
         }
 
+        .archivo-quien {
+            min-width: 0;
+            flex: 1 1 12rem;
+        }
+
+        .archivo-titulo-pedido {
+            font-size: 1.05rem;
+            color: #171717;
+            line-height: 1.35;
+            overflow-wrap: anywhere;
+        }
+
+        .archivo-id-pedido {
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        .archivo-envio {
+            margin-top: 0.2rem;
+            font-size: 0.8rem;
+            color: #888;
+            overflow-wrap: anywhere;
+        }
+
+        .archivo-lateral {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem 0.75rem;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .archivo-fecha {
+            font-size: 0.85rem;
+            color: #888;
+            white-space: nowrap;
+        }
+
+        .archivo-lateral .pedido-estado {
+            margin-left: 0;
+        }
+
+        /* PRODUCTOS */
+
         .archivo-platos {
+            list-style: none;
             margin: 0;
-            padding-left: 1.1rem;
-            font-size: 0.9rem;
-            color: #ddd;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .archivo-platos li {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            font-size: 0.95rem;
+            color: #333;
+        }
+
+        .archivo-plato-nombre {
+            min-width: 0;
+            flex: 1 1 8rem;
+            overflow-wrap: anywhere;
+        }
+
+        .archivo-plato-cantidad {
+            margin-left: 0.35rem;
+            font-size: 0.85rem;
+            color: #888;
+            white-space: nowrap;
+        }
+
+        .archivo-plato-precio {
+            font-weight: 700;
+            color: #171717;
+            white-space: nowrap;
+        }
+
+        /* PIE */
+
+        .archivo-separador {
+            margin: 0;
+            border: none;
+            border-top: 0.0625rem solid #eee;
+        }
+
+        .archivo-pie {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem 1rem;
+            flex-wrap: wrap;
+        }
+
+        .archivo-total-etiqueta {
+            font-size: 0.85rem;
+            color: #777;
         }
 
         .archivo-total {
-            font-weight: 700;
-            color: #f5f5f5;
+            font-weight: 800;
+            font-size: 1.3rem;
+            color: #171717;
             white-space: nowrap;
+        }
+
+        /* RESPONSIVE */
+
+        @media (max-width: 37.5rem) {
+            .archivo-buscador input[type='search'] {
+                flex: 1 1 100%;
+            }
+
+            .archivo-chip {
+                flex: 1 1 0;
+                text-align: center;
+            }
+
+            .archivo-cabecera {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .archivo-lateral {
+                justify-content: space-between;
+            }
+
+            .archivo-fila {
+                padding: 0.9rem;
+            }
         }
     </style>
 </head>
 <body>
 
-    <div class="archivo-cabecera">
-        <h1 class="archivo-titulo">🗂 Archivo local de pedidos</h1>
-        <a class="boton-borrar-todos" href="admin.html" style="text-decoration: none;">← Volver al panel</a>
-    </div>
-
-    <p class="archivo-nota">
-        Esta es la copia permanente de los pedidos: vive en el archivo
-        <b>pedidos.jsonl</b> de esta PC y no se pierde aunque el servidor se apague.
-        Tu PC lo actualiza sola cada 5 segundos.
-    </p>
+    <header class="admin-header">
+        <div class="admin-header-inner">
+            <h1 class="admin-titulo">🗂 Archivo local de pedidos</h1>
+            <div class="admin-header-acciones">
+                <a class="archivo-volver" href="admin.html" style="text-decoration: none;">← Volver al panel</a>
+            </div>
+        </div>
+    </header>
 
     <main class="admin-main">
+
+        <p class="archivo-nota">
+            Esta es la copia permanente de los pedidos: vive en el archivo
+            <b>pedidos.jsonl</b> de esta PC y no se pierde aunque el servidor se apague.
+            Tu PC lo actualiza sola cada 5 segundos. Sacar un pedido de la pantalla no
+            lo borra de acá.
+        </p>
+
+        <div class="archivo-buscador">
+            <input type="search" id="buscar" placeholder="Buscar por nombre, teléfono, pedido o plato…" autocomplete="off">
+            <button class="archivo-chip activo" id="filtro-todos" type="button">Todos</button>
+            <button class="archivo-chip" id="filtro-listos" type="button">Solo listos</button>
+            <span class="archivo-conteo" id="conteo"></span>
+        </div>
+
         <section class="pedidos-lista" id="lista-archivo"></section>
+
     </main>
 
     <script>
         var lista = document.getElementById('lista-archivo');
+        var buscar = document.getElementById('buscar');
+        var conteo = document.getElementById('conteo');
+        var chipTodos = document.getElementById('filtro-todos');
+        var chipListos = document.getElementById('filtro-listos');
+
+        var pedidos = [];
+        var soloListos = false;
 
         function precio(valor) {
             return '$' + Number(valor || 0).toLocaleString('es-AR');
@@ -88,41 +332,131 @@
             });
         }
 
-        function mostrar(pedidos) {
+        function fechaLegible(valor) {
+            if (!valor) return '';
+            var fecha = new Date(String(valor).replace(' ', 'T') + 'Z');
+            if (isNaN(fecha.getTime())) return String(valor);
+            return fecha.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+                ' · ' + fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function datosPedido(pedido) {
+            var cliente = pedido.cliente || {};
+            var platos = (pedido.items || []).map(function (item) {
+                return (item.name || '') + ' x' + (item.quantity || 1);
+            }).join(' ');
+            return [
+                pedido.id,
+                pedido.estado,
+                pedido.envio,
+                pedido.created_at,
+                pedido.total,
+                cliente.nombre,
+                cliente.apellido,
+                cliente.telefono,
+                cliente.direccion,
+                platos
+            ].join(' ').toLowerCase();
+        }
+
+        function coincide(pedido, textoBuscado) {
+            return datosPedido(pedido).indexOf(textoBuscado) !== -1;
+        }
+
+        function visibles() {
+            var textoBuscado = buscar.value.trim().toLowerCase();
+            return pedidos.filter(function (pedido) {
+                if (soloListos && (pedido.estado || 'nuevo') !== 'listo') return false;
+                return coincide(pedido, textoBuscado);
+            });
+        }
+
+        function construirTarjeta(pedido) {
+            var cliente = pedido.cliente || {};
+            var nombre = (cliente.nombre || '') + ' ' + (cliente.apellido || '');
+            var estado = pedido.estado || 'nuevo';
+            var etiqueta = estado === 'listo' ? 'Listo' : estado === 'recibido' ? 'Recibido' : 'Nuevo';
+
+            var productos = (pedido.items || []).map(function (item) {
+                var cantidad = item.quantity || 1;
+                return '<li>' +
+                    '<span class="archivo-plato-nombre">' + texto(item.name) +
+                        '<span class="archivo-plato-cantidad">x' + cantidad + '</span>' +
+                    '</span>' +
+                    '<span class="archivo-plato-precio">' + precio((item.price || 0) * cantidad) + '</span>' +
+                '</li>';
+            }).join('');
+
+            return '<article class="archivo-fila">' +
+                '<div class="archivo-cabecera">' +
+                    '<div class="archivo-quien">' +
+                        '<div class="archivo-titulo-pedido">' +
+                            '<span class="archivo-id-pedido">Pedido #' + texto(pedido.id) + '</span> — ' +
+                            texto(nombre || 'Sin nombre') +
+                        '</div>' +
+                        '<div class="archivo-envio">' + texto(pedido.envio || '') + '</div>' +
+                    '</div>' +
+                    '<div class="archivo-lateral">' +
+                        '<span class="archivo-fecha">' + texto(fechaLegible(pedido.created_at)) + '</span>' +
+                        '<span class="pedido-estado estado-' + estado + '">' + etiqueta + '</span>' +
+                    '</div>' +
+                '</div>' +
+                '<ul class="archivo-platos">' + productos + '</ul>' +
+                '<hr class="archivo-separador">' +
+                '<div class="archivo-pie">' +
+                    '<span class="archivo-total-etiqueta">Total del pedido</span>' +
+                    '<span class="archivo-total">' + precio(pedido.total) + '</span>' +
+                '</div>' +
+            '</article>';
+        }
+
+        function mostrar() {
+            var listaPedidos = visibles();
+            conteo.textContent = pedidos.length === 0
+                ? ''
+                : 'Mostrando ' + listaPedidos.length + ' de ' + pedidos.length + ' pedidos.';
+
             if (pedidos.length === 0) {
                 lista.innerHTML = '<div class="pedido-vacio"><span class="pedido-vacio-icono">🗂</span>' +
                   'Todavia no hay pedidos guardados en el archivo local.</div>';
                 return;
             }
 
-            lista.innerHTML = pedidos.map(function (pedido) {
-                var cliente = pedido.cliente || {};
-                var platos = (pedido.items || []).map(function (item) {
-                    return texto(item.name) + ' x' + (item.quantity || 1) + ' — ' + precio((item.price || 0) * (item.quantity || 1));
-                }).join('');
+            if (listaPedidos.length === 0) {
+                lista.innerHTML = '<div class="pedido-vacio"><span class="pedido-vacio-icono">🔍</span>' +
+                  'Ningun pedido coincide con la busqueda.</div>';
+                return;
+            }
 
-                return '<article class="archivo-fila">' +
-                    '<div>' +
-                      '<div><b>#' + texto(pedido.id) + '</b> — ' + texto(cliente.nombre || '') + ' ' + texto(cliente.apellido || '') + '</div>' +
-                      '<div class="archivo-platos"><ul>' + platos.split(' — ').map(function (plato) {
-                        return '<li>' + plato + '</li>';
-                      }).join('') + '</ul></div>' +
-                      '<div><small>' + texto(pedido.envio || '') + ' · ' + texto(pedido.estado || '') + ' · ' + texto(pedido.created_at || '') + '</small></div>' +
-                    '</div>' +
-                    '<div class="archivo-total">' + precio(pedido.total) + '</div>' +
-                  '</article>';
-            }).join('');
+            lista.innerHTML = listaPedidos.map(construirTarjeta).join('');
         }
 
         async function cargar() {
             try {
                 var respuesta = await fetch('/api/archivo');
-                mostrar(await respuesta.json());
+                pedidos = await respuesta.json();
+                mostrar();
             } catch (error) {
                 lista.innerHTML = '<div class="pedido-vacio"><span class="pedido-vacio-icono">🔌</span>' +
                   'No se pudo leer el archivo. Verificá que Modo Hambre este abierto.</div>';
             }
         }
+
+        buscar.addEventListener('input', mostrar);
+
+        chipTodos.addEventListener('click', function () {
+            soloListos = false;
+            chipTodos.classList.add('activo');
+            chipListos.classList.remove('activo');
+            mostrar();
+        });
+
+        chipListos.addEventListener('click', function () {
+            soloListos = true;
+            chipListos.classList.add('activo');
+            chipTodos.classList.remove('activo');
+            mostrar();
+        });
 
         cargar();
         setInterval(cargar, 5000);

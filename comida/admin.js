@@ -294,9 +294,32 @@ async function cambiarEstado(id, estado) {
   }
 }
 
+/* =====================
+   ARCHIVO LOCAL
+   ===================== */
+
+/* Antes de borrar de la pantalla, el pedido se copia al archivo de la PC
+   (pedidos.jsonl). Así lo que se borra del panel nunca se pierde. */
+async function archivarEnDisco(lista) {
+  for (var i = 0; i < lista.length; i++) {
+    try {
+      await fetch('/api/archivo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pedido: lista[i] })
+      });
+    } catch (e) {
+      console.warn('No se pudo archivar el pedido #' + lista[i].id, e);
+    }
+  }
+}
+
 async function eliminarPedido(id) {
-  if (!confirm('¿Eliminar el pedido #' + id + '?')) return;
+  if (!confirm('¿Sacar el pedido #' + id + ' de la pantalla?\n\nQueda guardado en el archivo local.')) return;
   try {
+    var pedido = pedidos.find(function (p) { return p.id === id; });
+    if (pedido) await archivarEnDisco([pedido]);
+
     var response = await fetch(API_REMOTA + '/api/orders/' + id, { method: 'DELETE' });
     if (!response.ok) throw new Error('Respuesta no válida');
     pedidos = pedidos.filter(function (p) { return p.id !== id; });
@@ -316,12 +339,14 @@ async function eliminarPedido(id) {
 async function eliminarTodos() {
   if (pedidos.length === 0) return;
   var confirmacion = confirm(
-    'Se van a borrar los ' + pedidos.length + ' pedidos del día.\n\n' +
-    'Esta acción no se puede deshacer.\n\n¿Continuar?'
+    'Se van a sacar de la pantalla los ' + pedidos.length + ' pedidos.\n\n' +
+    'Quedan todos guardados en el archivo local.\n\n¿Continuar?'
   );
   if (!confirmacion) return;
 
   try {
+    await archivarEnDisco(pedidos.slice());
+
     var response = await fetch(API_REMOTA + '/api/orders', { method: 'DELETE' });
     if (!response.ok) throw new Error('Respuesta no válida');
     var datos = await response.json();
@@ -329,10 +354,10 @@ async function eliminarTodos() {
     pedidos = [];
     ultimoId = null;
     renderizar();
-    alert('Se borraron ' + datos.eliminados + ' pedidos.');
+    alert('Se sacaron ' + datos.eliminados + ' pedidos de la pantalla. Quedaron en el archivo local.');
   } catch (e) {
     console.error(e);
-    alert('No se pudieron borrar los pedidos. Revisá la conexión con el servidor.');
+    alert('No se pudieron sacar los pedidos. Revisá la conexión con el servidor.');
   }
 }
 

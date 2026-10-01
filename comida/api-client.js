@@ -12,7 +12,19 @@ async function saveOrder(items, envio, cliente) {
   });
 
   if (!response.ok) {
-    throw new Error('No se pudo guardar el pedido');
+    // el servidor puede explicar por que fallo (por ejemplo, que el local esta
+    // cerrado). Si no dice nada, usamos un mensaje generico.
+    let mensaje = 'No se pudo guardar el pedido';
+    let codigo = '';
+    try {
+      const datos = await response.json();
+      if (datos && datos.error) mensaje = datos.error;
+      if (datos && datos.codigo) codigo = datos.codigo;
+    } catch (e) {}
+
+    const error = new Error(mensaje);
+    error.codigo = codigo;
+    throw error;
   }
 
   return response.json();

@@ -250,11 +250,11 @@ function animarContadorCarrito() {
   cartCountEl.classList.add('animar');
 }
 
-function mostrarToast(texto) {
+function mostrarToast(texto, tipo) {
   var viejo = document.querySelector('.toast-cart');
   if (viejo) viejo.remove();
   var toast = document.createElement('div');
-  toast.className = 'toast-cart';
+  toast.className = tipo ? 'toast-cart ' + tipo : 'toast-cart';
   toast.setAttribute('role', 'status');
   toast.textContent = texto;
   document.body.appendChild(toast);
@@ -264,7 +264,7 @@ function mostrarToast(texto) {
   setTimeout(function () {
     toast.classList.remove('visible');
     setTimeout(function () { toast.remove(); }, 400);
-  }, 2000);
+  }, tipo === 'error' ? 5000 : 2000);
 }
 
 document.querySelectorAll('.add-cart').forEach(function (button) {
@@ -548,7 +548,13 @@ function enviarPedidoSistema(tipo, cliente) {
     .catch(function (e) {
       console.error(e);
       botonConfirmar.disabled = false;
-      mostrarToast('No se pudo enviar el pedido. Intentá de nuevo.');
+      // el carrito y el formulario quedan como estaban, el cliente puede
+      // reintentar mas tarde
+      if (e && e.codigo === 'local_cerrado') {
+        mostrarToast('No se pudo enviar el pedido: el local está cerrado ahora mismo. Intentá de nuevo más tarde.', 'error');
+      } else {
+        mostrarToast('No se pudo enviar el pedido. Intentá de nuevo.', 'error');
+      }
     });
 }
 
