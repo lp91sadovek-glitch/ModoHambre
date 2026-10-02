@@ -301,12 +301,6 @@
             pedido de la pantalla no lo borra de acá.
         </p>
 
-        <p class="archivo-nota">
-            <b>Ojo:</b> esta pagina solo tiene contenido si la abris en la computadora
-            del local. Si la abris desde la web, no vas a ver nada: los pedidos no se
-            guardan en el servidor, se guardan en esa PC.
-        </p>
-
         <div class="archivo-buscador">
             <input type="search" id="buscar" placeholder="Buscar por nombre, teléfono, pedido o plato…" autocomplete="off">
             <button class="archivo-chip activo" id="filtro-todos" type="button">Todos</button>
@@ -452,8 +446,7 @@
                       'Todavia no hay pedidos guardados en el archivo local.</div>'
                     : '<div class="pedido-vacio"><span class="pedido-vacio-icono">💻</span>' +
                       'Esta copia de los pedidos esta en la computadora del local, no en la web.<br>' +
-                      'Abri esta pagina desde esa PC en <b>localhost:5000/archivo.html</b> ' +
-                      'y ahi vas a ver todos los pedidos.</div>';
+                      'No se va a mostrar nada desde esta pagina.</div>';
                 return;
             }
 
@@ -467,6 +460,12 @@
         }
 
         async function cargar() {
+            // En el host no hay archivo local: no se muestra nada y no se pide.
+            if (!esLaPcDelLocal()) {
+                pedidos = [];
+                mostrar();
+                return;
+            }
             try {
                 var respuesta = await fetch('/api/archivo', {
                     headers: PanelClave.cabeceras()

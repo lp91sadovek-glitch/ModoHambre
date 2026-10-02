@@ -312,7 +312,19 @@ async function cambiarEstado(id, estado) {
 
 /* Antes de borrar de la pantalla, el pedido se copia al archivo de la PC
    (pedidos.jsonl). Así lo que se borra del panel nunca se pierde. */
+function esLaPcDelLocal() {
+  var host = window.location.hostname;
+  if (host === 'localhost' || host === '127.0.0.1' || host === '::1') {
+    return true;
+  }
+  // tambien si la abrieron con la direccion de la red (192.168.0.10, etc)
+  return /^10\./.test(host) ||
+    /^192\.168\./.test(host) ||
+    /^172\.(1[6-9]|2[0-9]|3[01])\./.test(host);
+}
+
 async function archivarEnDisco(lista) {
+  if (!esLaPcDelLocal()) return; // desde la web hosteada no se guarda nada local
   for (var i = 0; i < lista.length; i++) {
     try {
       await pedir('/api/archivo', {
@@ -327,7 +339,7 @@ async function archivarEnDisco(lista) {
 }
 
 async function eliminarPedido(id) {
-  if (!confirm('¿Sacar el pedido #' + id + ' de la pantalla?\n\nQueda guardado en el archivo local.')) return;
+  if (!confirm('¿Sacar el pedido #' + id + ' de la pantalla?' + (esLaPcDelLocal() ? '\n\nQueda guardado en el archivo local.' : ''))) return;
   try {
     var pedido = pedidos.find(function (p) { return p.id === id; });
     if (pedido) await archivarEnDisco([pedido]);
@@ -351,8 +363,9 @@ async function eliminarPedido(id) {
 async function eliminarTodos() {
   if (pedidos.length === 0) return;
   var confirmacion = confirm(
-    'Se van a sacar de la pantalla los ' + pedidos.length + ' pedidos.\n\n' +
-    'Quedan todos guardados en el archivo local.\n\n¿Continuar?'
+    'Se van a sacar de la pantalla los ' + pedidos.length + ' pedidos.' +
+    (esLaPcDelLocal() ? '\n\nQuedan todos guardados en el archivo local.' : '') +
+    '\n\n¿Continuar?'
   );
   if (!confirmacion) return;
 
@@ -366,7 +379,7 @@ async function eliminarTodos() {
     pedidos = [];
     ultimoId = null;
     renderizar();
-    alert('Se sacaron ' + datos.eliminados + ' pedidos de la pantalla. Quedaron en el archivo local.');
+    alert('Se sacaron ' + datos.eliminados + ' pedidos de la pantalla.' + (esLaPcDelLocal() ? ' Quedaron en el archivo local.' : ''));
   } catch (e) {
     console.error(e);
     alert('No se pudieron sacar los pedidos. Revisá la conexión con el servidor.');

@@ -87,7 +87,24 @@
         </div>
     </div>
 
+    <script>
+        // El aviso de "se pierde" solo tiene sentido cuando la pagina esta en el
+        // host (Render). En la PC del local los datos quedan guardados en
+        // pedidos.jsonl, asi que ese aviso no se muestra.
+        if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+            document.querySelectorAll('.admin-aviso, .admin-nota-alerta').forEach(function (el) {
+                el.remove();
+            });
+        } else {
+            // En el host, archivo.html no muestra nada: los links a esa pagina
+            // se reemplazan por texto plano.
+            document.querySelectorAll('a[href="archivo.html"]').forEach(function (el) {
+                var texto = document.createTextNode(el.textContent);
+                el.parentNode.replaceChild(texto, el);
+            });
+        }
+    </script>
     <script src="panel-clave.js?v=2"></script>
-    <script src="admin.js?v=4"></script>
+    <script src="admin.js?v=5"></script>
 </body>
 </html>
