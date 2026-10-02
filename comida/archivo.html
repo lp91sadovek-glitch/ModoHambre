@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Archivo de pedidos · Modo Hambre</title>
-    <link rel="stylesheet" href="style/admin.css">
+    <link rel="stylesheet" href="style/admin.css?v=1">
     <style>
         /* esta pagina es solo de lectura: mira el archivo local, no el host */
 
@@ -296,9 +296,15 @@
 
         <p class="archivo-nota">
             Esta es la copia permanente de los pedidos: vive en el archivo
-            <b>pedidos.jsonl</b> de esta PC y no se pierde aunque el servidor se apague.
-            Tu PC lo actualiza sola cada 5 segundos. Sacar un pedido de la pantalla no
-            lo borra de acá.
+            <b>pedidos.jsonl</b> de la computadora del local y no se pierde aunque el
+            servidor se apague. Esa PC lo actualiza sola cada 5 segundos. Sacar un
+            pedido de la pantalla no lo borra de acá.
+        </p>
+
+        <p class="archivo-nota">
+            <b>Ojo:</b> esta pagina solo tiene contenido si la abris en la computadora
+            del local. Si la abris desde la web, no vas a ver nada: los pedidos no se
+            guardan en el servidor, se guardan en esa PC.
         </p>
 
         <div class="archivo-buscador">
@@ -311,6 +317,19 @@
         <section class="pedidos-lista" id="lista-archivo"></section>
 
     </main>
+
+    <div class="clave-fondo" id="clave-fondo" hidden>
+        <div class="clave-caja">
+            <h1 class="clave-titulo">Archivo local de pedidos</h1>
+            <p class="clave-ayuda">Escribi la clave del local para ver los pedidos.</p>
+            <input type="password" id="clave-input" placeholder="Clave" autocomplete="current-password">
+            <button class="clave-boton" id="clave-boton" type="button">Entrar</button>
+            <p class="clave-error" id="clave-error"></p>
+            <p class="clave-nota">La clave te la da el encargado del local.</p>
+        </div>
+    </div>
+
+    <script src="panel-clave.js?v=1"></script>
 
     <script>
         var lista = document.getElementById('lista-archivo');
@@ -410,6 +429,17 @@
             '</article>';
         }
 
+        function esLaPcDelLocal() {
+            var host = window.location.hostname;
+            if (host === 'localhost' || host === '127.0.0.1' || host === '::1') {
+                return true;
+            }
+            // tambien si la abrieron con la direccion de la red (192.168.0.10, etc)
+            return /^10\./.test(host) ||
+                /^192\.168\./.test(host) ||
+                /^172\.(1[6-9]|2[0-9]|3[01])\./.test(host);
+        }
+
         function mostrar() {
             var listaPedidos = visibles();
             conteo.textContent = pedidos.length === 0
@@ -417,8 +447,13 @@
                 : 'Mostrando ' + listaPedidos.length + ' de ' + pedidos.length + ' pedidos.';
 
             if (pedidos.length === 0) {
-                lista.innerHTML = '<div class="pedido-vacio"><span class="pedido-vacio-icono">🗂</span>' +
-                  'Todavia no hay pedidos guardados en el archivo local.</div>';
+                lista.innerHTML = esLaPcDelLocal()
+                    ? '<div class="pedido-vacio"><span class="pedido-vacio-icono">🗂</span>' +
+                      'Todavia no hay pedidos guardados en el archivo local.</div>'
+                    : '<div class="pedido-vacio"><span class="pedido-vacio-icono">💻</span>' +
+                      'Esta copia de los pedidos esta en la computadora del local, no en la web.<br>' +
+                      'Abri esta pagina desde esa PC en <b>localhost:5000/archivo.html</b> ' +
+                      'y ahi vas a ver todos los pedidos.</div>';
                 return;
             }
 
@@ -433,7 +468,14 @@
 
         async function cargar() {
             try {
-                var respuesta = await fetch('/api/archivo');
+                var respuesta = await fetch('/api/archivo', {
+                    headers: PanelClave.cabeceras()
+                });
+                if (respuesta.status === 401) {
+                    PanelClave.errorDeClave();
+                    lista.innerHTML = '';
+                    return;
+                }
                 pedidos = await respuesta.json();
                 mostrar();
             } catch (error) {

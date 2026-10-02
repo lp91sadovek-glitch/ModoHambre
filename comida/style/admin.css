@@ -415,6 +415,156 @@ body {
     cursor: not-allowed;
 }
 
+/* AVISO DE COMO FUNCIONAN LOS PEDIDOS (se abre al tocarlo) */
+
+.admin-nota {
+    margin: 0 0 1.25rem;
+    padding: 0.85rem 1rem;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: #555;
+    background: #FFFDF9;
+    border: 0.0625rem solid rgba(0, 0, 0, 0.08);
+    border-radius: 0.9375rem;
+    box-shadow: 0 0.125rem 0.625rem rgba(0, 0, 0, 0.15);
+}
+
+.admin-nota summary {
+    font-weight: 700;
+    color: #171717;
+    cursor: pointer;
+}
+
+.admin-nota summary:hover {
+    color: #f57c00;
+}
+
+.admin-nota p {
+    margin: 0.85rem 0 0;
+}
+
+.admin-nota b {
+    color: #171717;
+}
+
+.admin-nota .admin-nota-alerta {
+    color: #8a4b00;
+}
+
+/* AVISO QUE SE VE SIEMPRE: los pedidos de la web se borran al actualizarla */
+
+.admin-aviso {
+    margin: 0 0 1.25rem;
+    padding: 0.85rem 1rem;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: #7a4a00;
+    background: #fff6e6;
+    border: 0.0625rem solid rgba(245, 124, 0, 0.4);
+    border-radius: 0.9375rem;
+    box-shadow: 0 0.125rem 0.625rem rgba(0, 0, 0, 0.15);
+}
+
+.admin-aviso b {
+    color: #5c3600;
+}
+
+.admin-aviso a {
+    color: #e07100;
+    font-weight: 700;
+}
+
+/* CLAVE DEL PANEL (solo se ve hasta que se escribe la clave) */
+
+.clave-fondo {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+    background: #FC8F02;
+}
+
+.clave-fondo[hidden] {
+    display: none;
+}
+
+.clave-caja {
+    width: 100%;
+    max-width: 22rem;
+    padding: 1.75rem 1.5rem;
+    text-align: center;
+    background: #fff;
+    border-radius: 0.9375rem;
+    box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.25);
+}
+
+.clave-titulo {
+    margin: 0 0 0.35rem;
+    font-size: 1.3rem;
+    color: #171717;
+}
+
+.clave-ayuda {
+    margin: 0 0 1.25rem;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: #777;
+}
+
+.clave-caja input[type='password'] {
+    width: 100%;
+    padding: 0.7rem 0.9rem;
+    font-family: inherit;
+    font-size: 1rem;
+    text-align: center;
+    color: #171717;
+    background: #FFFDF9;
+    border: 0.0625rem solid #e4e4e4;
+    border-radius: 0.5rem;
+}
+
+.clave-caja input[type='password']:focus {
+    outline: 0;
+    border-color: #FC8F02;
+    box-shadow: 0 0 0 0.1875rem rgba(252, 143, 2, 0.25);
+}
+
+.clave-boton {
+    width: 100%;
+    margin-top: 0.75rem;
+    padding: 0.7rem 1rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #fff;
+    background: #f57c00;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.clave-boton:hover {
+    background: #e07100;
+}
+
+.clave-error {
+    min-height: 1.1rem;
+    margin: 0.75rem 0 0;
+    font-size: 0.85rem;
+    color: #b3261e;
+}
+
+.clave-nota {
+    margin: 0.5rem 0 0;
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: #999;
+}
+
 /* TICKET (solo visible al imprimir) */
 
 .ticket-print {

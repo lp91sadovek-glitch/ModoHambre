@@ -1,4 +1,10 @@
 # archivo local de pedidos: tiene datos de clientes, no va al repositorio
 comida/pedidos.jsonl
 
+# base de pedidos: se llena sola con los pedidos del local, tampoco va
+comida/orders.db
+
+# tiene la clave del panel escrita, y el repositorio es publico
+para abrir el hostlocal.txt
+
 __pycache__/

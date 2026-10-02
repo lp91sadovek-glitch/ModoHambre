@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de pedidos · Modo Hambre</title>
-    <link rel="stylesheet" href="style/admin.css">
+    <link rel="stylesheet" href="style/admin.css?v=1">
 </head>
 <body>
 
@@ -20,6 +20,38 @@
     </header>
 
     <main class="admin-main">
+
+        <details class="admin-nota">
+            <summary>ℹ️ ¿De dónde salen estos pedidos?</summary>
+            <p>
+                Los clientes piden desde la web y los pedidos se guardan en el sitio
+                (<b>modohambre.onrender.com</b>). Esta pantalla los lee de ahí.
+            </p>
+            <p>
+                <b>Tu computadora es la que los conserva.</b> Mientras Modo Hambre esté abierto
+                en la PC del local, esa PC se conecta al sitio cada 5 segundos, le avisa que el
+                local está abierto y copia cada pedido en el archivo permanente
+                (<b>pedidos.jsonl</b>). Por eso no se pierden aunque el sitio se apague.
+            </p>
+            <p class="admin-nota-alerta">
+                <b>Ojo:</b> la memoria del sitio es temporal. Cada vez que se actualiza la web se
+                borran los pedidos que estaban ahí, y esta pantalla queda vacía. La copia que no
+                se pierde está en la PC del local:
+                <a href="archivo.html">archivo local de pedidos</a>. Si la PC está apagada mientras
+                entra un pedido, ese pedido no queda guardado en ninguna parte.
+            </p>
+            <p>
+                Esta pantalla pide la clave del local porque muestra el nombre, el teléfono y la
+                dirección de los clientes.
+            </p>
+        </details>
+
+        <p class="admin-aviso">
+            ⚠️ <b>Ojo, esta lista se borra:</b> los pedidos que ves acá están guardados en el
+            servidor de la web, y cada vez que se actualiza el sitio (cuando se sube un cambio
+            nuevo) arrancan de cero. Lo único que no se pierde está guardado en tu
+            computadora: <a href="archivo.html">🗂 archivo local de pedidos</a>.
+        </p>
 
         <div class="admin-resumen">
             <div class="resumen-card resumen-nuevos">
@@ -44,6 +76,18 @@
 
     <div class="ticket-print" id="ticket-print" aria-hidden="true"></div>
 
-    <script src="admin.js?v=3"></script>
+    <div class="clave-fondo" id="clave-fondo" hidden>
+        <div class="clave-caja">
+            <h1 class="clave-titulo">Panel de pedidos</h1>
+            <p class="clave-ayuda">Escribi la clave del local para ver los pedidos.</p>
+            <input type="password" id="clave-input" placeholder="Clave" autocomplete="current-password">
+            <button class="clave-boton" id="clave-boton" type="button">Entrar</button>
+            <p class="clave-error" id="clave-error"></p>
+            <p class="clave-nota">La clave te la da el encargado del local.</p>
+        </div>
+    </div>
+
+    <script src="panel-clave.js?v=1"></script>
+    <script src="admin.js?v=4"></script>
 </body>
 </html>

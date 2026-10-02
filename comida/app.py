@@ -1,10 +1,13 @@
 import json
 import os
+import re
+import secrets
 import socket
 import sqlite3
 import sys
 import threading
 import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -30,11 +33,81 @@ INTERVALO_LATIDO = 5
 # cortar la pagina con tiempo antes de que el servicio termine.
 SEGUNDOS_PARA_CERRADO = 300
 
+# El puerto del host local (la PC del local).
+PUERTO = 5000
+URL_LOCAL = f"http://localhost:{PUERTO}"
+
+# ---------------------------------------------------------------------------
+# CLAVE DEL PANEL
+#
+# El panel muestra los pedidos con nombre, telefono y direccion del cliente, asi
+# que no puede quedar abierto en internet. El dueno escribe la clave y recien ahi
+# puede verlos.
+#
+# La clave se busca en dos lugares, en este orden:
+#   1. La variable de entorno CLAVE_PANEL de Render (la del host).
+#   2. La linea "CLAVE_PANEL:" del archivo de texto de la PC del local, que ese
+#      archivo no se sube al repositorio justamente para que la clave no quede
+#      a la vista de cualquiera.
+# ---------------------------------------------------------------------------
+
+CABECERA_CLAVE = "X-Clave-Panel"
+ARCHIVO_CLAVE = "para abrir el hostlocal.txt"
+
+
+def leer_clave_del_archivo():
+    """Busca la linea 'CLAVE_PANEL:' en el archivo de texto de la PC del local."""
+    for carpeta in (BASE_DIR, BASE_DIR.parent):
+        ruta = carpeta / ARCHIVO_CLAVE
+        if not ruta.exists():
+            continue
+        try:
+            lineas = ruta.read_text(encoding="utf-8", errors="ignore").splitlines()
+        except OSError:
+            continue
+        for linea in lineas:
+            if linea.strip().startswith("CLAVE_PANEL:"):
+                return linea.split(":", 1)[1].strip()
+    return ""
+
+
+def limpiar_clave(valor):
+    """Los guiones y las mayusculas no cuentan: la clave se puede escribir como sea."""
+    return re.sub(r"[\s-]", "", valor or "").lower()
+
+
+CLAVE_PANEL = os.environ.get("CLAVE_PANEL", "").strip() or leer_clave_del_archivo()
+CLAVE_PANEL_LIMPIA = limpiar_clave(CLAVE_PANEL)
+
 app = Flask(__name__, static_folder=".", static_url_path="")
 
 # El panel de pedidos corre en la PC del local y consulta esta API, que esta
 # en otro dominio. Sin esto el navegador bloquea la respuesta.
-CORS(app, resources={r"/api/.*": {"origins": "*"}})
+CORS(
+    app,
+    resources={r"/api/.*": {"origins": "*"}},
+    allow_headers=["Content-Type", CABECERA_CLAVE],
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+)
+
+
+def panel_permitido():
+    """Si el pedido que llego puede tocar los datos del panel."""
+    if not CLAVE_PANEL_LIMPIA:
+        # Todavia no se configuro ninguna clave. En la PC del local el panel
+        # funciona igual (es la maquina del local), pero en el host queda cerrado
+        # para no dejar los pedidos a la vista de cualquiera.
+        return not EN_RENDER
+    enviada = limpiar_clave(request.headers.get(CABECERA_CLAVE, ""))
+    return bool(enviada) and secrets.compare_digest(enviada, CLAVE_PANEL_LIMPIA)
+
+
+def pedir_clave():
+    """Devuelve la respuesta de error, o None si el pedido puede seguir."""
+    if panel_permitido():
+        return None
+    return jsonify({"error": "Falta la clave del panel", "codigo": "sin_clave"}), 401
+
 
 
 @app.after_request
@@ -164,6 +237,12 @@ def estado_del_local():
 @app.route("/api/local/latido", methods=["POST"])
 def latido_del_local():
     """La PC del local avisa que sigue encendida."""
+    # Sin clave no se avisa: si cualquiera pudiera mandar latidos, el host nunca
+    # detectaria que el local esta cerrado.
+    error = pedir_clave()
+    if error:
+        return error
+
     conn = get_db_connection()
     conn.execute(
         """
@@ -190,8 +269,29 @@ def estado_local():
     )
 
 
+@app.route("/api/panel/estado")
+def estado_panel():
+    """Solo para comprobar la clave. Si esta mal, responde 401."""
+    error = pedir_clave()
+    if error:
+        return error
+
+    if not CLAVE_PANEL_LIMPIA:
+        # en la PC del local puede no haber clave puesta: el panel abre igual
+        return jsonify({"ok": True, "con_clave": False})
+
+    return jsonify({"ok": True, "con_clave": True})
+
+
 @app.route("/api/orders", methods=["GET", "POST", "DELETE"])
 def orders():
+    # El POST es el que usan los clientes para pedir, va sin clave. Todo lo demas
+    # (mirar pedidos, cambiarlos de estado, borrarlos) es del dueno.
+    if request.method != "POST":
+        error = pedir_clave()
+        if error:
+            return error
+
     if request.method == "DELETE":
         conn = get_db_connection()
         cur = conn.execute("DELETE FROM orders")
@@ -268,6 +368,10 @@ def orders():
 
 @app.route("/api/orders/<int:order_id>/estado", methods=["POST"])
 def update_estado(order_id):
+    error = pedir_clave()
+    if error:
+        return error
+
     data = request.get_json(silent=True) or {}
     estado = data.get("estado")
     if estado not in ("nuevo", "recibido", "listo"):
@@ -289,6 +393,10 @@ def update_estado(order_id):
 
 @app.route("/api/orders/<int:order_id>", methods=["DELETE"])
 def delete_order(order_id):
+    error = pedir_clave()
+    if error:
+        return error
+
     conn = get_db_connection()
     cur = conn.execute("DELETE FROM orders WHERE id = ?", (order_id,))
     conn.commit()
@@ -367,7 +475,13 @@ def guardar_en_archivo(pedidos_nuevos):
 def sincronizar_una_vez():
     """Descarga los pedidos del host y los deja en el archivo local."""
     try:
-        with urllib.request.urlopen(URL_HOST + "/api/orders", timeout=15) as respuesta:
+        peticion = urllib.request.Request(
+            URL_HOST + "/api/orders",
+            # sin la clave el host no devuelve nada: los pedidos llevan datos
+            # de los clientes y esa informacion solo se ve con la clave del panel
+            headers={CABECERA_CLAVE: CLAVE_PANEL},
+        )
+        with urllib.request.urlopen(peticion, timeout=15) as respuesta:
             pedidos = json.loads(respuesta.read().decode("utf-8"))
     except Exception:
         # si el host no responde no pasa nada, se reintenta en el proximo ciclo
@@ -376,16 +490,36 @@ def sincronizar_una_vez():
     return guardar_en_archivo(pedidos)
 
 
+AVISO_CLAVE_MOSTRADO = False
+
+
 def avisar_que_el_local_esta_abierto():
     """Le dice al host que esta PC sigue encendida."""
     peticion = urllib.request.Request(
         URL_HOST + "/api/local/latido",
         data=b"{}",
-        headers={"Content-Type": "application/json"},
+        headers={
+            "Content-Type": "application/json",
+            # el host pide la misma clave del panel para creerle el latido
+            CABECERA_CLAVE: CLAVE_PANEL,
+        },
         method="POST",
     )
     with urllib.request.urlopen(peticion, timeout=15) as respuesta:
         respuesta.read()
+
+
+def avisar_falta_la_clave():
+    """Lo dice una sola vez, no cada 5 segundos."""
+    global AVISO_CLAVE_MOSTRADO
+    if AVISO_CLAVE_MOSTRADO:
+        return
+    AVISO_CLAVE_MOSTRADO = True
+    print("")
+    print("No hay clave del panel en esta PC, asi que el host no puede saber")
+    print("que el local esta abierto. Agrega esta linea en el archivo")
+    print(f"  {ARCHIVO_CLAVE}")
+    print("y reinicia el host.")
 
 
 def sincronizar_en_segundo_plano():
@@ -399,13 +533,20 @@ def sincronizar_en_segundo_plano():
             # de que el local esta abierto aunque falle bajar los pedidos
             avisar_que_el_local_esta_abierto()
         except Exception as error:
-            print("No se pudo avisar al host que el local esta abierto:", error)
+            if not CLAVE_PANEL_LIMPIA:
+                avisar_falta_la_clave()
+            else:
+                print("No se pudo avisar al host que el local esta abierto:", error)
         time.sleep(INTERVALO_SINCRONIZACION)
 
 
 @app.route("/api/archivo", methods=["GET", "POST"])
 def archivo_pedidos():
     """El archivo local: GET lo lee, POST agrega un pedido."""
+    error = pedir_clave()
+    if error:
+        return error
+
     if request.method == "POST":
         data = request.get_json(silent=True) or {}
         pedido = data.get("pedido", data)
@@ -431,7 +572,45 @@ def puerto_ocupado(puerto):
 def run_http_server():
     from waitress import serve
 
-    serve(app, host="0.0.0.0", port=5000, threads=8)
+    serve(app, host="0.0.0.0", port=PUERTO, threads=8)
+
+
+# --- cartel de consola (misma estetica que instalar_requerimientos.py) ---
+
+def mostrar_mensaje(texto):
+    """Imprime sin problemas caracteres especiales en la consola de Windows."""
+    print(texto.encode("ascii", "replace").decode("ascii"))
+    sys.stdout.flush()
+
+
+def mostrar_titulo(subtitulo):
+    mostrar_mensaje("=" * 60)
+    mostrar_mensaje("  MODO HAMBRE")
+    mostrar_mensaje(f"  {subtitulo}")
+    mostrar_mensaje("=" * 60)
+    mostrar_mensaje("")
+
+
+def mostrar_aviso(titulo, lineas=()):
+    mostrar_mensaje("-" * 60)
+    mostrar_mensaje(f"  {titulo}")
+    for linea in lineas:
+        mostrar_mensaje(f"  {linea}")
+    mostrar_mensaje("-" * 60)
+    mostrar_mensaje("")
+
+
+def esperar_servidor(intentos=40):
+    """Espera a que el servidor responda en lugar de asumir que levanto."""
+    for _ in range(intentos):
+        try:
+            with urllib.request.urlopen(URL_LOCAL, timeout=2):
+                return True
+        except urllib.error.HTTPError:
+            return True
+        except Exception:
+            time.sleep(0.25)
+    return False
 
 
 # En la PC del local el archivo se mantiene solo: no hace falta que el panel este
@@ -441,22 +620,69 @@ if not EN_RENDER:
 
 
 if __name__ == "__main__":
-    if puerto_ocupado(5000):
-        print("")
-        print("El puerto 5000 ya esta en uso.")
-        print("")
-        print("Casi seguro ya hay otra ventana de Modo Hambre abierta.")
-        print("Cerrala con Ctrl+C o cerrando la ventana, y volve a abrir el programa.")
+    mostrar_titulo("Servidor local del local")
+
+    if puerto_ocupado(PUERTO):
+        mostrar_aviso(
+            f"El puerto {PUERTO} ya esta en uso.",
+            [
+                "Casi seguro ya hay otra ventana de Modo Hambre abierta.",
+                "Cerrala con Ctrl+C o cerrando la ventana,",
+                "y volve a abrir el programa.",
+            ],
+        )
+        input("\nPresiona ENTER para cerrar...")
         sys.exit(1)
 
     try:
-        print("Servidor iniciado en http://localhost:5000")
-        run_http_server()
+        import waitress  # noqa: F401
     except ImportError:
-        print("")
-        print("Falta la dependencia 'waitress'.")
-        print("Ejecutá: pip install -r requirements.txt")
+        mostrar_aviso(
+            "Falta la dependencia 'waitress'.",
+            [
+                "Instalala con doble clic en instalar_requerimientos.py",
+                '(o con "pip install -r requirements.txt").',
+            ],
+        )
+        input("\nPresiona ENTER para cerrar...")
         sys.exit(1)
+
+    mostrar_mensaje("Arrancando el host...")
+    servidor = threading.Thread(target=run_http_server, daemon=True)
+    servidor.start()
+
+    if not esperar_servidor():
+        mostrar_aviso(
+            "El host no se pudo levantar.",
+            [f"Revisa si el puerto {PUERTO} esta ocupado:"],
+            ["  netstat -ano | findstr :5000"],
+        )
+        input("\nPresiona ENTER para cerrar...")
+        sys.exit(1)
+
+    mostrar_aviso(
+        "Host levantado con exito.",
+        [
+            f"Pagina para tus clientes:  {URL_LOCAL}",
+            f"Panel de pedidos:         {URL_LOCAL}/admin.html",
+            f"Archivo local de pedidos: {URL_LOCAL}/archivo.html",
+            "",
+            "El panel recibe los pedidos que hacen tus clientes",
+            "en la web.",
+        ],
+    )
+    if not CLAVE_PANEL_LIMPIA:
+        mostrar_mensaje("  Sin clave del panel: en el host, el panel queda cerrado.")
+    else:
+        mostrar_mensaje("  El panel pide la clave del local para poder entrar.")
+    mostrar_mensaje("")
+    mostrar_mensaje("Presione Ctrl+C para apagar el host.")
+    mostrar_mensaje("")
+
+    try:
+        while True:
+            time.sleep(1)
     except KeyboardInterrupt:
-        print("")
-        print("Servidor detenido")
+        mostrar_mensaje("")
+        mostrar_mensaje("Apagando el host...")
+        mostrar_mensaje("")

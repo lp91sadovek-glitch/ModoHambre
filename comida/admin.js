@@ -21,6 +21,18 @@ var ultimoId = null;
 var sinConexion = false;
 var primeraCarga = true;
 
+/* Todos los pedidos al host llevan la clave del panel. Si el servidor la
+   rechaza (401) aparece la pantalla para escribirla de nuevo. */
+async function pedir(url, opciones) {
+  var config = opciones || {};
+  config.headers = PanelClave.cabeceras(config.headers);
+  var response = await fetch(url, config);
+  if (response.status === 401) {
+    PanelClave.errorDeClave();
+  }
+  return response;
+}
+
 function formatPrice(value) {
   return '$' + value.toLocaleString('es-AR');
 }
@@ -239,7 +251,7 @@ function renderizar() {
 
 async function cargarPedidos() {
   try {
-    var response = await fetch(API_REMOTA + '/api/orders');
+    var response = await pedir(API_REMOTA + '/api/orders');
     if (!response.ok) throw new Error('Respuesta no válida');
     var datos = await response.json();
 
@@ -281,7 +293,7 @@ async function cargarPedidos() {
 
 async function cambiarEstado(id, estado) {
   try {
-    var response = await fetch(API_REMOTA + '/api/orders/' + id + '/estado', {
+    var response = await pedir(API_REMOTA + '/api/orders/' + id + '/estado', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ estado: estado })
@@ -303,7 +315,7 @@ async function cambiarEstado(id, estado) {
 async function archivarEnDisco(lista) {
   for (var i = 0; i < lista.length; i++) {
     try {
-      await fetch('/api/archivo', {
+      await pedir('/api/archivo', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pedido: lista[i] })
@@ -320,7 +332,7 @@ async function eliminarPedido(id) {
     var pedido = pedidos.find(function (p) { return p.id === id; });
     if (pedido) await archivarEnDisco([pedido]);
 
-    var response = await fetch(API_REMOTA + '/api/orders/' + id, { method: 'DELETE' });
+    var response = await pedir(API_REMOTA + '/api/orders/' + id, { method: 'DELETE' });
     if (!response.ok) throw new Error('Respuesta no válida');
     pedidos = pedidos.filter(function (p) { return p.id !== id; });
     var card = lista.querySelector('[data-pedido-id="' + id + '"]');
@@ -347,7 +359,7 @@ async function eliminarTodos() {
   try {
     await archivarEnDisco(pedidos.slice());
 
-    var response = await fetch(API_REMOTA + '/api/orders', { method: 'DELETE' });
+    var response = await pedir(API_REMOTA + '/api/orders', { method: 'DELETE' });
     if (!response.ok) throw new Error('Respuesta no válida');
     var datos = await response.json();
 
