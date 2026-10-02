@@ -78,7 +78,9 @@ var PanelClave = (function () {
         }
 
         mostrar('Comprobando...');
-        fetch('/api/panel/estado', { headers: cabeceras() })
+        var cabecerasPrueba = cabeceras();
+        cabecerasPrueba[CABECERA] = clave;
+        fetch('/api/panel/estado', { headers: cabecerasPrueba })
             .then(function (respuesta) {
                 if (!respuesta.ok) {
                     guardar('');
