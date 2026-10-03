@@ -7,4 +7,13 @@ comida/orders.db
 # tiene la clave del panel escrita, y el repositorio es publico
 para abrir el hostlocal.txt
 
+# nota de trabajo entre sesiones: es interna, no va al repositorio
+PARA LA SESION SIGUIENTE*.md
+
+# el documento de traspaso renombrado: TIENE LA CLAVE ADENTRO
+prompts para desarrollo de editor de comida.md
+
+# notas personales del dueno: internas
+ideas a implementar.txt
+
 __pycache__/
