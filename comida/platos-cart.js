@@ -267,49 +267,86 @@ function mostrarToast(texto, tipo) {
   }, tipo === 'error' ? 5000 : 2000);
 }
 
-document.querySelectorAll('.add-cart').forEach(function (button) {
-  button.addEventListener('click', function () {
-    var name = button.dataset.name;
-    var price = Number(button.dataset.price);
-    var image = getImageForPlato(button);
-    addToCart(name, price, true, image);
-  });
-});
+/* =====================
+   EL MENÚ (platos y categorías)
+   =====================
+   Todo esto usa delegación de eventos en vez de engancharle el clic a cada
+   botón que ya existe en la página. La razón es que el menú ahora se dibuja
+   desde la base de datos (platos-menu.js) y llega después de que esta página
+   terminó de cargar: con delegación los botones nuevos funcionan sin tocar
+   nada acá. También por eso el menú de respaldo escrito en el HTML y el que
+   viene de la base se comportan exactamente igual. */
 
-document.querySelectorAll('.variantes-toggle').forEach(function (button) {
-  button.addEventListener('click', function () {
-    var selector = button.closest('.plato').querySelector('.selector-variantes');
-    var estabaAbierto = !selector.hidden;
-    closeAllSelectors();
-    if (!estabaAbierto) {
-      selector.hidden = false;
-      button.setAttribute('aria-expanded', 'true');
-      abrirOverlayGustos();
-    }
-  });
-});
+document.addEventListener('click', function (event) {
+  var boton;
 
-document.querySelectorAll('.variante-add').forEach(function (button) {
-  button.addEventListener('click', function () {
-    var image = getImageForPlato(button);
-    var name = button.dataset.name;
-    addToCart(name, Number(button.dataset.price), false, image);
+  /* Agregar al carrito una comida de un solo precio. */
+  boton = event.target.closest('.add-cart');
+  if (boton) {
+    addToCart(
+      boton.dataset.name,
+      Number(boton.dataset.price),
+      true,
+      getImageForPlato(boton)
+    );
+    return;
+  }
+
+  /* Agregar al carrito una comida con el gusto elegido. */
+  boton = event.target.closest('.variante-add');
+  if (boton) {
+    var name = boton.dataset.name;
+    addToCart(name, Number(boton.dataset.price), false, getImageForPlato(boton));
     animarContadorCarrito();
     mostrarToast('Su ' + name.charAt(0).toLowerCase() + name.slice(1) + ' ha sido agregada al carrito');
-  });
+    return;
+  }
+
+  /* Abrir y cerrar la lista de gustos de una comida. */
+  boton = event.target.closest('.variantes-toggle');
+  if (boton) {
+    var plato = boton.closest('.plato');
+    var selector = plato && plato.querySelector('.selector-variantes');
+    if (selector) {
+      var estabaAbierto = !selector.hidden;
+      closeAllSelectors();
+      if (!estabaAbierto) {
+        selector.hidden = false;
+        boton.setAttribute('aria-expanded', 'true');
+        abrirOverlayGustos();
+      }
+    }
+    return;
+  }
+
+  /* Cerrar la lista de gustos con la cruz. */
+  if (event.target.closest('.cerrar-selector')) {
+    closeAllSelectors();
+    return;
+  }
+
+  /* Abrir y cerrar una categoría (el acordeón). */
+  boton = event.target.closest('.categoria-toggle');
+  if (boton) {
+    var categoria = boton.closest('.categoria');
+    if (categoria) {
+      var abierta = categoria.classList.toggle('abierta');
+      boton.setAttribute('aria-expanded', String(abierta));
+    }
+  }
 });
 
 /* hundimiento al mantener pulsado — funciona en móvil y PC */
-document.querySelectorAll('.boton, .variante-add').forEach(function (btn) {
-  btn.addEventListener('pointerdown', function () {
-    btn.classList.add('presionado');
-  });
-  function soltarPulsacion() {
-    btn.classList.remove('presionado');
-  }
-  btn.addEventListener('pointerup', soltarPulsacion);
-  btn.addEventListener('pointercancel', soltarPulsacion);
-  btn.addEventListener('pointerleave', soltarPulsacion);
+document.addEventListener('pointerdown', function (event) {
+  var boton = event.target.closest('.boton, .variante-add');
+  if (boton) boton.classList.add('presionado');
+});
+
+['pointerup', 'pointercancel', 'pointerleave'].forEach(function (evento) {
+  document.addEventListener(evento, function (event) {
+    var boton = event.target.closest('.boton, .variante-add');
+    if (boton) boton.classList.remove('presionado');
+  }, true);
 });
 
 /* =====================
@@ -602,10 +639,8 @@ function closeAllSelectors() {
   cerrarOverlayGustos();
 }
 
-document.querySelectorAll('.cerrar-selector').forEach(function (button) {
-  button.addEventListener('click', closeAllSelectors);
-});
-
+/* Un clic en cualquier lado de la página que no sea la lista de gustos la
+   cierra. El enganche de los botones está arriba, con el resto del menú. */
 document.addEventListener('click', function (event) {
   if (event.target.closest('.selector-variantes') || event.target.closest('.variantes-toggle')) return;
   closeAllSelectors();
@@ -613,18 +648,6 @@ document.addEventListener('click', function (event) {
 
 document.addEventListener('keydown', function (event) {
   if (event.key === 'Escape') closeAllSelectors();
-});
-
-/* =====================
-   CATEGORÍAS (accordion)
-   ===================== */
-
-document.querySelectorAll('.categoria-toggle').forEach(function (button) {
-  button.addEventListener('click', function () {
-    var categoria = button.closest('.categoria');
-    var abierta = categoria.classList.toggle('abierta');
-    button.setAttribute('aria-expanded', String(abierta));
-  });
 });
 
 /* =====================

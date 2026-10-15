@@ -13,7 +13,14 @@ PARA LA SESION SIGUIENTE*.md
 # el documento de traspaso renombrado: TIENE LA CLAVE ADENTRO
 prompts para desarrollo de editor de comida.md
 
+# registro de cambios entre sesiones: nota interna
+cambios del editor de menu*.md
+
 # notas personales del dueno: internas
 ideas a implementar.txt
+
+# tiene la URL de conexion a la base de datos escrita, y el repositorio
+# es publico. La URL es una contrasena.
+para abrir la base de datos.txt
 
 __pycache__/

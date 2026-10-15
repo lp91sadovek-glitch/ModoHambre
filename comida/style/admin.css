@@ -58,6 +58,11 @@ body {
     border-color: #2e7d43;
 }
 
+.admin-conexion.rojo {
+    color: #ff8a80;
+    border-color: #6b2b2b;
+}
+
 /* BORRAR TODOS */
 
 .boton-borrar-todos {
@@ -75,6 +80,18 @@ body {
 .boton-borrar-todos:hover {
     background: #2a1a1a;
     border-color: #a33;
+}
+
+/* Los enlaces del cabecera (editar el menu, archivo local) no son un boton
+   de borrar: van claros, para que no se confundan con "sacar todos". */
+.boton-neutro {
+    color: #ddd;
+    border-color: #444;
+}
+
+.boton-neutro:hover {
+    background: #262626;
+    border-color: #666;
 }
 
 .boton-borrar-todos:disabled {

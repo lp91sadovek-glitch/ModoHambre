@@ -1610,3 +1610,11 @@ body.checkout-abierto {
         box-shadow: 0 0 0 0 transparent;
     }
 }
+
+/* Mientras llega el menu de la base (platos-menu.js): el de respaldo se ve,
+   pero no se puede tocar, para no agregar al carrito un precio viejo. */
+.container-categorias.menu-cargando {
+    opacity: 0.6;
+    pointer-events: none;
+    transition: opacity 0.2s;
+}

@@ -16,6 +16,10 @@ var PanelClave = (function () {
     // Se usa cuando el navegador no deja guardar nada (modo privado, etc.)
     var enMemoria = '';
 
+    // Funciones que se avisan cuando la clave queda aceptada. Las usa el editor
+    // del menu, que no puede mostrar nada hasta que entra la clave.
+    var alEntrar = [];
+
     function id(nombre) {
         return document.getElementById(nombre);
     }
@@ -68,6 +72,17 @@ var PanelClave = (function () {
         if (caja) caja.textContent = '';
     }
 
+    /* Se avisa a las paginas que estaban esperando la clave. Si una falla no
+       se corta el resto: son paginas distintas y una rota no puede tappingar
+       la entrada de las otras. */
+    function avisarQueEntro() {
+        for (var i = 0; i < alEntrar.length; i++) {
+            try {
+                alEntrar[i]();
+            } catch (e) {}
+        }
+    }
+
     function comprobar(alAceptar) {
         var entrada = id('clave-input');
         if (!entrada) return;
@@ -93,6 +108,7 @@ var PanelClave = (function () {
                 }
                 guardar(clave);
                 ocultar();
+                avisarQueEntro();
                 if (alAceptar) alAceptar();
             })
             .catch(function () {
@@ -150,6 +166,9 @@ var PanelClave = (function () {
         cabeceras: cabeceras,
         mostrar: mostrar,
         ocultar: ocultar,
-        errorDeClave: errorDeClave
+        errorDeClave: errorDeClave,
+        alEntrar: function (funcion) {
+            alEntrar.push(funcion);
+        }
     };
 })();

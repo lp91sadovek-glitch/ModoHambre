@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ordenar</title>
 
-    <link rel="stylesheet" href="style/platos.css?v=15">
+    <link rel="stylesheet" href="style/platos.css?v=16">
     <style>
         .header {
             background: #FFB060;
@@ -34,6 +34,21 @@
 
     <!-- CATEGORÍAS -->
     <section class="container-categorias">
+
+        <!-- EL MENÚ DE RESPALDO
+             ------------------------------------------------------------------
+             Lo que está escrito abajo no es el menu de verdad: es el menu de
+             respaldo. El menu de verdad viene de la base de datos y lo dibuja
+             platos-menu.js apenas lee /api/menu.
+
+             Se deja este HTML escrito a proposito: si la base no contesta
+             (no hay internet en el local, la base esta caida, o todavia no se
+             configuro la URL), el menu de siempre sigue en su lugar y los
+             clientes pueden pedir igual. Para cambiar el menu, el dueno usa
+             la pantalla del panel, no este archivo.
+
+             Cuando se cambie el menu desde el panel, no hay que tocar nada
+             de acá. -->
 
         <!-- ENTRADAS -->
         <div class="categoria">
@@ -681,35 +696,63 @@
     </div>
 
     <script src="api-client.js?v=5"></script>
-    <script src="platos-cart.js?v=4"></script>
+    <script src="platos-cart.js?v=5"></script>
+    <script src="platos-menu.js?v=2"></script>
 
     <script>
-        // Abre la categoría y resalta el plato pedido desde "Lo más vendido"
-        (function () {
-            var params = new URLSearchParams(window.location.search);
-            var plato = params.get('plato');
-            if (!plato) return;
-            var target = document.getElementById('menu-' + plato);
-            if (!target) return;
+        /* Abre la categoría y resalta el plato pedido desde "Lo más vendido"
+           (index.html manda platos.html?plato=empanadas y companhia).
 
-            var categoria = target.closest('.categoria');
-            if (categoria) {
-                var toggle = categoria.querySelector('.categoria-toggle');
-                if (toggle && toggle.getAttribute('aria-expanded') !== 'true') {
-                    categoria.classList.add('abierta');
-                    toggle.setAttribute('aria-expanded', 'true');
+           Se deja como función pública porque el menú puede llegar de dos
+           lados: el que está escrito en esta misma página, que ya está
+           listo cuando carga el script, o el que viene de la base de datos,
+           que se dibuja un momento después. En los dos casos hay que
+           arreglar la vista. */
+        window.avisoQueElMenuEstaListo = (function () {
+            /* Se guarda el elemento al que ya se le hizo caso, y no un simple
+               "ya lo hice". El menú puede entrar dos veces: primero el que está
+               escrito en esta página, y después el que viene de la base, que
+               borra el anterior y dibuja otro. Con una banderita de "una sola
+               vez" el segundo menú se quedaba sin arreglar: el cliente entraba
+               por "?plato=empanadas" y la página no le llevaba a las empanadas
+               ni las iluminaba, porque la banderita ya estaba puesta por el
+               menú de respaldo. Guardando el elemento, el mismo no se procesa
+               dos veces pero un menú nuevo si. */
+            var yaLeHicimosCasoA = null;
+
+            return function () {
+                var params = new URLSearchParams(window.location.search);
+                var plato = params.get('plato');
+                if (!plato) return;
+
+                var target = document.getElementById('menu-' + plato);
+                // Todavía no está dibujado: se reintenta cuando llegue.
+                if (!target) return;
+                if (yaLeHicimosCasoA === target) return;
+                yaLeHicimosCasoA = target;
+
+                var categoria = target.closest('.categoria');
+                if (categoria) {
+                    var toggle = categoria.querySelector('.categoria-toggle');
+                    if (toggle && toggle.getAttribute('aria-expanded') !== 'true') {
+                        categoria.classList.add('abierta');
+                        toggle.setAttribute('aria-expanded', 'true');
+                    }
                 }
-            }
 
-            setTimeout(function () {
-                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 120);
+                setTimeout(function () {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 120);
 
-            target.classList.add('destacado');
-            setTimeout(function () {
-                target.classList.remove('destacado');
-            }, 2500);
+                target.classList.add('destacado');
+                setTimeout(function () {
+                    target.classList.remove('destacado');
+                }, 2500);
+            };
         })();
+
+        // El menú escrito en el HTML ya está en su lugar: se aplica de una.
+        window.avisoQueElMenuEstaListo();
     </script>
 
     <!-- PIE -->

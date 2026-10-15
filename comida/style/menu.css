@@ -1,0 +1,511 @@
+/* EDITOR DEL MENÚ — MODO HAMBRE
+ *
+ * Comparte el cabecera y los colores con el panel de pedidos (admin.css), asi
+ * que el dueño pasa de una pantalla a la otra sin notar el cambio. Lo que hay
+ * abajo es solo lo del editor.
+ */
+
+.menu-main {
+    max-width: 1100px;
+}
+
+.menu-barra {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+}
+
+.menu-pista {
+    font-size: 0.85rem;
+    color: #5d4037;
+}
+
+/* AVISOS */
+
+.menu-aviso {
+    background: #fff;
+    border-left: 0.375rem solid #1976d2;
+    border-radius: 0.625rem;
+    padding: 0.75rem 1rem;
+    margin: 0 0 1rem;
+    font-size: 0.9rem;
+    color: #171717;
+}
+
+.menu-aviso-mal {
+    border-left-color: #c62828;
+}
+
+.menu-vacio {
+    background: #fff;
+    border-radius: 0.9375rem;
+    padding: 2rem 1.25rem;
+    text-align: center;
+    color: #555;
+}
+
+/* CATEGORÍAS */
+
+.menu-categoria {
+    background: #fff;
+    border-radius: 0.9375rem;
+    box-shadow: 0.125rem 0.125rem 0.625rem rgba(0, 0, 0, 0.15);
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.menu-categoria-cabecera {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.75rem 1rem;
+    background: #f5f5f5;
+    border-bottom: 0.0625rem solid #e0e0e0;
+    flex-wrap: wrap;
+}
+
+.menu-categoria-icono {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.menu-categoria-nombre {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #171717;
+}
+
+.menu-categoria-cuenta {
+    font-size: 0.78rem;
+    color: #777;
+}
+
+.menu-categoria-botones,
+.menu-comida-botones {
+    margin-left: auto;
+    display: flex;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+}
+
+/* BOTONES CHICOS */
+
+.menu-mini {
+    font-family: inherit;
+    font-size: 0.78rem;
+    line-height: 1;
+    padding: 0.35rem 0.55rem;
+    border-radius: 0.375rem;
+    border: 0.0625rem solid #ccc;
+    background: #fff;
+    color: #333;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.menu-mini:hover:not(:disabled) {
+    background: #FC8F02;
+    border-color: #FC8F02;
+}
+
+.menu-mini:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.menu-mini-peligro {
+    color: #c62828;
+    border-color: #e0b4b4;
+}
+
+.menu-mini-peligro:hover:not(:disabled) {
+    background: #c62828;
+    border-color: #c62828;
+    color: #fff;
+}
+
+/* COMIDAS */
+
+.menu-comidas {
+    padding: 0.25rem 0;
+}
+
+.menu-comida {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 1rem;
+    border-bottom: 0.0625rem solid #f0f0f0;
+}
+
+.menu-comida:last-child {
+    border-bottom: 0;
+}
+
+/* Una comida apagada queda apagada: el dueño tiene que ver de un vistazo lo
+   que los clientes no están viendo. */
+.menu-comida-apagada {
+    background: #fafafa;
+    opacity: 0.6;
+}
+
+.menu-comida-visible {
+    width: 1.1rem;
+    height: 1.1rem;
+    cursor: pointer;
+    flex: none;
+}
+
+.menu-comida-foto,
+.menu-comida-sin-foto {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.5rem;
+    object-fit: cover;
+    background: #eee;
+    flex: none;
+}
+
+.menu-comida-sin-foto {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #aaa;
+    font-weight: 700;
+}
+
+.menu-comida-datos {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+}
+
+.menu-comida-nombre {
+    color: #171717;
+}
+
+.menu-comida-precio {
+    font-weight: 700;
+    color: #e65100;
+}
+
+.menu-comida-descripcion {
+    font-size: 0.82rem;
+    color: #666;
+}
+
+.menu-comida-tipo {
+    font-size: 0.72rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.menu-sin-comidas {
+    margin: 0;
+    padding: 0.9rem 1rem;
+    color: #888;
+    font-size: 0.88rem;
+}
+
+/* LA VENTANA DE EDICIÓN */
+
+.editor-fondo {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 1.5rem 1rem;
+    overflow-y: auto;
+    z-index: 200;
+}
+
+.editor-caja {
+    background: #fff;
+    border-radius: 0.9375rem;
+    width: 100%;
+    max-width: 34rem;
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.35);
+    margin: auto 0;
+}
+
+.editor-titulo {
+    margin: 0;
+    padding: 1rem 1.25rem;
+    font-size: 1.15rem;
+    background: #111;
+    color: #fff;
+    border-radius: 0.9375rem 0.9375rem 0 0;
+}
+
+.editor-cuerpo {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+}
+
+.editor-rejilla {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 0.75rem;
+}
+
+.editor-campo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.85rem;
+    color: #444;
+}
+
+.editor-campo small {
+    font-weight: 400;
+    color: #888;
+}
+
+.editor-campo input,
+.editor-campo select,
+.editor-campo textarea {
+    font-family: inherit;
+    font-size: 1rem;
+    padding: 0.55rem 0.65rem;
+    border: 0.0625rem solid #ccc;
+    border-radius: 0.5rem;
+    background: #fff;
+    color: #171717;
+    width: 100%;
+}
+
+.editor-campo input:focus,
+.editor-campo select:focus,
+.editor-campo textarea:focus {
+    outline: 0.125rem solid #FC8F02;
+    border-color: #FC8F02;
+}
+
+.editor-emoji {
+    max-width: 6rem;
+    text-align: center;
+    font-size: 1.4rem;
+}
+
+.editor-ayuda {
+    margin: 0;
+    font-size: 0.78rem;
+    color: #777;
+}
+
+/* FOTO */
+
+.editor-foto {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    padding: 0.75rem;
+    background: #fafafa;
+    border: 0.0625rem dashed #ccc;
+    border-radius: 0.625rem;
+}
+
+.editor-foto-vista {
+    width: 6.5rem;
+    height: 6.5rem;
+    flex: none;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    background: #eee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.editor-foto-vista img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.editor-foto-vacia {
+    font-size: 0.8rem;
+    color: #999;
+}
+
+.editor-foto-controles {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.editor-mini {
+    font-family: inherit;
+    font-size: 0.8rem;
+    align-self: flex-start;
+    padding: 0.35rem 0.6rem;
+    border-radius: 0.375rem;
+    border: 0.0625rem solid #ccc;
+    background: #fff;
+    cursor: pointer;
+}
+
+.editor-mini:hover {
+    background: #FC8F02;
+    border-color: #FC8F02;
+}
+
+/* TIPO Y GUSTOS */
+
+.editor-tipo {
+    border: 0.0625rem solid #ddd;
+    border-radius: 0.625rem;
+    padding: 0.6rem 0.85rem 0.85rem;
+    margin: 0;
+}
+
+.editor-tipo legend {
+    font-size: 0.8rem;
+    color: #444;
+    padding: 0 0.3rem;
+}
+
+.editor-tipo label {
+    display: block;
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+    cursor: pointer;
+}
+
+.editor-gustos {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: #fafafa;
+    border-radius: 0.625rem;
+}
+
+.editor-gustos-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.editor-gusto {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.editor-gusto input[type="text"] {
+    flex: 1;
+    min-width: 0;
+}
+
+.editor-gusto input {
+    font-family: inherit;
+    font-size: 0.95rem;
+    padding: 0.45rem 0.55rem;
+    border: 0.0625rem solid #ccc;
+    border-radius: 0.5rem;
+}
+
+.editor-gusto input[type="number"] {
+    width: 6rem;
+}
+
+.editor-guion {
+    color: #777;
+}
+
+.editor-quitar {
+    font-family: inherit;
+    width: 2rem;
+    height: 2rem;
+    flex: none;
+    border-radius: 0.375rem;
+    border: 0.0625rem solid #e0b4b4;
+    background: #fff;
+    color: #c62828;
+    cursor: pointer;
+}
+
+.editor-quitar:hover {
+    background: #c62828;
+    color: #fff;
+}
+
+.editor-check {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+/* PIE DE LA VENTANA */
+
+.editor-pie {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.625rem;
+    padding: 0.9rem 1.25rem;
+    border-top: 0.0625rem solid #eee;
+}
+
+.editor-guardar,
+.editor-cancelar {
+    font-family: inherit;
+    font-size: 0.95rem;
+    padding: 0.55rem 1.1rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    border: 0.0625rem solid transparent;
+}
+
+.editor-guardar {
+    background: #FC8F02;
+    color: #fff;
+    font-weight: 700;
+}
+
+.editor-guardar:hover:not(:disabled) {
+    background: #e07f00;
+}
+
+.editor-guardar:disabled {
+    opacity: 0.6;
+    cursor: progress;
+}
+
+.editor-cancelar {
+    background: #fff;
+    border-color: #ccc;
+    color: #333;
+}
+
+.editor-cancelar:hover {
+    background: #f0f0f0;
+}
+
+/* En una pantalla chica el editor se acomoda en una sola columna. */
+@media (max-width: 40rem) {
+    .editor-rejilla {
+        grid-template-columns: 1fr;
+    }
+
+    .menu-categoria-botones,
+    .menu-comida-botones {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .menu-comida {
+        flex-wrap: wrap;
+    }
+}

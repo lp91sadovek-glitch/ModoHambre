@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar el menu · Modo Hambre</title>
+    <link rel="stylesheet" href="style/admin.css?v=1">
+    <link rel="stylesheet" href="style/menu.css?v=1">
+</head>
+<body>
+
+    <header class="admin-header">
+        <div class="admin-header-inner">
+            <h1 class="admin-titulo">🍽️ Editar el menu</h1>
+            <div class="admin-header-acciones">
+                <span class="admin-conexion" id="estado-menu">Conectando…</span>
+                <a class="boton-borrar-todos boton-neutro" href="admin.html" style="text-decoration: none;">← Volver a los pedidos</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="admin-main menu-main">
+
+        <p class="menu-aviso" id="menu-aviso" hidden></p>
+
+        <details class="admin-nota">
+            <summary>ℹ️ ¿Dónde queda guardado esto?</summary>
+            <p>
+                Las categorias, las comidas, los gustos y las fotos quedan guardados
+                en la <b>base de datos</b>, no en esta computadora. Por eso lo que
+                escribas acá es lo que ven tus clientes en la web, y no se pierde
+                aunque se actualice el sitio.
+            </p>
+            <p>
+                Lo que sí se guarda en la computadora del local son los
+                <b>pedidos</b>, y eso está en otra pantalla.
+            </p>
+        </details>
+
+        <div class="menu-barra">
+            <button class="menu-boton menu-boton-nuevo" id="agregar-categoria" type="button">
+                + Agregar categoría
+            </button>
+            <span class="menu-pista" id="pista"></span>
+        </div>
+
+        <div id="lista-categorias"></div>
+
+        <p class="menu-vacio" id="menu-vacio" hidden>
+            Todavía no hay nada en el menu. Tocá <b>Agregar categoría</b> para empezar.
+        </p>
+
+    </main>
+
+    <!-- El formulario de comida y de categoria se abre en una ventana aparte,
+         para no perder lo que se estaba editando. -->
+    <div class="clave-fondo" id="clave-fondo" hidden>
+        <div class="clave-caja">
+            <h1 class="clave-titulo">Editar el menu</h1>
+            <p class="clave-ayuda">Escribi la clave del local para poder cambiar el menu.</p>
+            <input type="password" id="clave-input" placeholder="Clave" autocomplete="current-password">
+            <button class="clave-boton" id="clave-boton" type="button">Entrar</button>
+            <p class="clave-error" id="clave-error"></p>
+            <p class="clave-nota">La clave te la da el encargado del local.</p>
+        </div>
+    </div>
+
+    <script src="panel-clave.js?v=3"></script>
+    <script src="menu.js?v=2"></script>
+</body>
+</html>
