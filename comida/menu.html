@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editar el menu · Modo Hambre</title>
     <link rel="stylesheet" href="style/admin.css?v=1">
-    <link rel="stylesheet" href="style/menu.css?v=1">
+    <link rel="stylesheet" href="style/menu.css?v=3">
 </head>
-<body>
+<body class="pagina-menu">
 
     <header class="admin-header">
         <div class="admin-header-inner">
@@ -19,41 +19,53 @@
         </div>
     </header>
 
-    <main class="admin-main menu-main">
+    <main class="editor-menu">
 
-        <p class="menu-aviso" id="menu-aviso" hidden></p>
+        <!-- COLUMNA 1: CATEGORÍAS -->
+        <aside class="caja caja-categorias">
+            <div class="caja-titulo">
+                <h2>Categorías</h2>
+                <p class="caja-sub" id="pista-categorias">Arrastrá ⠿ para ordenar</p>
+            </div>
+            <ul class="lista-categorias" id="lista-categorias"></ul>
+            <button class="boton-punteado" id="agregar-categoria" type="button">+ Agregar categoría</button>
+        </aside>
 
-        <details class="admin-nota">
-            <summary>ℹ️ ¿Dónde queda guardado esto?</summary>
-            <p>
-                Las categorias, las comidas, los gustos y las fotos quedan guardados
-                en la <b>base de datos</b>, no en esta computadora. Por eso lo que
-                escribas acá es lo que ven tus clientes en la web, y no se pierde
-                aunque se actualice el sitio.
-            </p>
-            <p>
-                Lo que sí se guarda en la computadora del local son los
-                <b>pedidos</b>, y eso está en otra pantalla.
-            </p>
-        </details>
+        <!-- COLUMNA 2: COMIDAS -->
+        <section class="caja caja-comidas">
+            <div class="barra-comidas">
+                <label class="buscador">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                    <input type="search" id="buscar" placeholder="Buscar una comida…" autocomplete="off">
+                </label>
+                <div class="filtros" role="group" aria-label="Qué comidas mostrar">
+                    <button type="button" class="filtro activo" data-filtro="todas">Todas</button>
+                    <button type="button" class="filtro" data-filtro="visibles">Visibles</button>
+                    <button type="button" class="filtro" data-filtro="ocultas">Ocultas</button>
+                </div>
+            </div>
 
-        <div class="menu-barra">
-            <button class="menu-boton menu-boton-nuevo" id="agregar-categoria" type="button">
-                + Agregar categoría
-            </button>
-            <span class="menu-pista" id="pista"></span>
-        </div>
+            <div class="cabecera-categoria" id="cabecera-categoria"></div>
 
-        <div id="lista-categorias"></div>
+            <div class="grilla-comidas" id="grilla-comidas"></div>
 
-        <p class="menu-vacio" id="menu-vacio" hidden>
-            Todavía no hay nada en el menu. Tocá <b>Agregar categoría</b> para empezar.
-        </p>
+            <div class="vacio" id="vacio" hidden></div>
+        </section>
+
+        <!-- COLUMNA 3: EL PANEL PARA EDITAR -->
+        <aside class="caja caja-panel" id="panel">
+            <div class="panel-nada" id="panel-nada">
+                <span class="panel-nada-icono">✏️</span>
+                <p><b>Tocá “Editar” en una comida</b><br>para cambiarle el nombre, el precio o la foto.</p>
+            </div>
+            <form class="panel-form" id="panel-form" hidden novalidate></form>
+        </aside>
 
     </main>
 
-    <!-- El formulario de comida y de categoria se abre en una ventana aparte,
-         para no perder lo que se estaba editando. -->
+    <div class="panel-fondo" id="panel-fondo" hidden></div>
+    <div class="aviso" id="aviso" role="status" aria-live="polite" hidden></div>
+
     <div class="clave-fondo" id="clave-fondo" hidden>
         <div class="clave-caja">
             <h1 class="clave-titulo">Editar el menu</h1>
@@ -65,7 +77,36 @@
         </div>
     </div>
 
+    <div class="menu-bloqueado" id="menu-bloqueado" hidden>
+        <span class="menu-bloqueado-icono">🔒</span>
+        <h2>El menu se edita desde la computadora del local</h2>
+        <p>
+            Desde internet no se pueden cambiar precios ni comidas, así nadie de
+            afuera puede tocar el menu. Abrí Modo Hambre en la PC del local y
+            entrá a <b>Editar el menu</b> desde ahí: los cambios aparecen solos en
+            la web.
+        </p>
+        <a class="boton-naranja" href="admin.html">← Volver a los pedidos</a>
+    </div>
+
+    <script>
+        // Igual que el archivo de pedidos: el editor solo anda en la PC del
+        // local. El servidor del host tambien rechaza los cambios; esto es para
+        // mostrar un cartel claro en vez de una pantalla con errores.
+        var MENU_BLOQUEADO = (function () {
+            var host = window.location.hostname;
+            var local = host === 'localhost' || host === '127.0.0.1' || host === '::1' ||
+                /^10\./.test(host) || /^192\.168\./.test(host) ||
+                /^172\.(1[6-9]|2[0-9]|3[01])\./.test(host) || location.protocol === 'file:';
+            if (local) return false;
+            document.querySelector('.editor-menu').hidden = true;
+            document.getElementById('estado-menu').hidden = true;
+            document.getElementById('clave-fondo').remove();
+            document.getElementById('menu-bloqueado').hidden = false;
+            return true;
+        })();
+    </script>
     <script src="panel-clave.js?v=3"></script>
-    <script src="menu.js?v=2"></script>
+    <script src="menu.js?v=4"></script>
 </body>
 </html>

@@ -103,6 +103,11 @@
                 var texto = document.createTextNode(el.textContent);
                 el.parentNode.replaceChild(texto, el);
             });
+            // El menu tampoco se edita desde internet (el servidor lo rechaza):
+            // el boton se saca para no llevar a una pantalla que no anda.
+            document.querySelectorAll('a[href="menu.html"]').forEach(function (el) {
+                el.remove();
+            });
         }
     </script>
     <script src="panel-clave.js?v=3"></script>

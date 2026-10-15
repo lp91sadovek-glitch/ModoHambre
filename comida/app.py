@@ -148,7 +148,31 @@ def leer_db_url_del_archivo():
     return ""
 
 
-DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
+def limpiar_url(url):
+    """Neon da la URL de varias formas para copiar, y se pega como venga:
+
+        postgresql://...
+        'postgresql://...'
+        psql 'postgresql://...'
+        DATABASE_URL=postgresql://...
+
+    Con comillas o con "psql" adelante la URL parecia invalida y el host
+    mostraba siempre el menu de respaldo, sin decir por que.
+    """
+    url = (url or "").strip()
+    for prefijo in ("DATABASE_URL=", "psql "):
+        if url.startswith(prefijo):
+            url = url[len(prefijo):].strip()
+    return url.strip("'\"").strip()
+
+
+DATABASE_URL = limpiar_url(os.environ.get("DATABASE_URL", ""))
+if EN_RENDER and not url_de_conexion_valida(DATABASE_URL):
+    # Se ve en los "Logs" de Render. Sin esto, la unica pista era que la web
+    # mostraba los precios viejos del HTML.
+    print("ATENCION: falta DATABASE_URL (o no es valida) en Environment de Render."
+          " El menu sale del HTML de respaldo y los cambios del editor no se ven.",
+          flush=True)
 if not url_de_conexion_valida(DATABASE_URL):
     DATABASE_URL = leer_db_url_del_archivo()
 
@@ -231,6 +255,29 @@ EXTENSIONES_PUBLICAS = {
     ".html", ".css", ".js", ".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg",
     ".ico", ".mp4", ".webm", ".woff", ".woff2", ".ttf",
 }
+
+
+# El menu se edita solo desde la PC del local, como el archivo de pedidos. El
+# host (Render) lee el menu de la base para mostrarselo a los clientes, pero no
+# deja cambiarlo: aunque alguien consiga la clave del panel, desde internet no
+# puede tocar precios ni borrar comidas.
+RUTAS_DEL_EDITOR = (
+    "/api/admin/menu",
+    "/api/admin/categorias",
+    "/api/admin/comidas",
+    "/api/admin/gustos",
+    "/api/admin/imagenes",
+)
+
+
+@app.before_request
+def editor_solo_en_el_local():
+    if EN_RENDER and request.path.startswith(RUTAS_DEL_EDITOR):
+        return jsonify({
+            "error": "El menu se edita desde la computadora del local",
+            "codigo": "solo_en_el_local",
+        }), 403
+    return None
 
 
 @app.before_request
