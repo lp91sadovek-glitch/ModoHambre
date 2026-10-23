@@ -436,7 +436,23 @@ var checkoutFinalizar = null;
 
 function abrirCheckout(finalizar) {
   checkoutFinalizar = finalizar || function () {};
+  if (finalizar === enviarPedidoSistema) despertarServidor();
   mostrarPasoElegir();
+}
+
+/* Mientras el cliente escribe sus datos se despierta el servidor y la base de
+   datos (si estaban dormidos, despertarlos tarda unos segundos). Así, al tocar
+   "Confirmar pedido" ya están listos. De paso, si el local está cerrado se
+   avisa ahora y no después de llenar todo. */
+function despertarServidor() {
+  fetch(API_PEDIDOS + '/api/local/estado?despertar=1', { cache: 'no-store' })
+    .then(function (respuesta) { return respuesta.ok ? respuesta.json() : null; })
+    .then(function (datos) {
+      if (datos && datos.abierto === false) {
+        mostrarToast('El local está cerrado ahora mismo: no se pueden enviar pedidos por la app.', 'error');
+      }
+    })
+    .catch(function () {});
 }
 
 function crearCheckoutOverlay() {
@@ -569,11 +585,16 @@ function leerDatosCliente(tipo) {
 function enviarPedidoSistema(tipo, cliente) {
   var botonConfirmar = checkoutOverlay.querySelector('.elegir-boton-confirmar');
   botonConfirmar.disabled = true;
+  // Se ve al instante que el toque se tomó, aunque el servidor tarde.
+  botonConfirmar.textContent = 'Enviando pedido…';
 
   var pedidoDB = cart.map(function (item) {
     return { name: item.name, price: item.price, quantity: item.quantity, image: item.image || '' };
   });
 
+  /* Después de enviar el cliente se queda en la misma página. Antes, desde el
+     inicio se lo mandaba a platos.html, que es la página más pesada, y parecía
+     que el pedido tardaba más en salir. */
   saveOrder(pedidoDB, tipo, cliente)
     .then(function () {
       cart.length = 0;
@@ -582,15 +603,11 @@ function enviarPedidoSistema(tipo, cliente) {
       cerrarCheckout();
       closeCartDrawer();
       mostrarToast('Su pedido se ha enviado correctamente');
-      setTimeout(function () {
-        if (!isOrderingPage) {
-          window.location.href = 'platos.html';
-        }
-      }, 1400);
     })
     .catch(function (e) {
       console.error(e);
       botonConfirmar.disabled = false;
+      botonConfirmar.textContent = 'Confirmar pedido';
       // el carrito y el formulario quedan como estaban, el cliente puede
       // reintentar mas tarde
       if (e && e.codigo === 'local_cerrado') {

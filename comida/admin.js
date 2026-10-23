@@ -243,11 +243,38 @@ function renderizar() {
    CARGAR PEDIDOS (polling)
    ===================== */
 
+/* Los botones cambian la pantalla al instante, sin esperar al servidor (que
+   está lejos y tarda). Mientras el servidor no confirma, el cambio queda
+   anotado acá: id -> 'recibido' | 'listo' | 'fuera' (sacado de la pantalla).
+   Así una actualización que llega en el medio no "deshace" lo que se tocó. */
+var cambiosPendientes = {};
+var pedidosDelServidor = [];
+
+/* Sube cada vez que el servidor confirma un cambio. Una consulta que salió
+   antes de eso trae datos viejos y se descarta. */
+var versionCambios = 0;
+var consultando = false;
+
+function aplicarPendientes() {
+  pedidos = pedidosDelServidor
+    .filter(function (pedido) { return cambiosPendientes[pedido.id] !== 'fuera'; })
+    .map(function (pedido) {
+      var estado = cambiosPendientes[pedido.id];
+      return estado ? Object.assign({}, pedido, { estado: estado }) : pedido;
+    });
+  renderizar();
+}
+
 async function cargarPedidos() {
+  // Si la consulta anterior todavía no volvió, no se apila otra.
+  if (consultando) return;
+  consultando = true;
+  var versionAlSalir = versionCambios;
   try {
     var response = await pedir(API + '/api/orders');
     if (!response.ok) throw new Error('Respuesta no válida');
     var datos = await response.json();
+    if (versionAlSalir !== versionCambios) return;
 
     estadoConexion.textContent = 'Conectado · cada 4 segundos';
     estadoConexion.classList.add('ok');
@@ -262,9 +289,9 @@ async function cargarPedidos() {
       });
     }
 
-    pedidos = datos;
-    ultimoId = pedidos.length > 0 ? pedidos[0].id : null;
-    renderizar();
+    pedidosDelServidor = datos;
+    if (datos.length > 0) ultimoId = Math.max(ultimoId || 0, datos[0].id);
+    aplicarPendientes();
 
     if (hayNuevo) {
       sonarNuevo();
@@ -276,6 +303,37 @@ async function cargarPedidos() {
     estadoConexion.classList.remove('ok');
     sinConexion = true;
     renderizar();
+  } finally {
+    consultando = false;
+  }
+}
+
+/* Anota el cambio, lo muestra ya, y lo manda al servidor. Si el servidor
+   falla, se avisa y la pantalla vuelve a lo que dice el servidor. */
+async function cambiarYMandar(ids, cambio, mandar, textoError) {
+  ids.forEach(function (id) { cambiosPendientes[id] = cambio; });
+  aplicarPendientes();
+  try {
+    var response = await mandar();
+    if (!response.ok) throw new Error('Respuesta no válida');
+    // Ya quedó en el servidor: se aplica también a la copia local, así no
+    // parpadea hasta la próxima consulta.
+    pedidosDelServidor = pedidosDelServidor
+      .filter(function (pedido) { return cambio !== 'fuera' || ids.indexOf(pedido.id) === -1; })
+      .map(function (pedido) {
+        return ids.indexOf(pedido.id) !== -1 && cambio !== 'fuera'
+          ? Object.assign({}, pedido, { estado: cambio })
+          : pedido;
+      });
+  } catch (e) {
+    console.error(e);
+    alert(textoError);
+  } finally {
+    ids.forEach(function (id) {
+      if (cambiosPendientes[id] === cambio) delete cambiosPendientes[id];
+    });
+    versionCambios += 1;
+    aplicarPendientes();
   }
 }
 
@@ -283,43 +341,30 @@ async function cargarPedidos() {
    CAMBIAR ESTADO
    ===================== */
 
-async function cambiarEstado(id, estado) {
-  try {
-    var response = await pedir(API + '/api/orders/' + id + '/estado', {
+function cambiarEstado(id, estado) {
+  return cambiarYMandar([id], estado, function () {
+    return pedir(API + '/api/orders/' + id + '/estado', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ estado: estado })
     });
-    if (!response.ok) throw new Error('Respuesta no válida');
-    cargarPedidos();
-  } catch (e) {
-    console.error(e);
-    alert('No se pudo actualizar el pedido. ¿Está el servidor activo?');
-  }
+  }, 'No se pudo actualizar el pedido #' + id + '. Revisá la conexión.');
 }
 
 /* Sacar un pedido de la pantalla no lo borra: sigue en el registro de
    pedidos (archivo.html). */
-async function eliminarPedido(id) {
+function eliminarPedido(id) {
   if (!confirm('¿Sacar el pedido #' + id + ' de la pantalla?\n\nQueda guardado en el registro de pedidos.')) return;
-  try {
-    var response = await pedir(API + '/api/orders/' + id, { method: 'DELETE' });
-    if (!response.ok) throw new Error('Respuesta no válida');
-    pedidos = pedidos.filter(function (p) { return p.id !== id; });
-    var card = lista.querySelector('[data-pedido-id="' + id + '"]');
-    if (card) card.remove();
-    renderizar();
-  } catch (e) {
-    console.error(e);
-    alert('No se pudo eliminar el pedido. ¿Está el servidor activo?');
-  }
+  return cambiarYMandar([id], 'fuera', function () {
+    return pedir(API + '/api/orders/' + id, { method: 'DELETE' });
+  }, 'No se pudo sacar el pedido #' + id + '. Revisá la conexión.');
 }
 
 /* =====================
    BORRAR TODOS LOS PEDIDOS
    ===================== */
 
-async function eliminarTodos() {
+function eliminarTodos() {
   if (pedidos.length === 0) return;
   var confirmacion = confirm(
     'Se van a sacar de la pantalla los ' + pedidos.length + ' pedidos.' +
@@ -328,19 +373,13 @@ async function eliminarTodos() {
   );
   if (!confirmacion) return;
 
-  try {
-    var response = await pedir(API + '/api/orders', { method: 'DELETE' });
-    if (!response.ok) throw new Error('Respuesta no válida');
-    var datos = await response.json();
-
-    pedidos = [];
-    ultimoId = null;
-    renderizar();
-    alert('Se sacaron ' + datos.eliminados + ' pedidos de la pantalla. Quedaron en el registro de pedidos.');
-  } catch (e) {
-    console.error(e);
-    alert('No se pudieron sacar los pedidos. Revisá la conexión con el servidor.');
-  }
+  var ids = pedidos.map(function (pedido) { return pedido.id; });
+  // "hasta": se sacan solo los que se ven ahora. Un pedido que entra justo
+  // mientras tanto no desaparece sin que nadie lo haya visto.
+  var hasta = Math.max.apply(null, ids);
+  return cambiarYMandar(ids, 'fuera', function () {
+    return pedir(API + '/api/orders?hasta=' + hasta, { method: 'DELETE' });
+  }, 'No se pudieron sacar los pedidos. Revisá la conexión.');
 }
 
 /* =====================

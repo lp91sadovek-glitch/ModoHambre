@@ -1,3 +1,4 @@
+import atexit
 import json
 import os
 import re
@@ -15,6 +16,11 @@ try:
 except Exception:
     psycopg = None
     dict_row = None
+
+try:
+    from psycopg_pool import ConnectionPool
+except Exception:
+    ConnectionPool = None
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -330,12 +336,80 @@ def avisar_error_de_base(error):
     print("  Mientras tanto el menu sale del HTML de respaldo.")
 
 
-def recorrer_base(funcion, por_defecto=None):
-    """Abre la conexion, hace el trabajo, y cierra todo pase lo que pase.
+# Las conexiones a Neon se reusan. Render esta en Estados Unidos y Neon en San
+# Pablo: abrir una conexion nueva (TCP + cifrado + clave) son varios viajes de
+# ida y vuelta y tardaba mas de un segundo POR PEDIDO, asi que cada boton del
+# panel tardaba varios segundos. Con el pool la conexion ya esta abierta.
+#
+# min_size=0 y max_idle: si nadie usa la base por 2 minutos las conexiones se
+# cierran, y Neon se puede dormir (asi no se gasta la cuota gratis de mas).
+_pool = None
+_pool_lock = threading.Lock()
 
-    Sin esto, un error a mitad de una escritura deja la conexion abierta y la
-    transaccion sin cerrar, y la base se queda esperando.
+
+def obtener_pool():
+    global _pool
+    if _pool is not None or ConnectionPool is None or not DATABASE_URL or psycopg is None:
+        return _pool
+    with _pool_lock:
+        if _pool is None:
+            _pool = ConnectionPool(
+                DATABASE_URL,
+                min_size=0,
+                max_size=6,
+                max_idle=120,
+                timeout=10,
+                # prepare_threshold=None: el "-pooler" de Neon (pgbouncer) no
+                # se lleva bien con las consultas preparadas.
+                # keepalives y tcp_user_timeout: si Neon se durmio y la
+                # conexion guardada quedo cortada, se nota en segundos y se
+                # abre otra, en vez de quedarse esperando una respuesta que
+                # no va a llegar.
+                kwargs={"row_factory": dict_row, "connect_timeout": 10,
+                        "prepare_threshold": None,
+                        "keepalives": 1, "keepalives_idle": 30,
+                        "keepalives_interval": 10, "keepalives_count": 3,
+                        "tcp_user_timeout": 8000},
+                open=True,
+            )
+            # Al cerrar un script (migrar_a_neon.py, cargar_menu.py) se cierra
+            # el pool enseguida, en vez de esperar sus hilos 5 segundos cada uno.
+            atexit.register(_pool.close, timeout=1)
+    return _pool
+
+
+def recorrer_base(funcion, por_defecto=None, transaccion=True):
+    """Toma una conexion, hace el trabajo, y la devuelve pase lo que pase.
+
+    Con transaccion=True (lo que hace mas de una cosa, como el editor) se
+    confirma todo junto o nada. Con transaccion=False cada consulta se guarda
+    sola: es para lo que hace una sola consulta (los pedidos, el panel), y se
+    ahorra el BEGIN y el COMMIT, que son dos viajes mas a San Pablo.
     """
+    pool = obtener_pool()
+    if pool is None:
+        return _recorrer_sin_pool(funcion, por_defecto)
+
+    for intento in (1, 2):
+        try:
+            with pool.connection() as conn:
+                conn.autocommit = not transaccion
+                # Al salir del with sin error se hace commit; con error, rollback.
+                return funcion(conn.cursor())
+        except psycopg.OperationalError as error:
+            # Una conexion guardada que se corto (Neon se durmio, se reinicio
+            # el pooler): se tira y se prueba una vez con otra.
+            if intento == 2:
+                avisar_error_de_base(error)
+                return por_defecto
+        except Exception as error:
+            avisar_error_de_base(error)
+            return por_defecto
+    return por_defecto
+
+
+def _recorrer_sin_pool(funcion, por_defecto):
+    """Lo de siempre, por si falta psycopg_pool: una conexion por trabajo."""
     conn = get_pg_conn()
     if conn is None:
         return por_defecto
@@ -560,7 +634,9 @@ def obtener_menu(solo_activas=True, usar_cache=True):
                 return [], False
             return vista["valor"], True
 
-    categorias = recorrer_base(lambda cur: _consultar_menu(cur, solo_activas), por_defecto=None)
+    categorias = recorrer_base(
+        lambda cur: _consultar_menu(cur, solo_activas), por_defecto=None, transaccion=False
+    )
 
     fallo = categorias is None
     with _cache_lock:
@@ -727,7 +803,7 @@ def api_imagen(img_id):
         cur.execute("SELECT mime, contenido FROM imagenes WHERE id = %s", (img_id,))
         return cur.fetchone()
 
-    fila = recorrer_base(trabajo)
+    fila = recorrer_base(trabajo, transaccion=False)
     if fila is None:
         # Puede ser que la foto no exista o que la base este caida. En los dos
         # casos el navegador va a mostrar el texto alt, asi que no se rompe nada.
@@ -1346,20 +1422,40 @@ def api_borrar_imagen(img_id):
 # ---------------------------------------------------------------------------
 
 
-def local_abierto():
+# Si el local esta abierto se guarda tambien en memoria, asi cada pedido de un
+# cliente no tiene que ir a preguntarlo a Neon (un viaje a San Pablo menos por
+# pedido). El boton del panel lo cambia en memoria al instante; los 30
+# segundos son por si alguna vez hay mas de un proceso en Render.
+SEGUNDOS_CACHE_ESTADO = 30
+_cache_estado = {"abierto": None, "vence": 0.0}
+
+
+def local_abierto(usar_cache=True):
     """Si el local acepta pedidos. Sin nada guardado, esta abierto."""
+    with _cache_lock:
+        if usar_cache and time.time() < _cache_estado["vence"]:
+            return _cache_estado["abierto"]
+
     def trabajo(cur):
         cur.execute("SELECT valor FROM ajustes WHERE clave = 'local_abierto'")
         fila = cur.fetchone()
         # Se envuelve en una lista: recorrer_base usa None para "la base no anduvo".
         return [fila["valor"] if fila else None]
 
-    resultado = recorrer_base(trabajo)
-    if resultado is None or resultado[0] is None:
+    resultado = recorrer_base(trabajo, transaccion=False)
+    if resultado is None:
         # Si la base no contesta no se puede saber; el pedido igual va a fallar
         # al guardarse y el cliente recibe ese error, que es el verdadero.
         return True
-    return resultado[0] != "no"
+    abierto = resultado[0] != "no"
+    recordar_estado_local(abierto)
+    return abierto
+
+
+def recordar_estado_local(abierto):
+    with _cache_lock:
+        _cache_estado["abierto"] = abierto
+        _cache_estado["vence"] = time.time() + SEGUNDOS_CACHE_ESTADO
 
 
 @app.route("/api/local/estado", methods=["GET", "POST"])
@@ -1379,11 +1475,28 @@ def estado_local():
             )
             return True
 
-        if recorrer_base(trabajo) is None:
+        if recorrer_base(trabajo, transaccion=False) is None:
             return sin_base()
+        recordar_estado_local(abierto)
         return jsonify({"abierto": abierto})
 
-    return jsonify({"abierto": local_abierto()})
+    # ?despertar=1 lo manda la pagina del cliente cuando abre el formulario del
+    # pedido: va a Neon de verdad, asi la base y la conexion ya estan
+    # despiertas cuando el cliente toca "Confirmar" (si Neon estaba dormido,
+    # despertarlo tarda un par de segundos y antes los esperaba el cliente).
+    despertar = request.args.get("despertar") == "1"
+    return jsonify({"abierto": local_abierto(usar_cache=not despertar)})
+
+
+@app.route("/api/salud")
+def salud():
+    """Para ver que el sitio esta vivo, sin tocar la base de datos.
+
+    "varios_a_la_vez" dice si gunicorn tomo la configuracion con hilos: si da
+    false, atiende de a un pedido por vez y todo se pone en fila. Tambien sirve
+    para que un servicio como UptimeRobot visite el sitio y Render no se duerma.
+    """
+    return jsonify({"ok": True, "varios_a_la_vez": bool(request.environ.get("wsgi.multithread"))})
 
 
 @app.route("/api/panel/estado")
@@ -1456,17 +1569,28 @@ def orders():
             return error
 
     if request.method == "DELETE":
+        # "hasta": el panel manda el ultimo pedido que tiene en pantalla, asi
+        # uno que entro recien no se saca sin que nadie lo haya visto.
+        hasta = id_o_nada(request.args.get("hasta"))
+
         def trabajo(cur):
-            cur.execute("UPDATE pedidos SET oculto = TRUE WHERE NOT oculto")
+            if hasta is None:
+                cur.execute("UPDATE pedidos SET oculto = TRUE WHERE NOT oculto")
+            else:
+                cur.execute(
+                    "UPDATE pedidos SET oculto = TRUE WHERE NOT oculto AND id <= %s", (hasta,)
+                )
             return cur.rowcount
 
-        sacados = recorrer_base(trabajo)
+        sacados = recorrer_base(trabajo, transaccion=False)
         if sacados is None:
             return sin_base()
         return jsonify({"ok": True, "eliminados": sacados})
 
     if request.method == "GET":
-        pedidos = recorrer_base(lambda cur: lista_de_pedidos(cur, "WHERE NOT oculto"))
+        pedidos = recorrer_base(
+            lambda cur: lista_de_pedidos(cur, "WHERE NOT oculto"), transaccion=False
+        )
         if pedidos is None:
             return sin_base()
         return jsonify(pedidos)
@@ -1510,7 +1634,7 @@ def orders():
         )
         return cur.fetchone()["id"]
 
-    order_id = recorrer_base(trabajo)
+    order_id = recorrer_base(trabajo, transaccion=False)
     if order_id is None:
         return jsonify({"error": "No se pudo guardar el pedido. Intentá de nuevo."}), 503
 
@@ -1537,7 +1661,7 @@ def update_estado(order_id):
         cur.execute("UPDATE pedidos SET estado = %s WHERE id = %s", (estado, order_id))
         return cur.rowcount
 
-    cambiados = recorrer_base(trabajo)
+    cambiados = recorrer_base(trabajo, transaccion=False)
     if cambiados is None:
         return sin_base()
     if cambiados == 0:
@@ -1556,7 +1680,7 @@ def delete_order(order_id):
         cur.execute("UPDATE pedidos SET oculto = TRUE WHERE id = %s", (order_id,))
         return cur.rowcount
 
-    sacados = recorrer_base(trabajo)
+    sacados = recorrer_base(trabajo, transaccion=False)
     if sacados is None:
         return sin_base()
     if sacados == 0:
@@ -1570,7 +1694,7 @@ def archivo_pedidos():
     error = pedir_clave()
     if error:
         return error
-    pedidos = recorrer_base(lista_de_pedidos)
+    pedidos = recorrer_base(lista_de_pedidos, transaccion=False)
     if pedidos is None:
         return sin_base()
     return jsonify(pedidos)
@@ -1693,7 +1817,7 @@ def recordar_cliente(cliente):
         )
 
     try:
-        recorrer_base(trabajo)
+        recorrer_base(trabajo, transaccion=False)
     except Exception:
         pass  # recorrer_base ya avisa por consola
 

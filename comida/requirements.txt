@@ -4,7 +4,7 @@ flask-cors>=4.0
 gunicorn>=21.2
 
 # Base de datos del menu (Neon / Postgres)
-psycopg[binary]>=3.2.3
+psycopg[binary,pool]>=3.2.3
 
 # Achica y convierte las fotos a WebP antes de guardarlas en la base
 pillow>=10.4
