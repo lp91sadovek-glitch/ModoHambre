@@ -674,7 +674,22 @@ document.addEventListener('keydown', function (event) {
 });
 
 /* =====================
+   BARRA SUPERIOR
+   =====================
+   Arriba de todo la barra es transparente y se ve el fondo. Apenas se
+   scrollea toma color, así los botones no quedan encima del contenido. */
+
+var barraSuperior = document.querySelector('.header');
+
+function marcarBarraSuperior() {
+  if (barraSuperior) barraSuperior.classList.toggle('con-scroll', window.scrollY > 8);
+}
+
+window.addEventListener('scroll', marcarBarraSuperior, { passive: true });
+
+/* =====================
    INICIALIZACIÓN
    ===================== */
 
+marcarBarraSuperior();
 updateCart();

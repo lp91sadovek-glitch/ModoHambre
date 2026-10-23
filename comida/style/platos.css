@@ -14,7 +14,7 @@ body {
     right: 0;
     height: 100vh;
     z-index: -1;
-    background-image: url('../imagenes/fondo-menu.png');
+    background-image: url('../imagenes/fondo-menu.webp');
     background-repeat: no-repeat;
     background-position: center top;
     background-size: cover;
@@ -23,7 +23,7 @@ body {
 /* MÓVIL: FONDO DE PANTALLA COMPLETA EN EL MENÚ */
 @media (max-width: 48rem) {
     .fondo-menu {
-        background-image: url('../imagenes/fondo-principal-movil-4.png');
+        background-image: url('../imagenes/fondo-principal-movil-4.webp');
     }
 }
 
@@ -33,7 +33,10 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: #FC8F02;
+    /* Arriba de todo es transparente y se ve el fondo de la página. Cuando se
+       scrollea pasa a tener color (clase con-scroll, la pone platos-cart.js)
+       para que los botones no queden encima de las fotos y los textos. */
+    background: transparent;
     padding: 0.75rem 1.25rem;
     gap: 0.9375rem;
     flex-wrap: wrap;
@@ -41,6 +44,12 @@ body {
     top: 0;
     z-index: 1100;
     box-shadow: none;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.header.con-scroll {
+    background-color: #FC8F02;
+    box-shadow: 0 0.25rem 0.9rem rgba(0,0,0,0.18);
 }
 
 /* TITULO HEADER */
@@ -56,17 +65,30 @@ body {
     margin: 0;
 }
 
-/* LOGO */
+/* LOGO
+   El logo es un óvalo negro. Los botones de la derecha también son óvalos
+   negros del mismo alto (ver .action-btn), así combinan. */
 
-.logo {
-    width: clamp(5.625rem, 20vw, 9.375rem);
-    border-radius: 50%;
+.header {
+    --alto-boton: 4rem;
+}
+
+.logo-boton {
     display: block;
     transition: transform 0.3s ease;
 }
 
-.logo:hover {
-    transform: scale(1.1);
+.logo-boton:hover,
+.logo-boton:focus-visible {
+    transform: scale(1.06);
+}
+
+.logo {
+    display: block;
+    height: calc(var(--alto-boton) + 0.75rem);
+    width: auto;
+    /* la imagen es un rectángulo negro: el óvalo lo hace este redondeo */
+    border-radius: 50%;
 }
 
 .header a {
@@ -379,8 +401,12 @@ body.gusto-abierto .plato {
     align-items: center;
     justify-content: center;
     gap: 0.35rem;
-    padding: 0.85rem 1.3rem;
-    border-radius: 999px;
+    box-sizing: border-box;
+    height: var(--alto-boton, 4rem);
+    /* óvalo como el logo: 50% redondea en elipse, y el padding de los
+       costados deja lugar para que el texto no toque la curva */
+    padding: 0 1.9rem;
+    border-radius: 50%;
     border: 0.125rem solid rgba(255,255,255,0.3);
     background: #111;
     color: white;
@@ -399,8 +425,8 @@ body.gusto-abierto .plato {
 
 /* botón "Pedir comida" un poco más ancho */
 a.action-btn {
-    padding-left: 1.6rem;
-    padding-right: 1.6rem;
+    padding-left: 2.2rem;
+    padding-right: 2.2rem;
 }
 
 .cart-count {
@@ -1237,10 +1263,16 @@ body.panel-abierto {
 @media (max-width: 37.5rem) {
 
     .header {
+        --alto-boton: 3.4rem;
         flex-direction: column;
         text-align: center;
         padding: 0.5rem 0.75rem 0.625rem;
         gap: 0.5rem;
+    }
+
+    /* arriba de todo y solo: un poco más alto que los botones */
+    .logo {
+        height: 4.25rem;
     }
 
     .titulo {
@@ -1260,7 +1292,7 @@ body.panel-abierto {
     .header-actions .action-btn {
         flex: 1;
         white-space: nowrap;
-        padding: 0.6rem 0.5rem;
+        padding: 0 0.5rem;
         font-size: 0.85rem;
     }
 

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sobre nosotros</title>
-    <link rel="stylesheet" href="style/platos.css?v=17">
+    <link rel="stylesheet" href="style/platos.css?v=20">
     <link rel="stylesheet" href="style/nosotros.css?v=4">
     <style>
         /* el header flota sobre el video sin ocupar espacio */
@@ -13,7 +13,7 @@
             top: 0;
             left: 0;
             right: 0;
-            background: #FFB060;
+            
         }
     </style>
 </head>
@@ -22,7 +22,7 @@
     <!-- HEADER -->
     <header class="header">
 
-        <a href="index.html"><img class="logo" src="imagenes/modo hambre.png" alt="Logo de la empresa"></a>
+        <a class="logo-boton" href="index.html" aria-label="Ir al inicio"><img class="logo" src="imagenes/modo-hambre.webp" alt="Logo de la empresa"></a>
 
         <div class="header-actions">
             <a class="action-btn" href="platos.html">🍽️ Pedir comida</a>
@@ -36,8 +36,8 @@
 
         <!--video publicitario-->
         <div class="conteiner-video">
-            <video autoplay muted loop>
-                <source src="videos/Video de Producto Gastronómico.mp4" type="video/mp4">
+            <video autoplay muted loop playsinline>
+                <source src="videos/video-producto.mp4" type="video/mp4">
             </video>
         </div>
 
@@ -61,7 +61,7 @@
         <div class="nav-panel">
 
             <div class="nav-cabecera">
-                <img class="nav-logo-menu" src="imagenes/modo hambre.png" alt="Modo Hambre">
+                <img loading="lazy" decoding="async" class="nav-logo-menu" src="imagenes/modo-hambre.webp" alt="Modo Hambre">
                 <button class="close-panel" id="nav-close" aria-label="Cerrar menú">×</button>
             </div>
 
@@ -98,22 +98,22 @@
 
             <div class="redes-menu">
                 <a class="red-social whatsapp" href="https://wa.me/5492215012289" target="_blank" rel="noopener">
-                    <img class="red-icono" src="logos/whatsapp.png" alt="Logo de WhatsApp" />
+                    <img loading="lazy" decoding="async" class="red-icono" src="logos/whatsapp.webp" alt="Logo de WhatsApp" />
                     <span class="red-nombre">WhatsApp</span>
                     <span class="red-flecha">↗</span>
                 </a>
                 <a class="red-social instagram" href="https://www.instagram.com/mati.andino/" target="_blank" rel="noopener">
-                    <img class="red-icono" src="logos/instagram.jpg" alt="Logo de Instagram" />
+                    <img loading="lazy" decoding="async" class="red-icono" src="logos/instagram.webp" alt="Logo de Instagram" />
                     <span class="red-nombre">Instagram</span>
                     <span class="red-flecha">↗</span>
                 </a>
                 <a class="red-social tiktok" href="https://youtu.be/GBIIQ0kP15E?si=naH1oD5rXX_rzg_v" target="_blank" rel="noopener">
-                    <img class="red-icono" src="logos/tiktok.jpg" alt="Logo de TikTok" />
+                    <img loading="lazy" decoding="async" class="red-icono" src="logos/tiktok.webp" alt="Logo de TikTok" />
                     <span class="red-nombre">TikTok</span>
                     <span class="red-flecha">↗</span>
                 </a>
                 <a class="red-social facebook" href="https://www.facebook.com" target="_blank" rel="noopener">
-                    <img class="red-icono" src="logos/facebook.png" alt="Logo de Facebook" />
+                    <img loading="lazy" decoding="async" class="red-icono" src="logos/facebook.webp" alt="Logo de Facebook" />
                     <span class="red-nombre">Facebook</span>
                     <span class="red-flecha">↗</span>
                 </a>
@@ -128,7 +128,7 @@
     <div class="cart-overlay" id="cart-overlay"></div>
     <div class="cart-drawer" id="cart-panel" aria-hidden="true">
         <div class="cart-header">
-            <img class="cart-logo" src="imagenes/modo hambre.png" alt="Modo Hambre">
+            <img loading="lazy" decoding="async" class="cart-logo" src="imagenes/modo-hambre.webp" alt="Modo Hambre">
             <div class="cart-header-info">
                 <h2 class="cart-title">Tu carrito</h2>
                 <p class="cart-subtitle" id="cart-subtitle"></p>
@@ -160,6 +160,6 @@
     </div>
 
     <script src="api-client.js?v=6"></script>
-    <script src="platos-cart.js?v=8"></script>
+    <script src="platos-cart.js?v=9"></script>
 </body>
 </html>

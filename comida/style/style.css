@@ -740,7 +740,7 @@ body {
     overflow: hidden;
     z-index: -1;
     pointer-events: none;
-    background-image: url('../imagenes/fondo-principal-3.png');
+    background-image: url('../imagenes/fondo-principal-3.webp');
     background-size: 100% 100%;
     background-repeat: no-repeat;
     background-position: center top;
@@ -749,7 +749,7 @@ body {
 /* en móvil el fondo usa una foto propia */
 @media (max-width: 48rem) {
     .fondo-decorativo {
-        background-image: url('../imagenes/fondo-principal-movil-4.png');
+        background-image: url('../imagenes/fondo-principal-movil-4.webp');
         background-size: cover;
         background-position: center top;
     }

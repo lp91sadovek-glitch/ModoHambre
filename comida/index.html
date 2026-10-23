@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modo Hambre</title>
-    <link rel="stylesheet" href="style/style.css?v=32">
-    <link rel="stylesheet" href="style/platos.css?v=17">
+    <link rel="stylesheet" href="style/style.css?v=33">
+    <link rel="stylesheet" href="style/platos.css?v=20">
     <style>
         body {
             background-color: #FC8F02;
         }
-        .header {
-            background: #FFB060;
+        .header.con-scroll {
+            background-color: #FFB060;
         }
     </style>
 </head>
@@ -215,7 +215,7 @@
     <!-- HEADER -->
     <header class="header">
 
-        <a href="index.html"><img class="logo" src="imagenes/modo hambre.png" alt="Logo de la empresa"></a>
+        <a class="logo-boton" href="index.html" aria-label="Ir al inicio"><img class="logo" src="imagenes/modo-hambre.webp" alt="Logo de la empresa"></a>
 
         <div class="header-actions">
             <a class="action-btn" href="platos.html">🍽️ Pedir comida</a>
@@ -258,7 +258,7 @@
             </svg>
         </span>
 
-        <img class="titulo-logo" src="imagenes/titulo.png" alt="Modo Hambre">
+        <img class="titulo-logo" src="imagenes/titulo.webp" alt="Modo Hambre">
     </div>
 
     <!-- CARRUSEL -->
@@ -266,9 +266,9 @@
 
         <div class="carrusel">
 
-            <img src="imagenes/pollo_presentacion.png?v=2" class="slide slide-completa active" alt="1">
-            <img src="imagenes/asado_presentacion.png" class="slide slide-completa" alt="2">
-            <img src="imagenes/hamburguesa_presentacion.png?v=2" class="slide slide-completa" alt="3">
+            <img src="imagenes/pollo_presentacion.webp" class="slide slide-completa active" alt="1">
+            <img loading="lazy" decoding="async" src="imagenes/asado_presentacion.webp" class="slide slide-completa" alt="2">
+            <img loading="lazy" decoding="async" src="imagenes/hamburguesa_presentacion.webp" class="slide slide-completa" alt="3">
 
             <button class="prev" onclick="anteriorManual()">&#10094;</button>
             <button class="next" onclick="siguienteManual()">&#10095;</button>
@@ -286,7 +286,7 @@
             </div>
             <ul class="mas-vendido-lista">
                 <li class="mas-vendido-item" tabindex="0" role="button" aria-expanded="false">
-                    <img class="mas-vendido-miniatura" src="imagenes/asadp argento.png" alt="Asado argentino con papas y ensalada">
+                    <img loading="lazy" decoding="async" class="mas-vendido-miniatura" src="imagenes/asado-argento.webp" alt="Asado argentino con papas y ensalada">
                     <div class="mas-vendido-contenido">
                         <span class="mas-vendido-nombre"><span class="mas-vendido-nombre-corto">Asado argentino</span><span class="mas-vendido-nombre-largo">Asado Argentino con papas y ensalada</span></span>
                         <div class="mas-vendido-titulo">
@@ -301,7 +301,7 @@
                     
                 </li>
                 <li class="mas-vendido-item" tabindex="0" role="button" aria-expanded="false">
-                    <img class="mas-vendido-miniatura" src="imagenes/entradasempanadas-carne-pollo-jamon_y_queso.png" alt="Empanadas">
+                    <img loading="lazy" decoding="async" class="mas-vendido-miniatura" src="imagenes/entradasempanadas-carne-pollo-jamon_y_queso.webp" alt="Empanadas">
                     <div class="mas-vendido-contenido">
                         <span class="mas-vendido-nombre"><span class="mas-vendido-nombre-corto">Empanadas</span><span class="mas-vendido-nombre-largo">Empanadas de carne, pollo y jamón y queso</span></span>
                         <div class="mas-vendido-titulo">
@@ -316,7 +316,7 @@
                     
                 </li>
                 <li class="mas-vendido-item" tabindex="0" role="button" aria-expanded="false">
-                    <img class="mas-vendido-miniatura" src="imagenes/pizzaspizza_napolitana.png" alt="Pizza napolitana">
+                    <img loading="lazy" decoding="async" class="mas-vendido-miniatura" src="imagenes/pizzaspizza_napolitana.webp" alt="Pizza napolitana">
                     <div class="mas-vendido-contenido">
                         <span class="mas-vendido-nombre"><span class="mas-vendido-nombre-corto">Pizza napolitana</span><span class="mas-vendido-nombre-largo">Pizza napolitana</span></span>
                         <div class="mas-vendido-titulo">
@@ -331,7 +331,7 @@
                     
                 </li>
                 <li class="mas-vendido-item" tabindex="0" role="button" aria-expanded="false">
-                    <img class="mas-vendido-miniatura" src="imagenes/milanesassanguche_de_milanesa_de_carne.png" alt="Sanguche de milanesa de carne">
+                    <img loading="lazy" decoding="async" class="mas-vendido-miniatura" src="imagenes/milanesassanguche_de_milanesa_de_carne.webp" alt="Sanguche de milanesa de carne">
                     <div class="mas-vendido-contenido">
                         <span class="mas-vendido-nombre"><span class="mas-vendido-nombre-corto">Sanguche de milanesa</span><span class="mas-vendido-nombre-largo">Sanguche de milanesa de carne</span></span>
                         <div class="mas-vendido-titulo">
@@ -346,7 +346,7 @@
                     
                 </li>
                 <li class="mas-vendido-item" tabindex="0" role="button" aria-expanded="false">
-                    <img class="mas-vendido-miniatura" src="imagenes/hamburguesa 2.jpeg" alt="Hamburguesa">
+                    <img loading="lazy" decoding="async" class="mas-vendido-miniatura" src="imagenes/hamburguesa-2.webp" alt="Hamburguesa">
                     <div class="mas-vendido-contenido">
                         <span class="mas-vendido-nombre"><span class="mas-vendido-nombre-corto">Hamburguesa</span><span class="mas-vendido-nombre-largo">Hamburguesa</span></span>
                         <div class="mas-vendido-titulo">
@@ -390,7 +390,7 @@
         <div class="nav-panel">
 
             <div class="nav-cabecera">
-                <img class="nav-logo-menu" src="imagenes/modo hambre.png" alt="Modo Hambre">
+                <img loading="lazy" decoding="async" class="nav-logo-menu" src="imagenes/modo-hambre.webp" alt="Modo Hambre">
                 <button class="close-panel" id="nav-close" aria-label="Cerrar menú">×</button>
             </div>
 
@@ -427,22 +427,22 @@
 
             <div class="redes-menu">
                 <a class="red-social whatsapp" href="https://wa.me/5492215012289" target="_blank" rel="noopener">
-                    <img class="red-icono" src="logos/whatsapp.png" alt="Logo de WhatsApp" />
+                    <img loading="lazy" decoding="async" class="red-icono" src="logos/whatsapp.webp" alt="Logo de WhatsApp" />
                     <span class="red-nombre">WhatsApp</span>
                     <span class="red-flecha">↗</span>
                 </a>
                 <a class="red-social instagram" href="https://www.instagram.com/mati.andino/" target="_blank" rel="noopener">
-                    <img class="red-icono" src="logos/instagram.jpg" alt="Logo de Instagram" />
+                    <img loading="lazy" decoding="async" class="red-icono" src="logos/instagram.webp" alt="Logo de Instagram" />
                     <span class="red-nombre">Instagram</span>
                     <span class="red-flecha">↗</span>
                 </a>
                 <a class="red-social tiktok" href="https://youtu.be/GBIIQ0kP15E?si=naH1oD5rXX_rzg_v" target="_blank" rel="noopener">
-                    <img class="red-icono" src="logos/tiktok.jpg" alt="Logo de TikTok" />
+                    <img loading="lazy" decoding="async" class="red-icono" src="logos/tiktok.webp" alt="Logo de TikTok" />
                     <span class="red-nombre">TikTok</span>
                     <span class="red-flecha">↗</span>
                 </a>
                 <a class="red-social facebook" href="https://www.facebook.com" target="_blank" rel="noopener">
-                    <img class="red-icono" src="logos/facebook.png" alt="Logo de Facebook" />
+                    <img loading="lazy" decoding="async" class="red-icono" src="logos/facebook.webp" alt="Logo de Facebook" />
                     <span class="red-nombre">Facebook</span>
                     <span class="red-flecha">↗</span>
                 </a>
@@ -457,7 +457,7 @@
     <div class="cart-overlay" id="cart-overlay"></div>
     <div class="cart-drawer" id="cart-panel" aria-hidden="true">
         <div class="cart-header">
-            <img class="cart-logo" src="imagenes/modo hambre.png" alt="Modo Hambre">
+            <img loading="lazy" decoding="async" class="cart-logo" src="imagenes/modo-hambre.webp" alt="Modo Hambre">
             <div class="cart-header-info">
                 <h2 class="cart-title">Tu carrito</h2>
                 <p class="cart-subtitle" id="cart-subtitle"></p>
@@ -491,7 +491,7 @@
     <!-- SCRIPTS -->
     <script src="carrusel.js?v=4"></script>
     <script src="api-client.js?v=6"></script>
-    <script src="platos-cart.js?v=8"></script>
+    <script src="platos-cart.js?v=9"></script>
 
     <script>
         // Ajusta la altura de la decoración al alto total del documento
