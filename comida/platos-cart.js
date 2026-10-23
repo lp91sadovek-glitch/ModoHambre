@@ -45,7 +45,10 @@ const navClose = document.getElementById('nav-close');
 const clearCart = document.getElementById('clear-cart');
 const whatsappOrderBtn = document.getElementById('whatsapp-order');
 const systemOrderBtn = document.getElementById('system-order');
-const whatsappNumber = '2215012289';
+/* wa.me pide el número completo, sin + ni espacios: 54 (Argentina),
+   9 (celular) y después la característica y el número. Sin el 549 abría
+   otro número o daba error. */
+const whatsappNumber = '5492215012289';
 
 const isOrderingPage = window.location.pathname.includes('platos.html');
 
@@ -298,7 +301,8 @@ document.addEventListener('click', function (event) {
     var name = boton.dataset.name;
     addToCart(name, Number(boton.dataset.price), false, getImageForPlato(boton));
     animarContadorCarrito();
-    mostrarToast('Su ' + name.charAt(0).toLowerCase() + name.slice(1) + ' ha sido agregada al carrito');
+    // Sin "agregada"/"agregado": el nombre puede ser de cualquier género.
+    mostrarToast('Agregado al carrito: ' + name);
     return;
   }
 
@@ -400,24 +404,26 @@ function enviarPedidoWhatsApp(tipo, cliente) {
   });
 
   var encabezado = esDomicilio
-    ? 'Hola, quiero pedir por delivery:%0A%0A'
-    : 'Hola, quiero retirar mi pedido en el local:%0A%0A';
+    ? 'Hola, quiero pedir por delivery:\n\n'
+    : 'Hola, quiero retirar mi pedido en el local:\n\n';
 
   var datosCliente = esDomicilio
-    ? 'Datos del cliente:%0A' +
-      'Nombre: ' + cliente.nombre + ' ' + cliente.apellido + '%0A' +
+    ? 'Datos del cliente:\n' +
+      'Nombre: ' + cliente.nombre + ' ' + cliente.apellido + '\n' +
       'Dirección: ' + cliente.calle + ' ' + cliente.numero +
       (cliente.entre ? ' (entre ' + cliente.entre + ')' : '')
-    : 'Datos del cliente:%0A' +
-      'Nombre: ' + cliente.nombre + ' ' + cliente.apellido + '%0A' +
+    : 'Datos del cliente:\n' +
+      'Nombre: ' + cliente.nombre + ' ' + cliente.apellido + '\n' +
       'Retiro en el local';
 
   var message = encabezado +
-    lines.join('%0A') +
-    '%0A%0ATotal: ' + formatPrice(getSubtotal()) +
-    '%0A%0A' + datosCliente;
+    lines.join('\n') +
+    '\n\nTotal: ' + formatPrice(getSubtotal()) +
+    '\n\n' + datosCliente;
 
-  window.open('https://wa.me/' + whatsappNumber + '?text=' + message, '_blank', 'noopener');
+  /* encodeURIComponent: sin esto un "&" o un "#" en la dirección cortaba el
+     mensaje ahí ("Calle 7 & 50" llegaba como "Calle 7"). */
+  window.open('https://wa.me/' + whatsappNumber + '?text=' + encodeURIComponent(message), '_blank', 'noopener');
   cerrarCheckout();
 }
 

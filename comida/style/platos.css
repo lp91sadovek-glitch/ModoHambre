@@ -735,7 +735,11 @@ body.panel-abierto {
     top: 0;
     right: 0;
     width: min(500px, 100vw);
+    /* 100vh en el celular es mas alto que lo que se ve (cuenta la barra del
+       navegador), y el boton de abajo quedaba tapado sin poder llegar a el.
+       100dvh es el alto visible de verdad; 100vh queda para navegadores viejos. */
     height: 100vh;
+    height: 100dvh;
     background: #FFFDF9;
     box-shadow: -12px 0 35px rgba(0, 0, 0, 0.16);
     border-radius: 24px 0 0 24px;
@@ -813,6 +817,7 @@ body.panel-abierto {
 
 .cart-body {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
     padding: 0 20px 10px;
     scrollbar-width: thin;
@@ -935,7 +940,24 @@ body.panel-abierto {
 .cart-footer {
     flex-shrink: 0;
     padding: 16px 20px 20px;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
     border-top: 1px solid #E8E0D7;
+}
+
+/* En pantallas bajas (celular acostado o con teclado) el pie con los botones
+   no entra junto con la lista: se desliza todo el carrito de una, asi siempre
+   se puede bajar hasta "Enviar por la app". */
+@media (max-height: 700px) {
+    .cart-drawer {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+    }
+
+    .cart-body {
+        flex: 0 0 auto;
+        overflow: visible;
+    }
 }
 
 .cart-summary {
@@ -1039,7 +1061,7 @@ body.panel-abierto {
     cursor: not-allowed;
 }
 
-/* BOTÓN ORDENAR AL SISTEMA */
+/* BOTÓN ENVIAR POR LA APP */
 
 .system-button {
     width: 100%;

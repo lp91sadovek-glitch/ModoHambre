@@ -1,12 +1,8 @@
-/* PANEL DE PEDIDOS — MODE HAMBRE */
+/* PANEL DE PEDIDOS — MODO HAMBRE */
 
-/* ---- DONDE BUSCA LOS PEDIDOS ----
-   Dejalo vacio ('') para que el panel use el servidor local (pruebas en la PC).
-   Para leer los pedidos de la web de OnRender, poné la URL entre comillas:
-       var API_REMOTA = 'https://modohambre.onrender.com';
-   (si el navegador se queja, falta permitir CORS en el servidor: app.py ya lo
-   hace, pero el servidor tiene que estar desplegado con esa versión) */
-var API_REMOTA = 'https://modohambre.onrender.com';
+/* El panel lee los pedidos del mismo sitio donde está abierto
+   (modohambre.onrender.com). Los pedidos están guardados en Neon. */
+var API = '';
 
 var lista = document.getElementById('pedidos-lista');
 var banner = document.getElementById('banner-nuevo');
@@ -119,8 +115,8 @@ function construirFilaTabla(item) {
   var subtotal = precioUnitario * cantidad;
   return (
     '<tr>' +
-      '<td class="cantidad-cell">' + cantidad + '</td>' +
-      '<td>' + nombre + '</td>' +
+      '<td class="cantidad-cell">' + esc(cantidad) + '</td>' +
+      '<td>' + esc(nombre) + '</td>' +
       '<td class="precio-cell">' + formatPrice(precioUnitario) + '</td>' +
       '<td class="subtotal-cell">' + formatPrice(subtotal) + '</td>' +
     '</tr>'
@@ -183,11 +179,9 @@ function renderizar() {
     var tipoDeseado = sinConexion ? 'sin-conexion' : 'sin-pedidos';
     var vacioExistente = lista.querySelector('.pedido-vacio');
     if (!vacioExistente || vacioExistente.dataset.tipo !== tipoDeseado) {
-      var mensajeSinConexion = API_REMOTA
-        ? 'No se pudo contactar a <b>' + API_REMOTA + '</b>.<br>' +
-          'Revisá tu internet o aguardá unos segundos.'
-        : 'No se pudo contactar al servidor local.<br>' +
-          'Verificá que Modo Hambre esté abierto en otra ventana.';
+      var mensajeSinConexion =
+        'Revisá tu internet o aguardá unos segundos: si el sitio estaba dormido ' +
+        'tarda hasta un minuto en despertar.';
       lista.innerHTML = sinConexion
         ? '<div class="pedido-vacio" data-tipo="sin-conexion">' +
             '<span class="pedido-vacio-icono">🔌</span>' +
@@ -251,13 +245,11 @@ function renderizar() {
 
 async function cargarPedidos() {
   try {
-    var response = await pedir(API_REMOTA + '/api/orders');
+    var response = await pedir(API + '/api/orders');
     if (!response.ok) throw new Error('Respuesta no válida');
     var datos = await response.json();
 
-    estadoConexion.textContent = API_REMOTA
-      ? 'Conectado a OnRender · cada 4 segundos'
-      : 'Conectado · cada 4 segundos';
+    estadoConexion.textContent = 'Conectado · cada 4 segundos';
     estadoConexion.classList.add('ok');
     sinConexion = false;
 
@@ -293,7 +285,7 @@ async function cargarPedidos() {
 
 async function cambiarEstado(id, estado) {
   try {
-    var response = await pedir(API_REMOTA + '/api/orders/' + id + '/estado', {
+    var response = await pedir(API + '/api/orders/' + id + '/estado', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ estado: estado })
@@ -306,45 +298,12 @@ async function cambiarEstado(id, estado) {
   }
 }
 
-/* =====================
-   ARCHIVO LOCAL
-   ===================== */
-
-/* Antes de borrar de la pantalla, el pedido se copia al archivo de la PC
-   (pedidos.jsonl). Así lo que se borra del panel nunca se pierde. */
-function esLaPcDelLocal() {
-  var host = window.location.hostname;
-  if (host === 'localhost' || host === '127.0.0.1' || host === '::1') {
-    return true;
-  }
-  // tambien si la abrieron con la direccion de la red (192.168.0.10, etc)
-  return /^10\./.test(host) ||
-    /^192\.168\./.test(host) ||
-    /^172\.(1[6-9]|2[0-9]|3[01])\./.test(host);
-}
-
-async function archivarEnDisco(lista) {
-  if (!esLaPcDelLocal()) return; // desde la web hosteada no se guarda nada local
-  for (var i = 0; i < lista.length; i++) {
-    try {
-      await pedir('/api/archivo', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pedido: lista[i] })
-      });
-    } catch (e) {
-      console.warn('No se pudo archivar el pedido #' + lista[i].id, e);
-    }
-  }
-}
-
+/* Sacar un pedido de la pantalla no lo borra: sigue en el registro de
+   pedidos (archivo.html). */
 async function eliminarPedido(id) {
-  if (!confirm('¿Sacar el pedido #' + id + ' de la pantalla?' + (esLaPcDelLocal() ? '\n\nQueda guardado en el archivo local.' : ''))) return;
+  if (!confirm('¿Sacar el pedido #' + id + ' de la pantalla?\n\nQueda guardado en el registro de pedidos.')) return;
   try {
-    var pedido = pedidos.find(function (p) { return p.id === id; });
-    if (pedido) await archivarEnDisco([pedido]);
-
-    var response = await pedir(API_REMOTA + '/api/orders/' + id, { method: 'DELETE' });
+    var response = await pedir(API + '/api/orders/' + id, { method: 'DELETE' });
     if (!response.ok) throw new Error('Respuesta no válida');
     pedidos = pedidos.filter(function (p) { return p.id !== id; });
     var card = lista.querySelector('[data-pedido-id="' + id + '"]');
@@ -364,22 +323,20 @@ async function eliminarTodos() {
   if (pedidos.length === 0) return;
   var confirmacion = confirm(
     'Se van a sacar de la pantalla los ' + pedidos.length + ' pedidos.' +
-    (esLaPcDelLocal() ? '\n\nQuedan todos guardados en el archivo local.' : '') +
+    '\n\nQuedan todos guardados en el registro de pedidos.' +
     '\n\n¿Continuar?'
   );
   if (!confirmacion) return;
 
   try {
-    await archivarEnDisco(pedidos.slice());
-
-    var response = await pedir(API_REMOTA + '/api/orders', { method: 'DELETE' });
+    var response = await pedir(API + '/api/orders', { method: 'DELETE' });
     if (!response.ok) throw new Error('Respuesta no válida');
     var datos = await response.json();
 
     pedidos = [];
     ultimoId = null;
     renderizar();
-    alert('Se sacaron ' + datos.eliminados + ' pedidos de la pantalla.' + (esLaPcDelLocal() ? ' Quedaron en el archivo local.' : ''));
+    alert('Se sacaron ' + datos.eliminados + ' pedidos de la pantalla. Quedaron en el registro de pedidos.');
   } catch (e) {
     console.error(e);
     alert('No se pudieron sacar los pedidos. Revisá la conexión con el servidor.');
@@ -413,7 +370,7 @@ function construirTicket(pedido) {
     var subtotal = precioUnitario * cantidad;
     return (
       '<tr>' +
-        '<td>' + cantidad + ' x ' + nombre + '</td>' +
+        '<td>' + esc(cantidad) + ' x ' + esc(nombre) + '</td>' +
         '<td class="num">' + formatPrice(subtotal) + '</td>' +
       '</tr>'
     );
@@ -464,8 +421,60 @@ if (botonBorrarTodos) {
 }
 
 /* =====================
+   LOCAL ABIERTO / CERRADO
+   =====================
+   Con el local cerrado la web no acepta pedidos. Queda guardado en el
+   servidor, así que vale aunque este panel se cierre. */
+
+var botonLocal = document.getElementById('boton-local');
+var localAbierto = null;
+
+function mostrarEstadoLocal() {
+  if (!botonLocal) return;
+  botonLocal.hidden = localAbierto === null;
+  botonLocal.classList.toggle('local-cerrado', localAbierto === false);
+  botonLocal.textContent = localAbierto ? '🟢 Local abierto' : '🔴 Local cerrado';
+  botonLocal.title = localAbierto
+    ? 'Los clientes pueden pedir. Tocá para cerrar.'
+    : 'La web no acepta pedidos. Tocá para abrir.';
+}
+
+async function cargarEstadoLocal() {
+  try {
+    var response = await fetch(API + '/api/local/estado', { cache: 'no-store' });
+    if (!response.ok) return;
+    localAbierto = Boolean((await response.json()).abierto);
+    mostrarEstadoLocal();
+  } catch (e) {}
+}
+
+if (botonLocal) {
+  botonLocal.addEventListener('click', async function () {
+    var abrir = !localAbierto;
+    if (!abrir && !confirm('¿Cerrar el local? La web deja de aceptar pedidos hasta que lo abras.')) return;
+    botonLocal.disabled = true;
+    try {
+      var response = await pedir(API + '/api/local/estado', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ abierto: abrir })
+      });
+      if (!response.ok) throw new Error('Respuesta no válida');
+      localAbierto = Boolean((await response.json()).abierto);
+      mostrarEstadoLocal();
+    } catch (e) {
+      console.error(e);
+      alert('No se pudo cambiar el estado del local. Revisá la conexión.');
+    } finally {
+      botonLocal.disabled = false;
+    }
+  });
+}
+
+/* =====================
    INICIALIZACIÓN
    ===================== */
 
+cargarEstadoLocal();
 cargarPedidos();
 setInterval(cargarPedidos, 4000);

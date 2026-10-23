@@ -245,7 +245,7 @@ def conectar(url):
     except ImportError:
         mostrar_aviso(
             "Falta la dependencia 'psycopg'.",
-            ["Instalala con doble clic en instalar_requerimientos.py"],
+            ["Instalala con: pip install -r requirements.txt"],
         )
         raise SystemExit(1)
     from psycopg.rows import dict_row
@@ -278,7 +278,7 @@ def subir_fotos(cur, fotos, ya_subidas):
     except ImportError:
         mostrar_aviso(
             "Falta 'pillow', asi que las fotos se suben sin achicar.",
-            ["Instalalo con doble clic en instalar_requerimientos.py", "para que pesen menos."],
+            ["Instalalo con: pip install -r requirements.txt", "para que pesen menos."],
         )
         Image = None
         ImageOps = None

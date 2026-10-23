@@ -1074,13 +1074,9 @@ PanelClave.alEntrar(function () {
     cargar();
 });
 
-// En el host (internet) el editor esta bloqueado: menu.html ya muestra el
-// cartel y no se lee nada.
-if (!window.MENU_BLOQUEADO) {
-    if (PanelClave.obtener()) {
-        cargar();
-    } else {
-        estado('Esperando la clave');
-        setTimeout(cargar, 2500);
-    }
+if (PanelClave.obtener()) {
+    cargar();
+} else {
+    estado('Esperando la clave');
+    setTimeout(cargar, 2500);
 }

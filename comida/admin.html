@@ -13,8 +13,9 @@
             <h1 class="admin-titulo">🍽️ Panel de pedidos</h1>
             <div class="admin-header-acciones">
                 <span class="admin-conexion" id="estado-conexion">Conectando…</span>
+                <button class="boton-borrar-todos boton-local" id="boton-local" type="button" hidden>🟢 Local abierto</button>
                 <a class="boton-borrar-todos boton-neutro" href="menu.html" style="text-decoration: none;">🍽️ Editar el menu</a>
-                <a class="boton-borrar-todos" href="archivo.html" style="text-decoration: none;">🗂 Archivo local</a>
+                <a class="boton-borrar-todos boton-neutro" href="archivo.html" style="text-decoration: none;">🗂 Registro de pedidos</a>
                 <button class="boton-borrar-todos" id="borrar-todos" type="button">🗑 Sacar todos de la pantalla</button>
             </div>
         </div>
@@ -25,34 +26,24 @@
         <details class="admin-nota">
             <summary>ℹ️ ¿De dónde salen estos pedidos?</summary>
             <p>
-                Los clientes piden desde la web y los pedidos se guardan en el sitio
-                (<b>modohambre.onrender.com</b>). Esta pantalla los lee de ahí.
+                Los clientes piden desde la web y cada pedido queda guardado en la base de
+                datos del local. Esta pantalla se actualiza sola cada 4 segundos y se puede
+                abrir desde cualquier computadora o celular con la clave.
             </p>
             <p>
-                <b>Tu computadora es la que los conserva.</b> Mientras Modo Hambre esté abierto
-                en la PC del local, esa PC se conecta al sitio cada 5 segundos, le avisa que el
-                local está abierto y copia cada pedido en el archivo permanente
-                (<b>pedidos.jsonl</b>). Por eso no se pierden aunque el sitio se apague.
+                <b>Sacar un pedido de la pantalla no lo borra:</b> sigue en el
+                <a href="archivo.html">registro de pedidos</a>, donde también se puede bajar
+                una copia a la computadora.
             </p>
-            <p class="admin-nota-alerta">
-                <b>Ojo:</b> la memoria del sitio es temporal. Cada vez que se actualiza la web se
-                borran los pedidos que estaban ahí, y esta pantalla queda vacía. La copia que no
-                se pierde está en la PC del local:
-                <a href="archivo.html">archivo local de pedidos</a>. Si la PC está apagada mientras
-                entra un pedido, ese pedido no queda guardado en ninguna parte.
+            <p>
+                Con el botón <b>Local abierto / cerrado</b> decidís si la web acepta pedidos.
+                Cerralo cuando termine el horario.
             </p>
             <p>
                 Esta pantalla pide la clave del local porque muestra el nombre, el teléfono y la
                 dirección de los clientes.
             </p>
         </details>
-
-        <p class="admin-aviso">
-            ⚠️ <b>Ojo, esta lista se borra:</b> los pedidos que ves acá están guardados en el
-            servidor de la web, y cada vez que se actualiza el sitio (cuando se sube un cambio
-            nuevo) arrancan de cero. Lo único que no se pierde está guardado en tu
-            computadora: <a href="archivo.html">🗂 archivo local de pedidos</a>.
-        </p>
 
         <div class="admin-resumen">
             <div class="resumen-card resumen-nuevos">
@@ -88,29 +79,7 @@
         </div>
     </div>
 
-    <script>
-        // El aviso de "se pierde" solo tiene sentido cuando la pagina esta en el
-        // host (Render). En la PC del local los datos quedan guardados en
-        // pedidos.jsonl, asi que ese aviso no se muestra.
-        if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-            document.querySelectorAll('.admin-aviso, .admin-nota-alerta').forEach(function (el) {
-                el.remove();
-            });
-        } else {
-            // En el host, archivo.html no muestra nada: los links a esa pagina
-            // se reemplazan por texto plano.
-            document.querySelectorAll('a[href="archivo.html"]').forEach(function (el) {
-                var texto = document.createTextNode(el.textContent);
-                el.parentNode.replaceChild(texto, el);
-            });
-            // El menu tampoco se edita desde internet (el servidor lo rechaza):
-            // el boton se saca para no llevar a una pantalla que no anda.
-            document.querySelectorAll('a[href="menu.html"]').forEach(function (el) {
-                el.remove();
-            });
-        }
-    </script>
-    <script src="panel-clave.js?v=3"></script>
-    <script src="admin.js?v=5"></script>
+    <script src="panel-clave.js?v=4"></script>
+    <script src="admin.js?v=6"></script>
 </body>
 </html>

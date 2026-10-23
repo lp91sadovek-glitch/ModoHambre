@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Archivo de pedidos · Modo Hambre</title>
-    <link rel="stylesheet" href="style/admin.css?v=1">
+    <title>Registro de pedidos · Modo Hambre</title>
+    <link rel="stylesheet" href="style/admin.css?v=2">
     <style>
-        /* esta pagina es solo de lectura: mira el archivo local, no el host */
+        /* esta pagina es solo de lectura: muestra todos los pedidos guardados en Neon */
 
         /* VOLVER AL PANEL */
 
@@ -26,6 +26,15 @@
             color: #fff;
             background: #2b2b2b;
             border-color: #444;
+        }
+
+        button.archivo-volver {
+            cursor: pointer;
+        }
+
+        button.archivo-volver:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
         }
 
         /* NOTA INFORMATIVA */
@@ -285,8 +294,9 @@
 
     <header class="admin-header">
         <div class="admin-header-inner">
-            <h1 class="admin-titulo">🗂 Archivo local de pedidos</h1>
+            <h1 class="admin-titulo">🗂 Registro de pedidos</h1>
             <div class="admin-header-acciones">
+                <button class="archivo-volver" id="descargar" type="button" disabled>⬇ Bajar copia (Excel)</button>
                 <a class="archivo-volver" href="admin.html" style="text-decoration: none;">← Volver al panel</a>
             </div>
         </div>
@@ -295,10 +305,10 @@
     <main class="admin-main">
 
         <p class="archivo-nota">
-            Esta es la copia permanente de los pedidos: vive en el archivo
-            <b>pedidos.jsonl</b> de la computadora del local y no se pierde aunque el
-            servidor se apague. Esa PC lo actualiza sola cada 5 segundos. Sacar un
-            pedido de la pantalla no lo borra de acá.
+            Acá están <b>todos</b> los pedidos que entraron por la web, también los que
+            sacaste de la pantalla del panel. Están guardados en la base de datos y no se
+            pierden aunque el sitio se reinicie. Con <b>Bajar copia</b> te guardás un
+            respaldo en la computadora, que se abre con Excel.
         </p>
 
         <div class="archivo-buscador">
@@ -314,7 +324,7 @@
 
     <div class="clave-fondo" id="clave-fondo" hidden>
         <div class="clave-caja">
-            <h1 class="clave-titulo">Archivo local de pedidos</h1>
+            <h1 class="clave-titulo">Registro de pedidos</h1>
             <p class="clave-ayuda">Escribi la clave del local para ver los pedidos.</p>
             <input type="password" id="clave-input" placeholder="Clave" autocomplete="current-password">
             <button class="clave-boton" id="clave-boton" type="button">Entrar</button>
@@ -323,10 +333,11 @@
         </div>
     </div>
 
-    <script src="panel-clave.js?v=3"></script>
+    <script src="panel-clave.js?v=4"></script>
 
     <script>
         var lista = document.getElementById('lista-archivo');
+        var botonDescargar = document.getElementById('descargar');
         var buscar = document.getElementById('buscar');
         var conteo = document.getElementById('conteo');
         var chipTodos = document.getElementById('filtro-todos');
@@ -423,30 +434,16 @@
             '</article>';
         }
 
-        function esLaPcDelLocal() {
-            var host = window.location.hostname;
-            if (host === 'localhost' || host === '127.0.0.1' || host === '::1') {
-                return true;
-            }
-            // tambien si la abrieron con la direccion de la red (192.168.0.10, etc)
-            return /^10\./.test(host) ||
-                /^192\.168\./.test(host) ||
-                /^172\.(1[6-9]|2[0-9]|3[01])\./.test(host);
-        }
-
         function mostrar() {
             var listaPedidos = visibles();
+            botonDescargar.disabled = pedidos.length === 0;
             conteo.textContent = pedidos.length === 0
                 ? ''
                 : 'Mostrando ' + listaPedidos.length + ' de ' + pedidos.length + ' pedidos.';
 
             if (pedidos.length === 0) {
-                lista.innerHTML = esLaPcDelLocal()
-                    ? '<div class="pedido-vacio"><span class="pedido-vacio-icono">🗂</span>' +
-                      'Todavia no hay pedidos guardados en el archivo local.</div>'
-                    : '<div class="pedido-vacio"><span class="pedido-vacio-icono">💻</span>' +
-                      'Esta copia de los pedidos esta en la computadora del local, no en la web.<br>' +
-                      'No se va a mostrar nada desde esta pagina.</div>';
+                lista.innerHTML = '<div class="pedido-vacio"><span class="pedido-vacio-icono">🗂</span>' +
+                    'Todavia no hay pedidos guardados.</div>';
                 return;
             }
 
@@ -460,12 +457,6 @@
         }
 
         async function cargar() {
-            // En el host no hay archivo local: no se muestra nada y no se pide.
-            if (!esLaPcDelLocal()) {
-                pedidos = [];
-                mostrar();
-                return;
-            }
             try {
                 var respuesta = await fetch('/api/archivo', {
                     headers: PanelClave.cabeceras()
@@ -475,14 +466,70 @@
                     lista.innerHTML = '';
                     return;
                 }
+                if (!respuesta.ok) throw new Error('el servidor respondio ' + respuesta.status);
                 pedidos = await respuesta.json();
                 mostrar();
             } catch (error) {
+                // Si ya habia pedidos en pantalla se dejan: un corte de un
+                // momento no tiene que vaciar la lista.
+                if (pedidos.length) return;
                 lista.innerHTML = '<div class="pedido-vacio"><span class="pedido-vacio-icono">🔌</span>' +
-                  'No se pudo leer el archivo. Verificá que Modo Hambre este abierto.</div>';
+                  'No se pudo leer el registro. Revisá tu internet y esperá unos segundos.</div>';
             }
         }
 
+        /* La copia para la computadora: un CSV que Excel abre directo. Lleva
+           el BOM al principio para que Excel lea bien las tildes, y punto y
+           coma porque es el separador que usa Excel en español. */
+        function celda(valor) {
+            var textoCelda = String(valor == null ? '' : valor);
+            return '"' + textoCelda.replace(/"/g, '""') + '"';
+        }
+
+        function descargarCopia() {
+            var filas = [['Pedido', 'Fecha', 'Estado', 'Entrega', 'Nombre', 'Apellido',
+                'Telefono', 'Direccion', 'Platos', 'Total']];
+            pedidos.forEach(function (pedido) {
+                var cliente = pedido.cliente || {};
+                var direccion = cliente.direccion ||
+                    [cliente.calle, cliente.numero].filter(Boolean).join(' ') +
+                    (cliente.entre ? ' (entre ' + cliente.entre + ')' : '');
+                var platos = (pedido.items || []).map(function (item) {
+                    return (item.quantity || 1) + ' x ' + (item.name || '');
+                }).join(' | ');
+                filas.push([
+                    pedido.id,
+                    fechaLegible(pedido.created_at),
+                    pedido.estado || 'nuevo',
+                    pedido.envio === 'domicilio' ? 'A domicilio' : 'Retiro en el local',
+                    cliente.nombre,
+                    cliente.apellido,
+                    cliente.telefono,
+                    direccion,
+                    platos,
+                    pedido.total
+                ]);
+            });
+            var csv = '﻿' + filas.map(function (fila) {
+                return fila.map(celda).join(';');
+            }).join('\r\n');
+
+            var hoy = new Date();
+            var nombre = 'pedidos-modo-hambre-' + hoy.getFullYear() + '-' +
+                String(hoy.getMonth() + 1).padStart(2, '0') + '-' +
+                String(hoy.getDate()).padStart(2, '0') + '.csv';
+            var enlace = document.createElement('a');
+            enlace.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+            enlace.download = nombre;
+            document.body.appendChild(enlace);
+            enlace.click();
+            setTimeout(function () {
+                URL.revokeObjectURL(enlace.href);
+                enlace.remove();
+            }, 1000);
+        }
+
+        botonDescargar.addEventListener('click', descargarCopia);
         buscar.addEventListener('input', mostrar);
 
         chipTodos.addEventListener('click', function () {
@@ -499,8 +546,11 @@
             mostrar();
         });
 
+        // Se actualiza cada 30 segundos: es un registro, no la pantalla de la
+        // cocina, y asi la base de datos no queda despierta de mas.
         cargar();
-        setInterval(cargar, 5000);
+        setInterval(cargar, 30000);
+        PanelClave.alEntrar(cargar);
     </script>
 
 </body>
