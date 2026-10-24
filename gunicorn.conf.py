@@ -1,8 +1,9 @@
 # Configuracion de gunicorn, el programa que levanta la pagina en Render.
 #
-# gunicorn busca este archivo en la carpeta DESDE DONDE ARRANCA, antes de entrar
-# a la carpeta de la pagina. Render arranca desde aca (la raiz del repositorio),
-# por eso tiene que estar en este lugar y no adentro de comida/.
+# gunicorn busca este archivo en la carpeta DESDE DONDE ARRANCA. Render hoy
+# arranca desde comida/ y usa la copia de ahi (comida/gunicorn.conf.py); esta
+# queda por si algun dia arranca desde la raiz. Si se cambia algo, cambiarlo en
+# los dos.
 #
 # Sin esto gunicorn atiende de a UN pedido por vez, y mientras el panel
 # preguntaba por los pedidos nuevos, los botones esperaban en la fila.

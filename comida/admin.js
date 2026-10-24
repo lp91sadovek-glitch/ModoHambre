@@ -494,10 +494,18 @@ if (botonBorrarTodos) {
 var botonLocal = document.getElementById('boton-local');
 var localAbierto = null;
 
+/* El botón se ve SIEMPRE, aunque no se sepa el estado: antes, si el servidor
+   no contestaba, el botón no aparecía y no había forma de volver a abrir el
+   local. Sin estado conocido, tocarlo abre el local. */
 function mostrarEstadoLocal() {
   if (!botonLocal) return;
-  botonLocal.hidden = localAbierto === null;
+  botonLocal.hidden = false;
   botonLocal.classList.toggle('local-cerrado', localAbierto === false);
+  if (localAbierto === null) {
+    botonLocal.textContent = '⚠️ Local: sin datos';
+    botonLocal.title = 'No se pudo leer si el local está abierto. Tocá para abrirlo.';
+    return;
+  }
   botonLocal.textContent = localAbierto ? '🟢 Local abierto' : '🔴 Local cerrado';
   botonLocal.title = localAbierto
     ? 'Los clientes pueden pedir. Tocá para cerrar.'
@@ -507,15 +515,18 @@ function mostrarEstadoLocal() {
 async function cargarEstadoLocal() {
   try {
     var response = await fetch(API + '/api/local/estado', { cache: 'no-store' });
-    if (!response.ok) return;
-    localAbierto = Boolean((await response.json()).abierto);
-    mostrarEstadoLocal();
-  } catch (e) {}
+    if (!response.ok) throw new Error('Respuesta no válida');
+    var abierto = (await response.json()).abierto;
+    localAbierto = typeof abierto === 'boolean' ? abierto : null;
+  } catch (e) {
+    localAbierto = null;
+  }
+  mostrarEstadoLocal();
 }
 
 if (botonLocal) {
   botonLocal.addEventListener('click', async function () {
-    var abrir = !localAbierto;
+    var abrir = localAbierto !== true;
     if (!abrir && !confirm('¿Cerrar el local? La web deja de aceptar pedidos hasta que lo abras.')) return;
     botonLocal.disabled = true;
     try {
@@ -540,6 +551,10 @@ if (botonLocal) {
    INICIALIZACIÓN
    ===================== */
 
+mostrarEstadoLocal();
 cargarEstadoLocal();
 cargarPedidos();
 setInterval(cargarPedidos, 4000);
+// Se vuelve a mirar cada 15 segundos: si el servidor no contestaba, el botón
+// se acomoda solo cuando vuelve, y si otro dispositivo cerró el local se ve acá.
+setInterval(cargarEstadoLocal, 15000);

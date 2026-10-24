@@ -18,9 +18,12 @@ except Exception:
     dict_row = None
 
 try:
-    from psycopg_pool import ConnectionPool
+    from psycopg_pool import ConnectionPool, PoolTimeout
 except Exception:
     ConnectionPool = None
+
+    class PoolTimeout(Exception):
+        """Sin psycopg_pool nunca se tira; esta solo para que el except exista."""
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -346,6 +349,15 @@ def avisar_error_de_base(error):
 _pool = None
 _pool_lock = threading.Lock()
 
+# Si la base no responde, durante estos segundos no se la vuelve a esperar:
+# cada pedido contesta "sin base" al instante en vez de quedarse colgado.
+SEGUNDOS_BASE_CAIDA = 15
+_base_caida = {"hasta": 0.0}
+
+
+def marcar_base_caida():
+    _base_caida["hasta"] = time.time() + SEGUNDOS_BASE_CAIDA
+
 
 def obtener_pool():
     global _pool
@@ -358,7 +370,7 @@ def obtener_pool():
                 min_size=0,
                 max_size=6,
                 max_idle=120,
-                timeout=10,
+                timeout=8,
                 # prepare_threshold=None: el "-pooler" de Neon (pgbouncer) no
                 # se lleva bien con las consultas preparadas.
                 # keepalives y tcp_user_timeout: si Neon se durmio y la
@@ -389,6 +401,8 @@ def recorrer_base(funcion, por_defecto=None, transaccion=True):
     pool = obtener_pool()
     if pool is None:
         return _recorrer_sin_pool(funcion, por_defecto)
+    if time.time() < _base_caida["hasta"]:
+        return por_defecto
 
     for intento in (1, 2):
         try:
@@ -396,6 +410,14 @@ def recorrer_base(funcion, por_defecto=None, transaccion=True):
                 conn.autocommit = not transaccion
                 # Al salir del with sin error se hace commit; con error, rollback.
                 return funcion(conn.cursor())
+        except PoolTimeout as error:
+            # En 8 segundos no se pudo abrir NINGUNA conexion: la base no
+            # responde. No se reintenta (antes eran 20 segundos por pedido) y
+            # por un rato se contesta "sin base" al instante, asi la pagina no
+            # se cuelga esperando: con eso el panel y el menu siguen andando.
+            marcar_base_caida()
+            avisar_error_de_base(error)
+            return por_defecto
         except psycopg.OperationalError as error:
             # Una conexion guardada que se corto (Neon se durmio, se reinicio
             # el pooler): se tira y se prueba una vez con otra.
@@ -1431,7 +1453,12 @@ _cache_estado = {"abierto": None, "vence": 0.0}
 
 
 def local_abierto(usar_cache=True):
-    """Si el local acepta pedidos. Sin nada guardado, esta abierto."""
+    """True/False si el local acepta pedidos, o None si la base no contesta.
+
+    Sin nada guardado, esta abierto. None no es "cerrado": el panel lo usa para
+    mostrar "sin datos" (y dejar abrir el local igual), y un pedido con None se
+    intenta guardar, porque si la base no anda el error real llega al guardar.
+    """
     with _cache_lock:
         if usar_cache and time.time() < _cache_estado["vence"]:
             return _cache_estado["abierto"]
@@ -1444,9 +1471,9 @@ def local_abierto(usar_cache=True):
 
     resultado = recorrer_base(trabajo, transaccion=False)
     if resultado is None:
-        # Si la base no contesta no se puede saber; el pedido igual va a fallar
-        # al guardarse y el cliente recibe ese error, que es el verdadero.
-        return True
+        # Si la base no contesta se usa lo ultimo que se supo (si se supo algo).
+        with _cache_lock:
+            return _cache_estado["abierto"]
     abierto = resultado[0] != "no"
     recordar_estado_local(abierto)
     return abierto
@@ -1496,7 +1523,41 @@ def salud():
     false, atiende de a un pedido por vez y todo se pone en fila. Tambien sirve
     para que un servicio como UptimeRobot visite el sitio y Render no se duerma.
     """
-    return jsonify({"ok": True, "varios_a_la_vez": bool(request.environ.get("wsgi.multithread"))})
+    respuesta = {"ok": True, "varios_a_la_vez": bool(request.environ.get("wsgi.multithread"))}
+    if request.args.get("base") == "1":
+        respuesta["base"] = probar_base()
+    return jsonify(respuesta)
+
+
+# /api/salud?base=1 prueba la conexion a Neon y dice por que falla. Sirve para
+# saber que pasa sin entrar a los logs de Render. Nunca muestra la clave ni el
+# nombre del servidor de la base; como mucho una prueba cada 20 segundos.
+_ultima_prueba = {"momento": 0.0, "resultado": None}
+
+
+def probar_base():
+    ahora = time.time()
+    if ahora - _ultima_prueba["momento"] < 20 and _ultima_prueba["resultado"]:
+        return _ultima_prueba["resultado"]
+    region = next((parte for parte in DATABASE_URL.split(".")
+                   if parte.count("-") == 2 and parte[-1:].isdigit()), "?")
+    resultado = {"region": region, "hay_url": bool(DATABASE_URL)}
+    if not DATABASE_URL or psycopg is None:
+        resultado["estado"] = "sin URL" if not DATABASE_URL else "falta psycopg"
+    else:
+        inicio = time.time()
+        try:
+            with psycopg.connect(DATABASE_URL, connect_timeout=8, prepare_threshold=None) as conn:
+                conn.execute("SELECT 1")
+            resultado["estado"] = "ok"
+        except Exception as error:
+            mensaje = str(error).replace(DATABASE_URL, "<url>")
+            mensaje = re.sub(r"ep-[a-z0-9-]+", "<servidor>", mensaje)
+            mensaje = re.sub(r"\d+\.\d+\.\d+\.\d+", "<ip>", mensaje)
+            resultado["estado"] = f"{type(error).__name__}: {mensaje[:200]}"
+        resultado["segundos"] = round(time.time() - inicio, 2)
+    _ultima_prueba.update(momento=ahora, resultado=resultado)
+    return resultado
 
 
 @app.route("/api/panel/estado")
@@ -1599,7 +1660,7 @@ def orders():
 
     # Si el local esta cerrado el pedido no se guarda: no hay nadie para
     # prepararlo, asi que es mejor avisarle al cliente antes de que pague.
-    if not local_abierto():
+    if local_abierto() is False:
         return jsonify({
             "error": "El local esta cerrado ahora mismo. No se pudo enviar el pedido.",
             "codigo": "local_cerrado",
