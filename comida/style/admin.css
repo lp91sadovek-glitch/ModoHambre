@@ -271,6 +271,16 @@ body {
     background: #f57c00;
 }
 
+/* el cliente recibe notificaciones de su pedido */
+.pedido-avisos {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #1d5fa8;
+    background: #e5f0fc;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+}
+
 .estado-recibido {
     background: #1976d2;
 }

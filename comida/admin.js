@@ -82,7 +82,8 @@ function construirDatosCliente(pedido) {
     html +=
       '<div class="pedido-direccion">' +
         '📌 ' + esc(cliente.calle) +
-        (cliente.numero ? ' ' + esc(cliente.numero) : '') +
+        // "N°" para separar la calle del número (12 N° 2932838, no 12 2932838)
+        (cliente.numero ? ' N° ' + esc(cliente.numero) : '') +
         (cliente.entre ? '<br>↕ Entre ' + esc(cliente.entre) : '') +
       '</div>';
   }
@@ -103,9 +104,10 @@ function formatFecha(fecha) {
          fecha.toLocaleTimeString('es-AR', opcionesHora);
 }
 
-function estadoTexto(estado) {
+/* A domicilio, "listo" quiere decir que ya salió: se muestra "En camino". */
+function estadoTexto(estado, envio) {
   if (estado === 'recibido') return 'Recibido';
-  if (estado === 'listo') return 'Listo';
+  if (estado === 'listo') return envio === 'domicilio' ? 'En camino' : 'Listo';
   return 'Nuevo';
 }
 
@@ -153,16 +155,23 @@ function construirCard(pedido) {
     ? '<button class="boton-accion accion-recibir" data-accion="recibir" data-id="' + pedido.id + '">Recibir</button>'
     : '<button class="boton-accion accion-recibir" data-accion="recibir" data-id="' + pedido.id + '" disabled>Recibir</button>';
 
-  var botonListo = estado === 'listo'
-    ? '<button class="boton-accion accion-listo" data-accion="listo" data-id="' + pedido.id + '" disabled>Marcar listo</button>'
-    : '<button class="boton-accion accion-listo" data-accion="listo" data-id="' + pedido.id + '">Marcar listo</button>';
+  // A domicilio el botón dice que el pedido sale: al cliente le llega
+  // "está listo y lo estamos llevando a tu domicilio".
+  var textoListo = pedido.envio === 'domicilio' ? '🛵 Listo y en camino' : 'Marcar listo';
+  var botonListo =
+    '<button class="boton-accion accion-listo" data-accion="listo" data-id="' + pedido.id + '"' +
+    (estado === 'listo' ? ' disabled' : '') + '>' + textoListo + '</button>';
 
   return (
-    '<article class="pedido-card pedido-' + estado + '" data-pedido-id="' + pedido.id + '" data-estado="' + estado + '">' +
+    '<article class="pedido-card pedido-' + estado + '" data-pedido-id="' + pedido.id + '" data-estado="' + estado + '"' +
+      ' data-avisos="' + Boolean(pedido.con_avisos) + '">' +
       '<div class="pedido-cabecera">' +
         '<span class="pedido-id">Pedido #' + pedido.id + '</span>' +
         '<span class="pedido-fecha">' + formatFecha(fecha) + '</span>' +
-        '<span class="pedido-estado estado-' + estado + '">' + estadoTexto(estado) + '</span>' +
+        '<span class="pedido-estado estado-' + estado + '">' + estadoTexto(estado, pedido.envio) + '</span>' +
+        (pedido.con_avisos
+          ? '<span class="pedido-avisos" title="El cliente recibe una notificación cuando tocás Recibir o Listo">🔔 Avisos</span>'
+          : '') +
         '<button class="boton-accion accion-imprimir pedido-imprimir" data-accion="imprimir" data-id="' + pedido.id + '" aria-label="Imprimir ticket de pedido ' + pedido.id + '">🖨️</button>' +
         '<button class="boton-accion accion-eliminar pedido-eliminar" data-accion="eliminar" data-id="' + pedido.id + '" aria-label="Eliminar pedido ' + pedido.id + '">🗑️</button>' +
       '</div>' +
@@ -234,7 +243,8 @@ function renderizar() {
     enPantalla[id] = true;
 
     var estado = pedido.estado || 'nuevo';
-    if (card.dataset.estado !== estado) {
+    // también si el cliente activó los avisos después (para mostrar la 🔔)
+    if (card.dataset.estado !== estado || card.dataset.avisos !== String(Boolean(pedido.con_avisos))) {
       card.outerHTML = construirCard(pedido);
     }
   });
@@ -423,7 +433,7 @@ function construirTicket(pedido) {
       'Cliente: ' + esc(nombreCliente) +
       (cliente.telefono ? '<br>Tel: ' + esc(cliente.telefono) : '') +
       (esDomicilio && (cliente.calle || cliente.numero)
-        ? '<br>' + esc(cliente.calle) + ' ' + esc(cliente.numero) +
+        ? '<br>' + esc(cliente.calle) + (cliente.numero ? ' N° ' + esc(cliente.numero) : '') +
           (cliente.entre ? ' (entre ' + esc(cliente.entre) + ')' : '')
         : '') +
     '</p>';
@@ -453,7 +463,7 @@ function construirTicket(pedido) {
     '</table>' +
     '<hr class="ticket-regla">' +
     '<div class="ticket-total"><span>TOTAL</span><span>' + formatPrice(pedido.total) + '</span></div>' +
-    '<p class="ticket-estado">Estado: ' + estadoTexto(pedido.estado) + '</p>'
+    '<p class="ticket-estado">Estado: ' + estadoTexto(pedido.estado, pedido.envio) + '</p>'
   );
 }
 

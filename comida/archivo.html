@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro de pedidos · Modo Hambre</title>
-    <link rel="stylesheet" href="style/admin.css?v=3">
+    <link rel="stylesheet" href="style/admin.css?v=4">
     <style>
         /* esta pagina es solo de lectura: muestra todos los pedidos guardados en Neon */
 
@@ -399,7 +399,9 @@
             var cliente = pedido.cliente || {};
             var nombre = (cliente.nombre || '') + ' ' + (cliente.apellido || '');
             var estado = pedido.estado || 'nuevo';
-            var etiqueta = estado === 'listo' ? 'Listo' : estado === 'recibido' ? 'Recibido' : 'Nuevo';
+            var etiqueta = estado === 'listo'
+                ? (pedido.envio === 'domicilio' ? 'En camino' : 'Listo')
+                : estado === 'recibido' ? 'Recibido' : 'Nuevo';
 
             var productos = (pedido.items || []).map(function (item) {
                 var cantidad = item.quantity || 1;
@@ -422,7 +424,7 @@
                             (pedido.envio === 'domicilio' ? '🛵 A domicilio' : '🏪 Retiro en el local') +
                             (cliente.telefono ? ' · 📞 ' + texto(cliente.telefono) : '') +
                             (pedido.envio === 'domicilio' && (cliente.calle || cliente.numero)
-                                ? ' · 📌 ' + texto(cliente.calle) + ' ' + texto(cliente.numero) +
+                                ? ' · 📌 ' + texto(cliente.calle) + (cliente.numero ? ' N° ' + texto(cliente.numero) : '') +
                                   (cliente.entre ? ' (entre ' + texto(cliente.entre) + ')' : '')
                                 : '') +
                         '</div>' +
@@ -499,7 +501,7 @@
             pedidos.forEach(function (pedido) {
                 var cliente = pedido.cliente || {};
                 var direccion = cliente.direccion ||
-                    [cliente.calle, cliente.numero].filter(Boolean).join(' ') +
+                    [cliente.calle, cliente.numero].filter(Boolean).join(' N° ') +
                     (cliente.entre ? ' (entre ' + cliente.entre + ')' : '');
                 var platos = (pedido.items || []).map(function (item) {
                     return (item.quantity || 1) + ' x ' + (item.name || '');

@@ -1713,3 +1713,137 @@ body.checkout-abierto {
     pointer-events: none;
     transition: opacity 0.2s;
 }
+
+/* ========================================
+   SEGUIMIENTO DEL PEDIDO (seguimiento.js)
+   La tarjetita de abajo que muestra el estado del pedido.
+   Queda debajo del carrito y del formulario (z-index menor) para no taparlos.
+   ======================================== */
+
+.seguimiento {
+    position: fixed;
+    left: 1rem;
+    bottom: 1rem;
+    z-index: 1050;
+    width: min(22rem, calc(100% - 2rem));
+    box-sizing: border-box;
+    padding: 0.9rem 1rem 0.85rem;
+    border-radius: 1rem;
+    background: #FFFDF9;
+    color: #171717;
+    border-left: 0.3rem solid #FC8F02;
+    box-shadow: 0 0.6rem 1.8rem rgba(0, 0, 0, 0.25);
+    animation: seguimiento-entra 0.35s ease-out;
+}
+
+.seguimiento[hidden] {
+    display: none;
+}
+
+.seguimiento-listo {
+    border-left-color: #1e7b34;
+}
+
+@keyframes seguimiento-entra {
+    from { transform: translateY(1rem); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.seg-cerrar {
+    position: absolute;
+    top: 0.35rem;
+    right: 0.5rem;
+    border: none;
+    background: none;
+    font-size: 1.3rem;
+    line-height: 1;
+    color: #888;
+    cursor: pointer;
+}
+
+.seg-numero {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #888;
+}
+
+.seg-titulo {
+    margin: 0.15rem 1.2rem 0 0;
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.seg-cuerpo {
+    margin: 0.15rem 0 0;
+    font-size: 0.875rem;
+    color: #555;
+}
+
+.seg-pasos {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.4rem;
+    margin: 0.7rem 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #aaa;
+}
+
+.seg-paso {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.seg-punto {
+    width: 0.65rem;
+    height: 0.65rem;
+    border-radius: 50%;
+    background: #ddd;
+}
+
+.seg-paso.hecho {
+    color: #171717;
+}
+
+.seg-paso.hecho .seg-punto {
+    background: #FC8F02;
+}
+
+.seguimiento-listo .seg-paso.hecho .seg-punto {
+    background: #1e7b34;
+}
+
+.seg-paso.actual .seg-punto {
+    box-shadow: 0 0 0 0.2rem rgba(252, 143, 2, 0.3);
+}
+
+.seg-avisos {
+    width: 100%;
+    margin-top: 0.75rem;
+    padding: 0.55rem 0.75rem;
+    border: none;
+    border-radius: 0.6rem;
+    background: #111;
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.seg-avisos:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.seg-nota {
+    margin: 0.6rem 0 0;
+    font-size: 0.8rem;
+    color: #555;
+}

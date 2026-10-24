@@ -8,3 +8,6 @@ psycopg[binary,pool]>=3.2.3
 
 # Achica y convierte las fotos a WebP antes de guardarlas en la base
 pillow>=10.4
+
+# Notificaciones al celular del cliente cuando su pedido cambia de estado
+pywebpush>=2.0

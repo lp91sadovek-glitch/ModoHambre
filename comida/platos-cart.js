@@ -411,7 +411,7 @@ function enviarPedidoWhatsApp(tipo, cliente) {
     ? 'Datos del cliente:\n' +
       'Nombre: ' + cliente.nombre + ' ' + cliente.apellido + '\n' +
       'Teléfono: ' + cliente.telefono + '\n' +
-      'Dirección: ' + cliente.calle + ' ' + cliente.numero +
+      'Dirección: ' + cliente.calle + ' N° ' + cliente.numero +
       (cliente.entre ? ' (entre ' + cliente.entre + ')' : '')
     : 'Datos del cliente:\n' +
       'Nombre: ' + cliente.nombre + ' ' + cliente.apellido + '\n' +
@@ -677,13 +677,15 @@ function enviarPedidoSistema(tipo, cliente) {
      inicio se lo mandaba a platos.html, que es la página más pesada, y parecía
      que el pedido tardaba más en salir. */
   saveOrder(pedidoDB, tipo, cliente)
-    .then(function () {
+    .then(function (respuesta) {
       cart.length = 0;
       guardarCarrito();
       updateCart();
       cerrarCheckout();
       closeCartDrawer();
       mostrarToast('Su pedido se ha enviado correctamente');
+      // La tarjetita de abajo muestra el estado del pedido (seguimiento.js).
+      if (typeof SeguimientoPedidos !== 'undefined') SeguimientoPedidos.agregar(respuesta);
     })
     .catch(function (e) {
       console.error(e);

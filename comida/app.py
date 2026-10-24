@@ -525,6 +525,12 @@ TABLAS_NEON = (
     )
     """,
     "CREATE INDEX IF NOT EXISTS pedidos_visibles ON pedidos (oculto, id)",
+    # Seguimiento del pedido por el cliente: "seguimiento" es un codigo al azar
+    # que solo tiene el navegador que hizo el pedido (sin el, nadie puede ver
+    # el estado de un pedido ajeno). "avisos" es la suscripcion a las
+    # notificaciones del celular, si el cliente las acepto.
+    "ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS seguimiento TEXT",
+    "ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS avisos JSONB",
     # Ajustes sueltos del local, por ahora solo si esta abierto o cerrado.
     """
     CREATE TABLE IF NOT EXISTS ajustes (
@@ -1579,8 +1585,10 @@ def estado_panel():
 
 # La fecha sale en el mismo formato que usaba SQLite (UTC, "AAAA-MM-DD HH:MM:SS"),
 # que es el que entienden el panel y el registro.
+# El codigo de seguimiento y la suscripcion no salen nunca: el panel solo
+# necesita saber si el cliente tiene los avisos activados.
 COLUMNAS_PEDIDO = (
-    "id, items, total, estado, envio, cliente, oculto,"
+    "id, items, total, estado, envio, cliente, oculto, (avisos IS NOT NULL) AS con_avisos,"
     " to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS') AS created_at"
 )
 MAXIMO_PLATOS_POR_PEDIDO = 100
@@ -1693,16 +1701,19 @@ def orders():
     if len(telefono) >= 6:
         cliente["telefono_normalizado"] = telefono
 
+    # El codigo con el que el navegador del cliente sigue su pedido.
+    seguimiento = secrets.token_urlsafe(16)
+
     def trabajo(cur):
         # En la misma consulta se cuenta cuantos pedidos hizo antes ese mismo
         # telefono, asi no es un viaje mas a la base.
         cur.execute(
-            "INSERT INTO pedidos (items, total, envio, cliente)"
-            " VALUES (%s::jsonb, %s, %s, jsonb_set(%s::jsonb, '{pedidos_anteriores}',"
+            "INSERT INTO pedidos (items, total, envio, seguimiento, cliente)"
+            " VALUES (%s::jsonb, %s, %s, %s, jsonb_set(%s::jsonb, '{pedidos_anteriores}',"
             "   to_jsonb((SELECT count(*) FROM pedidos"
             "              WHERE %s <> '' AND cliente->>'telefono_normalizado' = %s))))"
             " RETURNING id",
-            (json.dumps(platos, ensure_ascii=False), total, envio,
+            (json.dumps(platos, ensure_ascii=False), total, envio, seguimiento,
              json.dumps(cliente, ensure_ascii=False),
              cliente.get("telefono_normalizado", ""), cliente.get("telefono_normalizado", "")),
         )
@@ -1717,7 +1728,8 @@ def orders():
     # guardado.
     threading.Thread(target=recordar_cliente, args=(cliente,), daemon=True).start()
 
-    return jsonify({"ok": True, "order_id": order_id, "total": total})
+    return jsonify({"ok": True, "order_id": order_id, "total": total,
+                    "envio": envio, "seguimiento": seguimiento})
 
 
 @app.route("/api/orders/<int:order_id>/estado", methods=["POST"])
@@ -1740,7 +1752,196 @@ def update_estado(order_id):
         return sin_base()
     if cambiados == 0:
         return jsonify({"error": "Pedido no encontrado"}), 404
+    if estado in ("recibido", "listo"):
+        # La notificacion al celular del cliente va en otro hilo: el panel no
+        # tiene que esperar a que la mande.
+        threading.Thread(target=avisar_al_cliente, args=(order_id, estado), daemon=True).start()
     return jsonify({"ok": True, "order_id": order_id, "estado": estado})
+
+
+# ---------------------------------------------------------------------------
+# SEGUIMIENTO DEL PEDIDO Y AVISOS AL CLIENTE
+#
+# Cuando el dueno toca "Recibir" o "Listo" en el panel, al cliente le llega el
+# aviso de dos formas:
+#   1. La pagina donde pidio pregunta el estado cada pocos segundos
+#      (/api/seguimiento) y lo muestra en una tarjetita. Anda en cualquier
+#      celular mientras la pagina este abierta.
+#   2. Si el cliente acepto "avisarme aunque cierre la pagina", le llega una
+#      notificacion del celular (Web Push), como las de cualquier app.
+#
+# Para las notificaciones hacen falta dos claves (VAPID). Se crean solas la
+# primera vez y se guardan en la base, asi no hay que configurar nada en Render.
+# ---------------------------------------------------------------------------
+
+try:
+    from py_vapid import Vapid02
+    from pywebpush import WebPushException, webpush
+except Exception:
+    webpush = None
+
+# Lo que dice el aviso en cada estado. La pagina del cliente (seguimiento.js)
+# muestra los mismos textos.
+TEXTOS_AVISO = {
+    "recibido": ("🍽️ ¡Recibimos tu pedido!", "Pedido #{id}: ya lo estamos preparando."),
+    "listo_local": ("✅ ¡Tu pedido está listo!", "Pedido #{id}: ya podés pasar a retirarlo por el local."),
+    "listo_domicilio": ("🛵 ¡Tu pedido va en camino!",
+                        "Pedido #{id}: está listo y lo estamos llevando a tu domicilio."),
+}
+
+_claves_vapid = {"privada": None, "publica": None}
+
+
+def claves_vapid():
+    """Devuelve (Vapid02, clave_publica) o (None, None). Las crea si no existen."""
+    if webpush is None:
+        return None, None
+    if _claves_vapid["privada"] is not None:
+        return _claves_vapid["privada"], _claves_vapid["publica"]
+
+    nueva = Vapid02()
+    nueva.generate_keys()
+    pem_nueva = nueva.private_pem().decode()
+
+    def trabajo(cur):
+        # Si ya habia una guardada, gana esa: las suscripciones de los
+        # clientes quedan atadas a la clave con la que se hicieron.
+        cur.execute(
+            "INSERT INTO ajustes (clave, valor) VALUES ('vapid_privada', %s)"
+            " ON CONFLICT (clave) DO NOTHING",
+            (pem_nueva,),
+        )
+        cur.execute("SELECT valor FROM ajustes WHERE clave = 'vapid_privada'")
+        return cur.fetchone()["valor"]
+
+    pem = recorrer_base(trabajo)
+    if not pem:
+        return None, None
+    privada = Vapid02.from_pem(pem.encode())
+    import base64
+
+    from cryptography.hazmat.primitives import serialization
+
+    crudo = privada.public_key.public_bytes(
+        serialization.Encoding.X962, serialization.PublicFormat.UncompressedPoint
+    )
+    publica = base64.urlsafe_b64encode(crudo).decode().rstrip("=")
+    _claves_vapid.update(privada=privada, publica=publica)
+    return privada, publica
+
+
+def avisar_al_cliente(order_id, estado):
+    """Manda la notificacion al celular del cliente, si la pidio. Nunca falla."""
+    try:
+        privada, _ = claves_vapid()
+        if privada is None:
+            return
+
+        def leer(cur):
+            cur.execute("SELECT avisos, envio FROM pedidos WHERE id = %s", (order_id,))
+            return cur.fetchone()
+
+        fila = recorrer_base(leer, transaccion=False)
+        if not fila or not fila["avisos"]:
+            return
+        clave = estado if estado == "recibido" else f"listo_{fila['envio']}"
+        titulo, cuerpo = TEXTOS_AVISO.get(clave, TEXTOS_AVISO["listo_local"])
+        datos = json.dumps({
+            "titulo": titulo,
+            "cuerpo": cuerpo.format(id=order_id),
+            "etiqueta": f"pedido-{order_id}",
+        }, ensure_ascii=False)
+        try:
+            webpush(
+                subscription_info=fila["avisos"],
+                data=datos,
+                vapid_private_key=privada,
+                vapid_claims={"sub": "https://modohambre.onrender.com"},
+                timeout=10,
+                ttl=60 * 60,
+            )
+        except WebPushException as error:
+            # 404/410: el cliente desactivo los avisos o borro el navegador.
+            # Se olvida la suscripcion para no seguir intentando.
+            codigo = getattr(getattr(error, "response", None), "status_code", None)
+            if codigo in (404, 410):
+                recorrer_base(
+                    lambda cur: cur.execute(
+                        "UPDATE pedidos SET avisos = NULL WHERE id = %s", (order_id,)
+                    ),
+                    transaccion=False,
+                )
+            else:
+                print(f"No se pudo avisar al cliente del pedido #{order_id}: {error}", flush=True)
+    except Exception as error:
+        print(f"No se pudo avisar al cliente del pedido #{order_id}: {error}", flush=True)
+
+
+@app.route("/api/seguimiento/<int:order_id>")
+def seguimiento_pedido(order_id):
+    """El estado de un pedido, para el cliente que lo hizo (con su codigo)."""
+    codigo = request.args.get("t", "")
+    if not codigo:
+        return jsonify({"error": "Falta el codigo"}), 400
+
+    def trabajo(cur):
+        cur.execute(
+            "SELECT id, estado, envio FROM pedidos WHERE id = %s AND seguimiento = %s",
+            (order_id, codigo),
+        )
+        return [cur.fetchone()]
+
+    resultado = recorrer_base(trabajo, transaccion=False)
+    if resultado is None:
+        return sin_base()
+    if resultado[0] is None:
+        return jsonify({"error": "Pedido no encontrado"}), 404
+    return jsonify(dict(resultado[0]))
+
+
+@app.route("/api/avisos/clave")
+def clave_de_avisos():
+    """La clave publica que el navegador necesita para suscribirse."""
+    _, publica = claves_vapid()
+    if not publica:
+        return jsonify({"error": "Los avisos no estan disponibles"}), 503
+    return jsonify({"clave": publica})
+
+
+@app.route("/api/seguimiento/<int:order_id>/avisos", methods=["POST"])
+def activar_avisos(order_id):
+    """Guarda la suscripcion del navegador del cliente para ese pedido."""
+    datos = cuerpo_del_dueno()
+    codigo = str(datos.get("t") or "")
+    suscripcion = datos.get("suscripcion")
+    valida = (
+        isinstance(suscripcion, dict)
+        and str(suscripcion.get("endpoint", "")).startswith("https://")
+        and isinstance(suscripcion.get("keys"), dict)
+        and suscripcion["keys"].get("p256dh")
+        and suscripcion["keys"].get("auth")
+        and len(json.dumps(suscripcion)) < 2000
+    )
+    if not codigo or not valida:
+        return jsonify({"error": "Datos de aviso invalidos"}), 400
+    limpia = {
+        "endpoint": suscripcion["endpoint"],
+        "keys": {"p256dh": suscripcion["keys"]["p256dh"], "auth": suscripcion["keys"]["auth"]},
+    }
+
+    def trabajo(cur):
+        cur.execute(
+            "UPDATE pedidos SET avisos = %s::jsonb WHERE id = %s AND seguimiento = %s",
+            (json.dumps(limpia), order_id, codigo),
+        )
+        return cur.rowcount
+
+    cambiados = recorrer_base(trabajo, transaccion=False)
+    if cambiados is None:
+        return sin_base()
+    if cambiados == 0:
+        return jsonify({"error": "Pedido no encontrado"}), 404
+    return jsonify({"ok": True})
 
 
 @app.route("/api/orders/<int:order_id>", methods=["DELETE"])
@@ -1856,12 +2057,12 @@ def direccion_del_cliente(cliente):
     if cliente.get("direccion"):
         return texto_limpio(cliente.get("direccion"), 200)
 
-    partes = [
-        texto_limpio(cliente.get("calle"), 120),
-        texto_limpio(cliente.get("numero"), 20),
-    ]
+    calle = texto_limpio(cliente.get("calle"), 120)
+    numero = texto_limpio(cliente.get("numero"), 20)
     entre = texto_limpio(cliente.get("entre"), 80)
-    direccion = " ".join(parte for parte in partes if parte)
+    # "N°" entre la calle y el numero: con calles que son numeros (12 2932838)
+    # no se entendia donde terminaba una y empezaba el otro.
+    direccion = " N° ".join(parte for parte in (calle, numero) if parte)
     if entre:
         direccion += f" (entre {entre})"
     return direccion[:200]
