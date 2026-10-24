@@ -365,6 +365,51 @@ body {
     line-height: 1.4;
 }
 
+/* TELEFONO Y CLIENTE FRECUENTE */
+
+.pedido-telefono {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.6rem;
+    font-size: 0.9rem;
+    color: #333;
+}
+
+.pedido-telefono span {
+    font-weight: 700;
+    margin-right: 0.2rem;
+}
+
+.pedido-telefono a {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #fff;
+    background: #171717;
+    padding: 0.25rem 0.7rem;
+    border-radius: 999px;
+    text-decoration: none;
+}
+
+.pedido-telefono a[href^="https://wa.me"] {
+    background: #1e9e4a;
+}
+
+.pedido-frecuente {
+    align-self: flex-start;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #7a4a00;
+    background: #fff1d6;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+}
+
+.pedido-frecuente.pedido-primera {
+    color: #1d5fa8;
+    background: #e5f0fc;
+}
+
 /* PIE */
 
 .pedido-pie {

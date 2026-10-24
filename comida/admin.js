@@ -57,6 +57,27 @@ function construirDatosCliente(pedido) {
       '</div>' +
     '</div>';
 
+  if (cliente.telefono) {
+    // El telefono "limpio" lo arma el servidor (sin +54, sin 0 ni 9): con
+    // el 549 adelante es el formato que pide WhatsApp.
+    var limpio = String(cliente.telefono_normalizado || '').replace(/\D/g, '');
+    html +=
+      '<div class="pedido-telefono">' +
+        '<span>📞 ' + esc(cliente.telefono) + '</span>' +
+        '<a href="tel:' + esc(limpio || cliente.telefono) + '">Llamar</a>' +
+        (limpio
+          ? '<a href="https://wa.me/549' + esc(limpio) + '" target="_blank" rel="noopener">WhatsApp</a>'
+          : '') +
+      '</div>';
+  }
+
+  if (cliente.telefono_normalizado) {
+    var anteriores = Number(cliente.pedidos_anteriores) || 0;
+    html += anteriores > 0
+      ? '<div class="pedido-frecuente">⭐ Ya pidió ' + anteriores + (anteriores === 1 ? ' vez' : ' veces') + ' antes</div>'
+      : '<div class="pedido-frecuente pedido-primera">🆕 Primer pedido</div>';
+  }
+
   if (esDomicilio && (cliente.calle || cliente.numero || cliente.entre)) {
     html +=
       '<div class="pedido-direccion">' +
@@ -400,6 +421,11 @@ function construirTicket(pedido) {
     '<p class="ticket-cliente">' +
       (esDomicilio ? '🛵 A domicilio' : '🏪 Retiro en el local') + '<br>' +
       'Cliente: ' + esc(nombreCliente) +
+      (cliente.telefono ? '<br>Tel: ' + esc(cliente.telefono) : '') +
+      (esDomicilio && (cliente.calle || cliente.numero)
+        ? '<br>' + esc(cliente.calle) + ' ' + esc(cliente.numero) +
+          (cliente.entre ? ' (entre ' + esc(cliente.entre) + ')' : '')
+        : '') +
     '</p>';
 
   var filas = pedido.items.map(function (item) {

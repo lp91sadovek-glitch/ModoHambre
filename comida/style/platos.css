@@ -44,12 +44,16 @@ body {
     top: 0;
     z-index: 1100;
     box-shadow: none;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    /* Al volver arriba espera 5 segundos antes de hacerse transparente,
+       así no parpadea si se scrollea un poquito para arriba y para abajo. */
+    transition: background-color 0.4s ease 5s, box-shadow 0.4s ease 5s;
 }
 
 .header.con-scroll {
     background-color: #FC8F02;
     box-shadow: 0 0.25rem 0.9rem rgba(0,0,0,0.18);
+    /* al bajar, el color aparece enseguida */
+    transition-delay: 0s;
 }
 
 /* TITULO HEADER */
@@ -1565,6 +1569,43 @@ body.panel-abierto {
 .elegir-campo input:focus {
     outline: none;
     border-color: rgb(139, 86, 36);
+}
+
+/* "Recordar mis datos en este dispositivo" */
+.elegir-recordar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: #444;
+    cursor: pointer;
+}
+
+.elegir-recordar input {
+    width: 1.1rem;
+    height: 1.1rem;
+    margin: 0;
+    accent-color: rgb(139, 86, 36);
+}
+
+.elegir-guardados {
+    margin: -0.35rem 0 0;
+    font-size: 0.8rem;
+    color: #777;
+}
+
+.elegir-guardados[hidden] {
+    display: none;
+}
+
+.elegir-guardados button {
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    color: rgb(139, 86, 36);
+    text-decoration: underline;
+    cursor: pointer;
 }
 
 .elegir-form-acciones {

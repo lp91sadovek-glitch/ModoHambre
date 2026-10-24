@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro de pedidos · Modo Hambre</title>
-    <link rel="stylesheet" href="style/admin.css?v=2">
+    <link rel="stylesheet" href="style/admin.css?v=3">
     <style>
         /* esta pagina es solo de lectura: muestra todos los pedidos guardados en Neon */
 
@@ -418,7 +418,14 @@
                             '<span class="archivo-id-pedido">Pedido #' + texto(pedido.id) + '</span> — ' +
                             texto(nombre || 'Sin nombre') +
                         '</div>' +
-                        '<div class="archivo-envio">' + texto(pedido.envio || '') + '</div>' +
+                        '<div class="archivo-envio">' +
+                            (pedido.envio === 'domicilio' ? '🛵 A domicilio' : '🏪 Retiro en el local') +
+                            (cliente.telefono ? ' · 📞 ' + texto(cliente.telefono) : '') +
+                            (pedido.envio === 'domicilio' && (cliente.calle || cliente.numero)
+                                ? ' · 📌 ' + texto(cliente.calle) + ' ' + texto(cliente.numero) +
+                                  (cliente.entre ? ' (entre ' + texto(cliente.entre) + ')' : '')
+                                : '') +
+                        '</div>' +
                     '</div>' +
                     '<div class="archivo-lateral">' +
                         '<span class="archivo-fecha">' + texto(fechaLegible(pedido.created_at)) + '</span>' +

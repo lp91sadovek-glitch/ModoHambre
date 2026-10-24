@@ -372,8 +372,8 @@ def obtener_pool():
                         "tcp_user_timeout": 8000},
                 open=True,
             )
-            # Al cerrar un script (migrar_a_neon.py, cargar_menu.py) se cierra
-            # el pool enseguida, en vez de esperar sus hilos 5 segundos cada uno.
+            # Al cerrar el programa se cierra el pool enseguida, en vez de
+            # esperar sus hilos 5 segundos cada uno.
             atexit.register(_pool.close, timeout=1)
     return _pool
 
@@ -487,8 +487,8 @@ TABLAS_NEON = (
     "CREATE INDEX IF NOT EXISTS gustos_comida ON gustos (comida_id, orden, id)",
     "CREATE INDEX IF NOT EXISTS categorias_orden ON categorias (orden, id)",
     # Los pedidos. "oculto" es "sacado de la pantalla del panel": el pedido no
-    # se borra, sigue en el registro. "migrado_de" solo lo usa
-    # migrar_a_neon.py para no cargar dos veces un pedido viejo.
+    # se borra, sigue en el registro. "migrado_de" quedo de cuando se pasaron
+    # los pedidos viejos de la PC del local a Neon (marca de donde vino cada uno).
     """
     CREATE TABLE IF NOT EXISTS pedidos (
       id SERIAL PRIMARY KEY,
@@ -1625,12 +1625,25 @@ def orders():
 
     total = sum(plato["price"] * plato["quantity"] for plato in platos)
 
+    # El telefono "limpio" (solo digitos, sin +54 ni 0 ni 9) sirve para
+    # reconocer al cliente aunque lo escriba distinto cada vez. Con eso el panel
+    # muestra si ya pidio antes y arma el link de WhatsApp.
+    telefono = telefono_normalizado(cliente.get("telefono"))
+    if len(telefono) >= 6:
+        cliente["telefono_normalizado"] = telefono
+
     def trabajo(cur):
+        # En la misma consulta se cuenta cuantos pedidos hizo antes ese mismo
+        # telefono, asi no es un viaje mas a la base.
         cur.execute(
             "INSERT INTO pedidos (items, total, envio, cliente)"
-            " VALUES (%s::jsonb, %s, %s, %s::jsonb) RETURNING id",
+            " VALUES (%s::jsonb, %s, %s, jsonb_set(%s::jsonb, '{pedidos_anteriores}',"
+            "   to_jsonb((SELECT count(*) FROM pedidos"
+            "              WHERE %s <> '' AND cliente->>'telefono_normalizado' = %s))))"
+            " RETURNING id",
             (json.dumps(platos, ensure_ascii=False), total, envio,
-             json.dumps(cliente, ensure_ascii=False)),
+             json.dumps(cliente, ensure_ascii=False),
+             cliente.get("telefono_normalizado", ""), cliente.get("telefono_normalizado", "")),
         )
         return cur.fetchone()["id"]
 
@@ -1726,14 +1739,15 @@ def _sin_marcas_de_telefono(digitos):
         while digitos.startswith("0"):        # el 0 del 011
             digitos = digitos[1:]
 
-        # El 9 de "llamar al exterior": solo se saca si delante queda algo que
-        # arranca con 1 (todo celular del país) o con un 0 (un 011 atras). Un
-        # fijo que empieza con 9 se deja como estaba.
+        # El 9 de los celulares ("+54 9 221 ..."): se saca si delante queda una
+        # caracteristica, y en Argentina todas arrancan con 1, 2 o 3 (11, 221,
+        # 351...). Antes solo se sacaba delante de un 1, y un celular de La
+        # Plata escrito con +54 9 parecia otro cliente.
         if digitos.startswith("9") and len(digitos) > 6:
             resto = digitos[1:]
             while resto.startswith("0"):
                 resto = resto[1:]
-            if resto.startswith("1"):
+            if resto[:1] in ("1", "2", "3"):
                 digitos = resto
 
         if digitos == antes:
@@ -1749,20 +1763,26 @@ def telefono_normalizado(telefono):
     nuevo y el panel decía "primera vez que pide" a gente que ya había pedido.
 
     Solo se sacan las partes que NO pueden ser parte del número: el 00 y el 54
-    del prefijo internacional, el 0 adelante del 011 y el 9 de "llamar al
-    exterior". El 15 de los celulares viejos NO se saca, porque es imposible
-    distinguirlo de un número que de verdad empieza con 15 (011 15-234-5678
-    puede ser el 15 de siempre o un 15 que es parte del número). Se deja así
-    para no inventar: si quedan dos fichas del mismo cliente, lo peor que pasa
-    es que el panel no le reconozca la dirección.
+    del prefijo internacional, el 0 adelante del 011, el 9 de los celulares y
+    el 15 de los celulares viejos. El 15 se saca solo cuando sobra: en
+    Argentina la característica más el número son siempre 10 dígitos, así que
+    si quedan 12 y hay un 15 justo después de la característica, ese 15 no es
+    parte del número. Sin esto el link de WhatsApp del panel no andaba.
 
-    Igual, todas las formas de escribir el mismo teléfono dan el mismo número:
-        11 1234-5678        -> 1112345678
-        +54 9 11 1234-5678  -> 1112345678
-        (011) 15-1234-5678  -> 111512345678
-        +54 9 011 15-1234567-> 111512345678
+    Todas las formas de escribir el mismo teléfono dan el mismo número:
+        11 1234-5678          -> 1112345678
+        +54 9 11 1234-5678    -> 1112345678
+        (011) 15-1234-5678    -> 1112345678
+        +54 9 221 501-2289    -> 2215012289
+        (0221) 15-501-2289    -> 2215012289
     """
-    return _sin_marcas_de_telefono(re.sub(r"[^\d]", "", str(telefono or "")))
+    digitos = _sin_marcas_de_telefono(re.sub(r"[^\d]", "", str(telefono or "")))
+    if len(digitos) == 12:
+        # la característica tiene 2 (11), 3 (221) o 4 (2966) dígitos
+        for largo in (2, 3, 4):
+            if digitos[largo:largo + 2] == "15":
+                return digitos[:largo] + digitos[largo + 2:]
+    return digitos
 
 
 def direccion_del_cliente(cliente):

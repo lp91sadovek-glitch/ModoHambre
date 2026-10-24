@@ -410,10 +410,12 @@ function enviarPedidoWhatsApp(tipo, cliente) {
   var datosCliente = esDomicilio
     ? 'Datos del cliente:\n' +
       'Nombre: ' + cliente.nombre + ' ' + cliente.apellido + '\n' +
+      'Teléfono: ' + cliente.telefono + '\n' +
       'Dirección: ' + cliente.calle + ' ' + cliente.numero +
       (cliente.entre ? ' (entre ' + cliente.entre + ')' : '')
     : 'Datos del cliente:\n' +
       'Nombre: ' + cliente.nombre + ' ' + cliente.apellido + '\n' +
+      'Teléfono: ' + cliente.telefono + '\n' +
       'Retiro en el local';
 
   var message = encabezado +
@@ -433,6 +435,42 @@ function enviarPedidoWhatsApp(tipo, cliente) {
 
 var checkoutOverlay = null;
 var checkoutFinalizar = null;
+
+/* DATOS DEL CLIENTE GUARDADOS EN EL NAVEGADOR
+   Si el cliente lo deja marcado, su nombre, teléfono y dirección quedan
+   guardados en este celular o computadora (y en ningún otro lado del
+   navegador), así la próxima vez el formulario ya viene completo. */
+var DATOS_CLIENTE_KEY = 'datos-cliente-modo-hambre';
+var CAMPOS_CLIENTE = ['nombre', 'apellido', 'telefono', 'calle', 'entre', 'numero'];
+
+function datosGuardados() {
+  try {
+    var datos = JSON.parse(localStorage.getItem(DATOS_CLIENTE_KEY));
+    return datos && typeof datos === 'object' ? datos : null;
+  } catch (error) {
+    return null;
+  }
+}
+
+function guardarDatosCliente(cliente) {
+  try {
+    // Se mezcla con lo que ya había: si esta vez retira en el local, no se
+    // pierde la dirección que dejó la vez anterior.
+    var datos = datosGuardados() || {};
+    CAMPOS_CLIENTE.forEach(function (campo) {
+      if (cliente[campo]) datos[campo] = cliente[campo];
+    });
+    localStorage.setItem(DATOS_CLIENTE_KEY, JSON.stringify(datos));
+  } catch (error) {
+    // sin storage (modo privado): no se recuerda, pero el pedido sale igual
+  }
+}
+
+function olvidarDatosCliente() {
+  try {
+    localStorage.removeItem(DATOS_CLIENTE_KEY);
+  } catch (error) {}
+}
 
 function abrirCheckout(finalizar) {
   checkoutFinalizar = finalizar || function () {};
@@ -540,7 +578,23 @@ function mostrarPasoFormulario(tipo) {
           '<span>Apellido</span>' +
           '<input type="text" name="apellido" placeholder="Tu apellido" required autocomplete="family-name">' +
         '</label>' +
+        /* El teléfono es para que el local pueda avisar o coordinar el pago.
+           Se aceptan espacios, guiones, paréntesis y el +54. */
+        '<label class="elegir-campo">' +
+          '<span>Teléfono</span>' +
+          '<input type="tel" name="telefono" placeholder="Ej: 221 501 2289" required autocomplete="tel"' +
+          ' inputmode="tel" pattern="[0-9 +\\(\\)\\-]{8,20}"' +
+          ' title="Escribí tu número con la característica, por ejemplo 221 501 2289">' +
+        '</label>' +
         camposDomicilio +
+        '<label class="elegir-recordar">' +
+          '<input type="checkbox" name="recordar" checked>' +
+          '<span>Recordar mis datos en este dispositivo</span>' +
+        '</label>' +
+        '<p class="elegir-guardados" id="elegir-guardados" hidden>' +
+          'Completamos tus datos de la última vez. ' +
+          '<button type="button" id="elegir-olvidar">Borrar mis datos</button>' +
+        '</p>' +
         '<div class="elegir-form-acciones">' +
           '<button class="elegir-boton-volver" id="elegir-volver" type="button">← Volver</button>' +
           '<button class="elegir-boton-confirmar" type="submit">Confirmar pedido</button>' +
@@ -553,13 +607,39 @@ function mostrarPasoFormulario(tipo) {
   document.body.classList.add('checkout-abierto');
 
   var form = checkoutOverlay.querySelector('#elegir-form');
+
+  // Los datos se ponen con .value y no dentro del HTML: así un nombre con
+  // comillas o con "<" no puede romper el formulario.
+  var guardados = datosGuardados();
+  if (guardados) {
+    CAMPOS_CLIENTE.forEach(function (campo) {
+      if (form.elements[campo] && guardados[campo]) form.elements[campo].value = guardados[campo];
+    });
+    checkoutOverlay.querySelector('#elegir-guardados').hidden = false;
+  }
+  checkoutOverlay.querySelector('#elegir-olvidar').addEventListener('click', function () {
+    olvidarDatosCliente();
+    CAMPOS_CLIENTE.forEach(function (campo) {
+      if (form.elements[campo]) form.elements[campo].value = '';
+    });
+    form.elements.recordar.checked = false;
+    checkoutOverlay.querySelector('#elegir-guardados').hidden = true;
+    form.elements.nombre.focus();
+  });
+
   form.addEventListener('submit', function (event) {
     event.preventDefault();
     if (!form.checkValidity()) {
       form.reportValidity();
       return;
     }
-    checkoutFinalizar(tipo, leerDatosCliente(tipo));
+    var cliente = leerDatosCliente(tipo);
+    if (form.elements.recordar.checked) {
+      guardarDatosCliente(cliente);
+    } else {
+      olvidarDatosCliente();
+    }
+    checkoutFinalizar(tipo, cliente);
   });
   checkoutOverlay.querySelector('#elegir-volver').addEventListener('click', mostrarPasoElegir);
   checkoutOverlay.querySelector('#elegir-cerrar-paso').addEventListener('click', cerrarCheckout);
@@ -572,7 +652,8 @@ function leerDatosCliente(tipo) {
   var form = checkoutOverlay.querySelector('#elegir-form');
   var cliente = {
     nombre: (form.elements.nombre.value || '').trim(),
-    apellido: (form.elements.apellido.value || '').trim()
+    apellido: (form.elements.apellido.value || '').trim(),
+    telefono: (form.elements.telefono.value || '').trim()
   };
   if (tipo === 'domicilio') {
     cliente.calle = (form.elements.calle.value || '').trim();
@@ -677,7 +758,9 @@ document.addEventListener('keydown', function (event) {
    BARRA SUPERIOR
    =====================
    Arriba de todo la barra es transparente y se ve el fondo. Apenas se
-   scrollea toma color, así los botones no quedan encima del contenido. */
+   scrollea toma color, así los botones no quedan encima del contenido.
+   Al entrar a la página arranca con color (el HTML ya trae con-scroll) y
+   se vuelve transparente después de la espera del CSS (5 segundos). */
 
 var barraSuperior = document.querySelector('.header');
 
@@ -691,5 +774,9 @@ window.addEventListener('scroll', marcarBarraSuperior, { passive: true });
    INICIALIZACIÓN
    ===================== */
 
-marcarBarraSuperior();
+/* Se espera a que la barra ya se haya dibujado con color: si se le saca la
+   clase antes, el navegador no hace la transición y queda transparente de una. */
+requestAnimationFrame(function () {
+  requestAnimationFrame(marcarBarraSuperior);
+});
 updateCart();
