@@ -104,10 +104,11 @@ function formatFecha(fecha) {
          fecha.toLocaleTimeString('es-AR', opcionesHora);
 }
 
-/* A domicilio, "listo" quiere decir que ya salió: se muestra "En camino". */
+/* "Listo" se dice distinto según la entrega: a domicilio ya salió ("En
+   camino") y para retirar espera en el local ("Para retirar"). */
 function estadoTexto(estado, envio) {
   if (estado === 'recibido') return 'Recibido';
-  if (estado === 'listo') return envio === 'domicilio' ? 'En camino' : 'Listo';
+  if (estado === 'listo') return envio === 'domicilio' ? 'En camino' : 'Para retirar';
   return 'Nuevo';
 }
 
@@ -155,9 +156,9 @@ function construirCard(pedido) {
     ? '<button class="boton-accion accion-recibir" data-accion="recibir" data-id="' + pedido.id + '">Recibir</button>'
     : '<button class="boton-accion accion-recibir" data-accion="recibir" data-id="' + pedido.id + '" disabled>Recibir</button>';
 
-  // A domicilio el botón dice que el pedido sale: al cliente le llega
-  // "está listo y lo estamos llevando a tu domicilio".
-  var textoListo = pedido.envio === 'domicilio' ? '🛵 Listo y en camino' : 'Marcar listo';
+  // El botón dice lo que le va a llegar al cliente: a domicilio "está listo
+  // y lo estamos llevando", para retirar "ya podés pasar a buscarlo".
+  var textoListo = pedido.envio === 'domicilio' ? '🛵 Listo y en camino' : '🛍️ Listo para retirar';
   var botonListo =
     '<button class="boton-accion accion-listo" data-accion="listo" data-id="' + pedido.id + '"' +
     (estado === 'listo' ? ' disabled' : '') + '>' + textoListo + '</button>';

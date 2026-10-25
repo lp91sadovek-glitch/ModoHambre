@@ -1,5 +1,6 @@
 import atexit
 import json
+import mimetypes
 import os
 import re
 import secrets
@@ -240,7 +241,11 @@ def pedir_clave():
 EXTENSIONES_PUBLICAS = {
     ".html", ".css", ".js", ".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg",
     ".ico", ".mp4", ".webm", ".woff", ".woff2", ".ttf",
+    # manifest.webmanifest: lo que hace que en el iPhone la pagina se pueda
+    # agregar a la pantalla de inicio como una app (y recibir avisos)
+    ".webmanifest",
 }
+mimetypes.add_type("application/manifest+json", ".webmanifest")
 
 
 @app.before_request
@@ -531,6 +536,10 @@ TABLAS_NEON = (
     # notificaciones del celular, si el cliente las acepto.
     "ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS seguimiento TEXT",
     "ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS avisos JSONB",
+    # A que hora el local toco "Recibir" y "Listo": el cliente lo ve en la
+    # linea de tiempo de su pedido, como en las apps de delivery.
+    "ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS recibido_at TIMESTAMPTZ",
+    "ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS listo_at TIMESTAMPTZ",
     # Ajustes sueltos del local, por ahora solo si esta abierto o cerrado.
     """
     CREATE TABLE IF NOT EXISTS ajustes (
@@ -1744,7 +1753,16 @@ def update_estado(order_id):
         return jsonify({"error": "Estado inválido"}), 400
 
     def trabajo(cur):
-        cur.execute("UPDATE pedidos SET estado = %s WHERE id = %s", (estado, order_id))
+        # La hora de cada paso se guarda la primera vez que pasa (si se toca
+        # "Listo" sin "Recibir", cuenta como recibido en ese momento). Si se
+        # vuelve a "nuevo", se borran.
+        cur.execute(
+            "UPDATE pedidos SET estado = %s,"
+            " recibido_at = CASE WHEN %s IN ('recibido', 'listo') THEN COALESCE(recibido_at, now()) END,"
+            " listo_at = CASE WHEN %s = 'listo' THEN COALESCE(listo_at, now()) END"
+            " WHERE id = %s",
+            (estado, estado, estado, order_id),
+        )
         return cur.rowcount
 
     cambiados = recorrer_base(trabajo, transaccion=False)
@@ -1886,7 +1904,13 @@ def seguimiento_pedido(order_id):
 
     def trabajo(cur):
         cur.execute(
-            "SELECT id, estado, envio FROM pedidos WHERE id = %s AND seguimiento = %s",
+            "SELECT id, estado, envio, total, items,"
+            " cliente->>'calle' AS calle, cliente->>'numero' AS numero, cliente->>'entre' AS entre,"
+            # en segundos desde 1970: el navegador lo pasa a la hora del celular
+            " extract(epoch FROM created_at)::bigint AS enviado,"
+            " extract(epoch FROM recibido_at)::bigint AS recibido,"
+            " extract(epoch FROM listo_at)::bigint AS listo"
+            " FROM pedidos WHERE id = %s AND seguimiento = %s",
             (order_id, codigo),
         )
         return [cur.fetchone()]
@@ -1896,7 +1920,12 @@ def seguimiento_pedido(order_id):
         return sin_base()
     if resultado[0] is None:
         return jsonify({"error": "Pedido no encontrado"}), 404
-    return jsonify(dict(resultado[0]))
+    pedido = dict(resultado[0])
+    pedido["items"] = [
+        {"name": item.get("name"), "quantity": item.get("quantity"), "price": item.get("price")}
+        for item in (pedido.get("items") or [])
+    ]
+    return jsonify(pedido)
 
 
 @app.route("/api/avisos/clave")

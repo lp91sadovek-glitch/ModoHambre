@@ -591,6 +591,17 @@ function mostrarPasoFormulario(tipo) {
           '<input type="checkbox" name="recordar" checked>' +
           '<span>Recordar mis datos en este dispositivo</span>' +
         '</label>' +
+        /* Solo para "Enviar por la app" (por WhatsApp el local contesta por
+           WhatsApp) y si el navegador puede recibir notificaciones. */
+        (checkoutFinalizar === enviarPedidoSistema &&
+          typeof SeguimientoPedidos !== 'undefined' && SeguimientoPedidos.puedeAvisar()
+          ? '<label class="elegir-recordar">' +
+              // desmarcada: el aviso principal es el de la pantalla; la
+              // notificación de Chrome queda para quien la quiera
+              '<input type="checkbox" name="avisos">' +
+              '<span>🔔 Avisarme también con una notificación (aunque cierre la página)</span>' +
+            '</label>'
+          : '') +
         '<p class="elegir-guardados" id="elegir-guardados" hidden>' +
           'Completamos tus datos de la última vez. ' +
           '<button type="button" id="elegir-olvidar">Borrar mis datos</button>' +
@@ -639,7 +650,11 @@ function mostrarPasoFormulario(tipo) {
     } else {
       olvidarDatosCliente();
     }
-    checkoutFinalizar(tipo, cliente);
+    // El permiso de notificaciones se pide acá, en el mismo toque: el
+    // navegador no deja preguntarlo después, cuando vuelve la respuesta.
+    var quiereAvisos = Boolean(form.elements.avisos && form.elements.avisos.checked);
+    if (quiereAvisos) SeguimientoPedidos.pedirPermiso();
+    checkoutFinalizar(tipo, cliente, quiereAvisos);
   });
   checkoutOverlay.querySelector('#elegir-volver').addEventListener('click', mostrarPasoElegir);
   checkoutOverlay.querySelector('#elegir-cerrar-paso').addEventListener('click', cerrarCheckout);
@@ -663,7 +678,7 @@ function leerDatosCliente(tipo) {
   return cliente;
 }
 
-function enviarPedidoSistema(tipo, cliente) {
+function enviarPedidoSistema(tipo, cliente, quiereAvisos) {
   var botonConfirmar = checkoutOverlay.querySelector('.elegir-boton-confirmar');
   botonConfirmar.disabled = true;
   // Se ve al instante que el toque se tomó, aunque el servidor tarde.
@@ -685,7 +700,7 @@ function enviarPedidoSistema(tipo, cliente) {
       closeCartDrawer();
       mostrarToast('Su pedido se ha enviado correctamente');
       // La tarjetita de abajo muestra el estado del pedido (seguimiento.js).
-      if (typeof SeguimientoPedidos !== 'undefined') SeguimientoPedidos.agregar(respuesta);
+      if (typeof SeguimientoPedidos !== 'undefined') SeguimientoPedidos.agregar(respuesta, quiereAvisos);
     })
     .catch(function (e) {
       console.error(e);

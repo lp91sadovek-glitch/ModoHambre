@@ -400,7 +400,7 @@
             var nombre = (cliente.nombre || '') + ' ' + (cliente.apellido || '');
             var estado = pedido.estado || 'nuevo';
             var etiqueta = estado === 'listo'
-                ? (pedido.envio === 'domicilio' ? 'En camino' : 'Listo')
+                ? (pedido.envio === 'domicilio' ? 'En camino' : 'Para retirar')
                 : estado === 'recibido' ? 'Recibido' : 'Nuevo';
 
             var productos = (pedido.items || []).map(function (item) {

@@ -76,16 +76,38 @@ var SeguimientoPedidos = (function () {
     return bytes;
   }
 
-  async function activarAvisos(pedido, boton) {
-    boton.disabled = true;
-    boton.textContent = 'Activando…';
+  /* El permiso se pide en el mismo toque de "Confirmar pedido" (el navegador
+     solo deja preguntarlo cuando la persona toca algo). Antes había que tocar
+     además un botón aparte en la tarjeta, y si no se tocaba el aviso nunca
+     llegaba. Devuelve la promesa del permiso para no tener que esperarla. */
+  var permisoPedido = null;
+
+  function pedirPermiso() {
+    if (!puedeAvisarCerrada()) return null;
+    if (Notification.permission === 'granted') {
+      permisoPedido = Promise.resolve('granted');
+    } else {
+      try {
+        permisoPedido = Notification.requestPermission();
+      } catch (error) {
+        permisoPedido = null;
+      }
+    }
+    return permisoPedido;
+  }
+
+  /* Anota este celular para que le lleguen los avisos del pedido. Si falla,
+     queda escrito por qué en la tarjeta (antes fallaba sin decir nada). */
+  async function suscribir(pedido) {
     try {
-      var permiso = await Notification.requestPermission();
-      if (permiso !== 'granted') throw new Error('sin permiso');
+      var permiso = await (permisoPedido || Notification.requestPermission());
+      if (permiso !== 'granted') {
+        throw new Error(permiso === 'denied' ? 'bloqueado' : 'sin permiso');
+      }
       var registro = await navigator.serviceWorker.register('/sw.js');
       await navigator.serviceWorker.ready;
       var respuesta = await fetch(API_PEDIDOS + '/api/avisos/clave');
-      if (!respuesta.ok) throw new Error('sin clave');
+      if (!respuesta.ok) throw new Error('el servidor no tiene avisos');
       var clave = (await respuesta.json()).clave;
       var suscripcion = await registro.pushManager.getSubscription() ||
         await registro.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: claveABytes(clave) });
@@ -94,26 +116,108 @@ var SeguimientoPedidos = (function () {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ t: pedido.t, suscripcion: suscripcion.toJSON() })
       });
-      if (!guardada.ok) throw new Error('no se guardó');
-      marcar(pedido.id, { avisos: true });
-      dibujar();
+      if (!guardada.ok) throw new Error('el servidor no la guardó');
+      marcar(pedido.id, { avisos: true, errorAvisos: '' });
     } catch (error) {
       console.warn('No se pudieron activar los avisos', error);
-      boton.disabled = false;
-      boton.textContent = Notification.permission === 'denied'
-        ? 'Los avisos están bloqueados en el navegador'
-        : 'No se pudo. Tocá para reintentar';
+      var motivo = error && error.message === 'bloqueado'
+        ? 'Las notificaciones están bloqueadas para esta página. Activalas desde el candadito de la barra de direcciones.'
+        : error && error.message === 'sin permiso'
+          ? 'No diste permiso para las notificaciones.'
+          : 'No se pudieron activar las notificaciones en este navegador.';
+      marcar(pedido.id, { errorAvisos: motivo });
+    }
+    dibujar();
+  }
+
+  function activarAvisos(pedido, boton) {
+    boton.disabled = true;
+    boton.textContent = 'Activando…';
+    permisoPedido = null;
+    suscribir(pedido);
+  }
+
+  /* ---------- el aviso en pantalla ----------
+     Lo principal: un cartel grande en el medio de la página, con un sonido
+     corto y vibración en el celular. Si el cliente está en otra pestaña, el
+     título de la pestaña parpadea hasta que vuelve. */
+
+  var tituloOriginal = document.title;
+  var parpadeo = null;
+
+  function sonar() {
+    try {
+      var audio = new (window.AudioContext || window.webkitAudioContext)();
+      [0, 0.18].forEach(function (cuando, i) {
+        var nota = audio.createOscillator();
+        var volumen = audio.createGain();
+        nota.connect(volumen);
+        volumen.connect(audio.destination);
+        nota.frequency.value = i === 0 ? 880 : 1175;
+        volumen.gain.setValueAtTime(0.18, audio.currentTime + cuando);
+        volumen.gain.exponentialRampToValueAtTime(0.01, audio.currentTime + cuando + 0.35);
+        nota.start(audio.currentTime + cuando);
+        nota.stop(audio.currentTime + cuando + 0.35);
+      });
+    } catch (error) {}
+    if (navigator.vibrate) {
+      try { navigator.vibrate([200, 100, 200]); } catch (error) {}
     }
   }
 
-  /* Con la página abierta: si el cliente dio permiso, también se muestra la
-     notificación del celular (misma etiqueta que la del servidor, así no se
-     duplica si llegan las dos). */
+  function parpadearTitulo(texto) {
+    clearInterval(parpadeo);
+    var alternar = false;
+    parpadeo = setInterval(function () {
+      document.title = (alternar = !alternar) ? '🔔 ' + texto : tituloOriginal;
+    }, 1000);
+  }
+
+  function dejarDeParpadear() {
+    clearInterval(parpadeo);
+    parpadeo = null;
+    document.title = tituloOriginal;
+  }
+
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) dejarDeParpadear();
+  });
+
+  function cartelEnPantalla(pedido, texto) {
+    // Solo se saca un cartel anterior, no la pantalla de seguimiento si
+    // estaba abierta (el cartel queda arriba de ella).
+    var viejo = document.querySelector('.seg-aviso-fondo');
+    if (viejo) viejo.remove();
+    var fondo = document.createElement('div');
+    fondo.className = 'seg-cartel-fondo seg-aviso-fondo';
+    fondo.innerHTML =
+      '<div class="seg-cartel' + (pedido.estado === 'listo' ? ' seg-cartel-listo' : '') + '"' +
+      ' role="alertdialog" aria-modal="true" aria-labelledby="seg-cartel-titulo">' +
+        '<p class="seg-cartel-numero">Pedido #' + pedido.id + '</p>' +
+        '<p class="seg-cartel-titulo" id="seg-cartel-titulo">' + texto.titulo + '</p>' +
+        '<p class="seg-cartel-cuerpo">' + texto.cuerpo + '</p>' +
+        '<button class="seg-cartel-boton" type="button">¡Genial!</button>' +
+      '</div>';
+    document.body.appendChild(fondo);
+    var cerrar = function () {
+      fondo.remove();
+      dejarDeParpadear();
+    };
+    fondo.querySelector('.seg-cartel-boton').addEventListener('click', cerrar);
+    fondo.addEventListener('click', function (evento) {
+      if (evento.target === fondo) cerrar();
+    });
+    fondo.querySelector('.seg-cartel-boton').focus();
+  }
+
+  /* Además, si el cliente dio permiso, también se muestra la notificación
+     del celular (misma etiqueta que la del servidor, así no se duplica si
+     llegan las dos). */
   function avisarAhora(pedido) {
     var texto = textoDe(pedido);
-    if (typeof mostrarToast === 'function') {
-      mostrarToast(texto.titulo + ' ' + texto.cuerpo);
-    }
+    cartelEnPantalla(pedido, texto);
+    sonar();
+    if (document.hidden) parpadearTitulo(texto.titulo.replace(/^\S+\s/, ''));
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
     var opciones = {
       body: 'Pedido #' + pedido.id + ': ' + texto.cuerpo,
@@ -164,13 +268,23 @@ var SeguimientoPedidos = (function () {
     var texto = textoDe(pedido);
     var recibido = pedido.estado === 'recibido' || pedido.estado === 'listo';
     var listo = pedido.estado === 'listo';
-    var ultimoPaso = pedido.envio === 'domicilio' ? 'En camino' : 'Listo';
+    var ultimoPaso = pedido.envio === 'domicilio' ? 'En camino' : 'Listo para retirar';
 
     var botonAvisos = '';
-    if (!listo && !pedido.avisos && puedeAvisarCerrada()) {
-      botonAvisos = '<button class="seg-avisos" type="button" data-accion="avisos">🔔 Avisarme aunque cierre la página</button>';
-    } else if (!listo && pedido.avisos) {
+    if (!listo && pedido.avisos) {
       botonAvisos = '<p class="seg-nota">🔔 Te vamos a avisar aunque cierres la página.</p>';
+    } else if (!listo && puedeAvisarCerrada()) {
+      botonAvisos =
+        (pedido.errorAvisos ? '<p class="seg-nota seg-error">' + pedido.errorAvisos + '</p>' : '') +
+        '<button class="seg-avisos" type="button" data-accion="avisos">' +
+        (pedido.errorAvisos ? '🔔 Reintentar avisos' : '🔔 Avisarme aunque cierre la página') + '</button>';
+    } else if (!listo && 'Notification' in window && Notification.permission === 'denied') {
+      botonAvisos = '<p class="seg-nota seg-error">Las notificaciones están bloqueadas para esta página. ' +
+        'Activalas desde el candadito de la barra de direcciones.</p>';
+    } else if (!listo) {
+      // iPhone (fuera de la pantalla de inicio) y navegadores viejos
+      botonAvisos = '<p class="seg-nota">Dejá esta página abierta y te avisamos acá. ' +
+        'En iPhone, agregala a la pantalla de inicio para recibir notificaciones.</p>';
     }
 
     caja.hidden = false;
@@ -185,9 +299,165 @@ var SeguimientoPedidos = (function () {
         pasoHTML('Recibido', recibido, recibido && !listo) +
         pasoHTML(ultimoPaso, listo, listo) +
       '</ol>' +
+      '<button class="seg-ver" type="button" data-accion="detalle">Ver seguimiento ›</button>' +
       botonAvisos;
     caja.dataset.id = pedido.id;
+    if (detalleAbierto) dibujarDetalle();
   }
+
+  /* ---------- la pantalla de seguimiento ----------
+     Como en las apps de delivery: una línea de tiempo con la hora de cada
+     paso, y abajo qué se pidió, el total y la entrega. Se abre desde la
+     tarjetita ("Ver seguimiento") o desde "Mis pedidos" en el menú. */
+
+  var detalleAbierto = null;   // id del pedido que se está mirando
+  var fondoDetalle = null;
+
+  function esc(valor) {
+    return String(valor == null ? '' : valor)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function hora(segundos) {
+    if (!segundos) return '';
+    var fecha = new Date(segundos * 1000);
+    return fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function precio(valor) {
+    return '$' + Number(valor || 0).toLocaleString('es-AR');
+  }
+
+  function pasoLinea(icono, titulo, detalle, cuando, hecho, actual) {
+    return '<li class="seg-linea-paso' + (hecho ? ' hecho' : '') + (actual ? ' actual' : '') + '">' +
+      '<span class="seg-linea-icono">' + icono + '</span>' +
+      '<div class="seg-linea-texto">' +
+        '<p class="seg-linea-titulo">' + titulo + (cuando ? '<span class="seg-linea-hora">' + cuando + '</span>' : '') + '</p>' +
+        '<p class="seg-linea-detalle">' + detalle + '</p>' +
+      '</div>' +
+    '</li>';
+  }
+
+  function dibujarDetalle() {
+    if (!fondoDetalle) return;
+    var lista = leer();
+    var panel = fondoDetalle.querySelector('.seg-detalle-contenido');
+
+    if (!lista.length) {
+      panel.innerHTML =
+        '<p class="seg-detalle-vacio">📦<br>Todavía no hiciste pedidos por la app desde este dispositivo.</p>' +
+        '<a class="seg-cartel-boton seg-detalle-pedir" href="platos.html">Pedir comida</a>';
+      return;
+    }
+
+    var pedido = lista.find(function (p) { return p.id === detalleAbierto; }) || lista[lista.length - 1];
+    detalleAbierto = pedido.id;
+    var d = pedido.detalle || {};
+    var texto = textoDe(pedido);
+    var recibido = pedido.estado === 'recibido' || pedido.estado === 'listo';
+    var listo = pedido.estado === 'listo';
+    var aDomicilio = pedido.envio === 'domicilio';
+
+    var otros = lista.length > 1
+      ? '<div class="seg-detalle-otros">' + lista.slice().reverse().map(function (p) {
+          return '<button type="button" data-ver="' + p.id + '"' + (p.id === pedido.id ? ' class="activo"' : '') + '>#' + p.id + '</button>';
+        }).join('') + '</div>'
+      : '';
+
+    var platos = (d.items || []).map(function (item) {
+      var cantidad = item.quantity || 1;
+      return '<li><span>' + esc(cantidad) + ' × ' + esc(item.name) + '</span>' +
+        '<span>' + precio((item.price || 0) * cantidad) + '</span></li>';
+    }).join('');
+
+    var direccion = aDomicilio && d.calle
+      ? esc(d.calle) + (d.numero ? ' N° ' + esc(d.numero) : '') + (d.entre ? ' (entre ' + esc(d.entre) + ')' : '')
+      : '';
+
+    panel.innerHTML =
+      otros +
+      '<p class="seg-cartel-numero">Pedido #' + pedido.id + '</p>' +
+      '<p class="seg-detalle-estado">' + texto.titulo + '</p>' +
+      '<p class="seg-cartel-cuerpo">' + texto.cuerpo + '</p>' +
+      '<ol class="seg-linea">' +
+        pasoLinea('🧾', 'Pedido enviado', 'Le llegó al local.', hora(d.enviado), true, !recibido) +
+        pasoLinea('👨‍🍳', 'Pedido recibido', 'El local lo está preparando.', hora(d.recibido), recibido, recibido && !listo) +
+        (aDomicilio
+          ? pasoLinea('🛵', 'En camino', 'Está listo y lo estamos llevando a tu domicilio.', hora(d.listo), listo, listo)
+          : pasoLinea('🛍️', 'Listo para retirar', 'Ya podés pasar a buscarlo por el local.', hora(d.listo), listo, listo)) +
+      '</ol>' +
+      (platos
+        ? '<div class="seg-detalle-caja">' +
+            '<p class="seg-detalle-subtitulo">Tu pedido</p>' +
+            '<ul class="seg-detalle-platos">' + platos + '</ul>' +
+            '<p class="seg-detalle-total"><span>Total</span><span>' + precio(d.total) + '</span></p>' +
+          '</div>'
+        : '') +
+      '<div class="seg-detalle-caja">' +
+        '<p class="seg-detalle-subtitulo">Entrega</p>' +
+        '<p>' + (aDomicilio ? '🛵 A domicilio' + (direccion ? '<br>📌 ' + direccion : '') : '🏪 Retiro en el local') + '</p>' +
+      '</div>';
+  }
+
+  function cerrarDetalle() {
+    if (fondoDetalle) fondoDetalle.remove();
+    fondoDetalle = null;
+    detalleAbierto = null;
+  }
+
+  function abrirDetalle(id) {
+    cerrarDetalle();
+    detalleAbierto = id || null;
+    fondoDetalle = document.createElement('div');
+    fondoDetalle.className = 'seg-cartel-fondo seg-detalle-fondo';
+    fondoDetalle.innerHTML =
+      '<div class="seg-detalle" role="dialog" aria-modal="true" aria-label="Seguimiento del pedido">' +
+        '<div class="seg-detalle-cabecera">' +
+          '<p>📦 Mis pedidos</p>' +
+          '<button type="button" class="seg-detalle-cerrar" aria-label="Cerrar">×</button>' +
+        '</div>' +
+        '<div class="seg-detalle-contenido"></div>' +
+      '</div>';
+    document.body.appendChild(fondoDetalle);
+    fondoDetalle.addEventListener('click', function (evento) {
+      if (evento.target === fondoDetalle || evento.target.closest('.seg-detalle-cerrar')) {
+        cerrarDetalle();
+        return;
+      }
+      var otro = evento.target.closest('[data-ver]');
+      if (otro) {
+        detalleAbierto = Number(otro.dataset.ver);
+        dibujarDetalle();
+        consultarAhora(detalleAbierto);
+      }
+    });
+    dibujarDetalle();
+    if (detalleAbierto) consultarAhora(detalleAbierto);
+  }
+
+  /* Al abrir la pantalla se pregunta enseguida (también por los pedidos ya
+     listos, que no se siguen consultando), así las horas están al día. */
+  async function consultarAhora(id) {
+    var pedido = leer().find(function (p) { return p.id === id; });
+    if (!pedido) return;
+    await consultar(pedido);
+    dibujar();
+  }
+
+  document.addEventListener('keydown', function (evento) {
+    if (evento.key === 'Escape' && fondoDetalle) cerrarDetalle();
+  });
+
+  /* "Mis pedidos" del menú (cualquier link con data-mis-pedidos). */
+  document.addEventListener('click', function (evento) {
+    var link = evento.target.closest('[data-mis-pedidos]');
+    if (!link) return;
+    evento.preventDefault();
+    if (typeof toggleNavOverlay === 'function') toggleNavOverlay(false);
+    var lista = leer();
+    abrirDetalle(lista.length ? lista[lista.length - 1].id : null);
+  });
 
   function alTocar(evento) {
     var boton = evento.target.closest('[data-accion]');
@@ -196,42 +466,49 @@ var SeguimientoPedidos = (function () {
     var pedido = leer().find(function (p) { return p.id === id; });
     if (!pedido) return;
     if (boton.dataset.accion === 'cerrar') {
-      // Listo: se deja de seguir. Si no, se esconde hasta el próximo cambio.
-      if (pedido.estado === 'listo') {
-        guardar(leer().filter(function (p) { return p.id !== id; }));
-      } else {
-        marcar(id, { oculto: true });
-      }
+      // Se esconde la tarjeta (vuelve si cambia el estado). El pedido sigue
+      // en "Mis pedidos" hasta 6 horas después.
+      marcar(id, { oculto: true });
       dibujar();
     } else if (boton.dataset.accion === 'avisos') {
       activarAvisos(pedido, boton);
+    } else if (boton.dataset.accion === 'detalle') {
+      abrirDetalle(id);
     }
   }
 
   /* ---------- preguntar el estado ---------- */
 
+  /* Pregunta el estado de un pedido y guarda el detalle (horas, platos,
+     total). Si cambió el estado, avisa. */
+  async function consultar(pedido) {
+    try {
+      var respuesta = await fetch(API_PEDIDOS + '/api/seguimiento/' + pedido.id +
+        '?t=' + encodeURIComponent(pedido.t), { cache: 'no-store' });
+      if (respuesta.status === 404) {
+        // El pedido ya no existe: se deja de seguir.
+        guardar(leer().filter(function (p) { return p.id !== pedido.id; }));
+        return;
+      }
+      if (!respuesta.ok) return;
+      var datos = await respuesta.json();
+      var cambios = { detalle: datos, envio: datos.envio };
+      if (datos.estado !== pedido.estado) {
+        // Cambió: se vuelve a mostrar aunque el cliente la haya ocultado.
+        cambios.estado = datos.estado;
+        cambios.oculto = false;
+      }
+      marcar(pedido.id, cambios);
+      if (cambios.estado) avisarAhora(Object.assign({}, pedido, datos));
+    } catch (error) {
+      // sin internet un momento: se reintenta en la próxima vuelta
+    }
+  }
+
   async function actualizar() {
     var pendientes = leer().filter(function (p) { return p.estado !== 'listo'; });
     for (var i = 0; i < pendientes.length; i++) {
-      var pedido = pendientes[i];
-      try {
-        var respuesta = await fetch(API_PEDIDOS + '/api/seguimiento/' + pedido.id +
-          '?t=' + encodeURIComponent(pedido.t), { cache: 'no-store' });
-        if (respuesta.status === 404) {
-          // El pedido ya no existe: se deja de seguir.
-          guardar(leer().filter(function (p) { return p.id !== pedido.id; }));
-          continue;
-        }
-        if (!respuesta.ok) continue;
-        var datos = await respuesta.json();
-        if (datos.estado !== pedido.estado) {
-          // Cambió: se vuelve a mostrar aunque el cliente la haya ocultado.
-          marcar(pedido.id, { estado: datos.estado, envio: datos.envio, oculto: false });
-          avisarAhora(Object.assign({}, pedido, datos));
-        }
-      } catch (error) {
-        // sin internet un momento: se reintenta en la próxima vuelta
-      }
+      await consultar(pendientes[i]);
     }
     dibujar();
     if (!leer().some(function (p) { return p.estado !== 'listo'; })) {
@@ -242,25 +519,33 @@ var SeguimientoPedidos = (function () {
 
   function seguir() {
     dibujar();
+    // /#mis-pedidos (lo abre la notificación al tocarla) abre la pantalla
+    if (location.hash === '#mis-pedidos') {
+      var lista = leer();
+      abrirDetalle(lista.length ? lista[lista.length - 1].id : null);
+    }
     if (!reloj && leer().some(function (p) { return p.estado !== 'listo'; })) {
       reloj = setInterval(actualizar, CADA_CUANTO);
       actualizar();
     }
   }
 
-  /* La llama platos-cart.js cuando el pedido se guardó en el servidor. */
-  function agregar(respuesta) {
+  /* La llama platos-cart.js cuando el pedido se guardó en el servidor. Si el
+     cliente dejó marcado "avisarme", el celular se anota solo. */
+  function agregar(respuesta, quiereAvisos) {
     if (!respuesta || !respuesta.order_id || !respuesta.seguimiento) return;
-    var lista = leer();
-    lista.push({
+    var pedido = {
       id: respuesta.order_id,
       t: respuesta.seguimiento,
       envio: respuesta.envio || 'local',
       estado: 'nuevo',
       creado: Date.now()
-    });
+    };
+    var lista = leer();
+    lista.push(pedido);
     guardar(lista);
     seguir();
+    if (quiereAvisos && puedeAvisarCerrada()) suscribir(pedido);
   }
 
   if (document.readyState === 'loading') {
@@ -269,5 +554,12 @@ var SeguimientoPedidos = (function () {
     seguir();
   }
 
-  return { agregar: agregar };
+  /* Chrome frena las pestañas que no se están mirando (pregunta como mucho
+     una vez por minuto). Al volver a la pestaña se pregunta enseguida, así el
+     aviso aparece apenas el cliente mira la página. */
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden && reloj) actualizar();
+  });
+
+  return { agregar: agregar, pedirPermiso: pedirPermiso, puedeAvisar: puedeAvisarCerrada };
 })();

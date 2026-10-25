@@ -37,7 +37,7 @@ self.addEventListener('notificationclick', function (evento) {
       for (var i = 0; i < ventanas.length; i++) {
         if ('focus' in ventanas[i]) return ventanas[i].focus();
       }
-      return self.clients.openWindow('/');
+      return self.clients.openWindow('/#mis-pedidos');
     })
   );
 });

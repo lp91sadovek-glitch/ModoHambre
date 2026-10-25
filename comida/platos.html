@@ -4,9 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#FC8F02">
+    <link rel="apple-touch-icon" href="/imagenes/icono-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Modo Hambre">
     <title>Ordenar</title>
 
-    <link rel="stylesheet" href="style/platos.css?v=25">
+    <link rel="stylesheet" href="style/platos.css?v=29">
     <style>
         .header.con-scroll {
             background-color: #FFB060;
@@ -613,6 +618,11 @@
                     <span class="nav-item-texto">Pedir comida</span>
                     <span class="nav-item-flecha">›</span>
                 </a>
+                <a href="#mis-pedidos" class="nav-item" data-mis-pedidos>
+                    <span class="nav-item-icono">📦</span>
+                    <span class="nav-item-texto">Mis pedidos</span>
+                    <span class="nav-item-flecha">›</span>
+                </a>
                 <a href="sobre nosotros.html" class="nav-item">
                     <span class="nav-item-icono">👥</span>
                     <span class="nav-item-texto">Sobre nosotros</span>
@@ -696,8 +706,8 @@
     </div>
 
     <script src="api-client.js?v=6"></script>
-    <script src="platos-cart.js?v=13"></script>
-    <script src="seguimiento.js?v=1"></script>
+    <script src="platos-cart.js?v=15"></script>
+    <script src="seguimiento.js?v=6"></script>
     <script src="platos-menu.js?v=4"></script>
 
     <script>
