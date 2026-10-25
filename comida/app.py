@@ -375,7 +375,7 @@ def obtener_pool():
                 min_size=0,
                 max_size=6,
                 max_idle=120,
-                timeout=8,
+                timeout=6,
                 # prepare_threshold=None: el "-pooler" de Neon (pgbouncer) no
                 # se lleva bien con las consultas preparadas.
                 # keepalives y tcp_user_timeout: si Neon se durmio y la
@@ -395,6 +395,27 @@ def obtener_pool():
     return _pool
 
 
+def reiniciar_pool(viejo):
+    """Tira el pool trabado y deja que el proximo pedido arme uno nuevo.
+
+    Paso en Render: Neon estaba dormido, el pool fallo al abrir conexiones y
+    quedo trabado para siempre (cada pedido esperaba 8 segundos y fallaba),
+    aunque la base andaba bien. Con un pool nuevo se arregla solo.
+    """
+    global _pool
+    with _pool_lock:
+        if _pool is not viejo:
+            return  # otro pedido ya lo reinicio
+        _pool = None
+    _reinicios_pool["cantidad"] += 1
+    _reinicios_pool["ultimo"] = time.time()
+    # El viejo se cierra aparte: cerrarlo puede tardar y nadie lo espera.
+    threading.Thread(target=lambda: viejo.close(timeout=1), daemon=True).start()
+
+
+_reinicios_pool = {"cantidad": 0, "ultimo": 0.0}
+
+
 def recorrer_base(funcion, por_defecto=None, transaccion=True):
     """Toma una conexion, hace el trabajo, y la devuelve pase lo que pase.
 
@@ -403,26 +424,29 @@ def recorrer_base(funcion, por_defecto=None, transaccion=True):
     sola: es para lo que hace una sola consulta (los pedidos, el panel), y se
     ahorra el BEGIN y el COMMIT, que son dos viajes mas a San Pablo.
     """
-    pool = obtener_pool()
-    if pool is None:
+    if obtener_pool() is None:
         return _recorrer_sin_pool(funcion, por_defecto)
     if time.time() < _base_caida["hasta"]:
         return por_defecto
 
     for intento in (1, 2):
+        pool = obtener_pool()
         try:
             with pool.connection() as conn:
                 conn.autocommit = not transaccion
                 # Al salir del with sin error se hace commit; con error, rollback.
                 return funcion(conn.cursor())
         except PoolTimeout as error:
-            # En 8 segundos no se pudo abrir NINGUNA conexion: la base no
-            # responde. No se reintenta (antes eran 20 segundos por pedido) y
-            # por un rato se contesta "sin base" al instante, asi la pagina no
-            # se cuelga esperando: con eso el panel y el menu siguen andando.
-            marcar_base_caida()
-            avisar_error_de_base(error)
-            return por_defecto
+            # No se pudo conseguir ninguna conexion. Puede ser que el pool se
+            # haya trabado (la base anda): se arma uno nuevo y se prueba una
+            # vez mas. Si con el nuevo tampoco, la base no responde: por un
+            # rato se contesta "sin base" al instante, asi la pagina no se
+            # cuelga esperando y el panel y el menu siguen andando.
+            reiniciar_pool(pool)
+            if intento == 2:
+                marcar_base_caida()
+                avisar_error_de_base(error)
+                return por_defecto
         except psycopg.OperationalError as error:
             # Una conexion guardada que se corto (Neon se durmio, se reinicio
             # el pooler): se tira y se prueba una vez con otra.
@@ -1571,6 +1595,18 @@ def probar_base():
             mensaje = re.sub(r"\d+\.\d+\.\d+\.\d+", "<ip>", mensaje)
             resultado["estado"] = f"{type(error).__name__}: {mensaje[:200]}"
         resultado["segundos"] = round(time.time() - inicio, 2)
+    # Como esta el pool que usan los pedidos (puede andar la conexion directa
+    # y estar trabado el pool, como paso una vez).
+    if _pool is not None:
+        try:
+            stats = _pool.get_stats()
+            resultado["pool"] = {clave: stats.get(clave, 0) for clave in (
+                "pool_size", "pool_available", "requests_waiting",
+                "connections_errors", "requests_errors", "connections_lost")}
+        except Exception:
+            pass
+    resultado["pool_reiniciado"] = _reinicios_pool["cantidad"]
+    resultado["base_caida_por"] = max(0, round(_base_caida["hasta"] - time.time()))
     _ultima_prueba.update(momento=ahora, resultado=resultado)
     return resultado
 
