@@ -26,8 +26,17 @@ var SeguimientoPedidos = (function () {
     nuevo: { titulo: 'Pedido enviado', cuerpo: 'Esperando que el local lo reciba.' },
     recibido: { titulo: '🍽️ ¡Recibimos tu pedido!', cuerpo: 'Ya lo estamos preparando.' },
     listo_local: { titulo: '✅ ¡Tu pedido está listo!', cuerpo: 'Ya podés pasar a retirarlo por el local.' },
-    listo_domicilio: { titulo: '🛵 ¡Tu pedido va en camino!', cuerpo: 'Está listo y lo estamos llevando a tu domicilio.' }
+    listo_domicilio: { titulo: '🛵 ¡Tu pedido va en camino!', cuerpo: 'Está listo y lo estamos llevando a tu domicilio.' },
+    entregado_local: { titulo: '🎉 ¡Retiraste tu pedido!', cuerpo: '¡Que lo disfrutes!' },
+    entregado_domicilio: { titulo: '🎉 ¡Tu pedido fue entregado!', cuerpo: '¡Que lo disfrutes!' }
   };
+
+  /* Un pedido está activo hasta que el local lo marca como entregado o
+     retirado. Mientras está activo se sigue preguntando el estado, se ve la
+     tarjeta de abajo y el botón "Mi pedido" de arriba. */
+  function activo(pedido) {
+    return pedido.estado !== 'entregado';
+  }
 
   var reloj = null;
   var caja = null;
@@ -54,6 +63,9 @@ var SeguimientoPedidos = (function () {
   }
 
   function textoDe(pedido) {
+    if (pedido.estado === 'entregado') {
+      return TEXTOS[pedido.envio === 'domicilio' ? 'entregado_domicilio' : 'entregado_local'];
+    }
     if (pedido.estado === 'listo') {
       return TEXTOS[pedido.envio === 'domicilio' ? 'listo_domicilio' : 'listo_local'];
     }
@@ -250,7 +262,8 @@ var SeguimientoPedidos = (function () {
   }
 
   function dibujar() {
-    var visibles = leer().filter(function (p) { return !p.oculto; });
+    var visibles = leer().filter(function (p) { return !p.oculto && activo(p); });
+    mostrarBotonArriba();
     if (!caja) {
       caja = document.createElement('div');
       caja.className = 'seguimiento';
@@ -355,8 +368,9 @@ var SeguimientoPedidos = (function () {
     detalleAbierto = pedido.id;
     var d = pedido.detalle || {};
     var texto = textoDe(pedido);
-    var recibido = pedido.estado === 'recibido' || pedido.estado === 'listo';
-    var listo = pedido.estado === 'listo';
+    var entregado = pedido.estado === 'entregado';
+    var listo = pedido.estado === 'listo' || entregado;
+    var recibido = pedido.estado === 'recibido' || listo;
     var aDomicilio = pedido.envio === 'domicilio';
 
     var otros = lista.length > 1
@@ -367,7 +381,9 @@ var SeguimientoPedidos = (function () {
 
     var platos = (d.items || []).map(function (item) {
       var cantidad = item.quantity || 1;
-      return '<li><span>' + esc(cantidad) + ' × ' + esc(item.name) + '</span>' +
+      // el precio de cada uno abajo, y a la derecha lo que suman
+      return '<li><span>' + esc(cantidad) + ' × ' + esc(item.name) +
+          '<small class="seg-unitario">' + precio(item.price) + ' c/u</small></span>' +
         '<span>' + precio((item.price || 0) * cantidad) + '</span></li>';
     }).join('');
 
@@ -384,8 +400,10 @@ var SeguimientoPedidos = (function () {
         pasoLinea('🧾', 'Pedido enviado', 'Le llegó al local.', hora(d.enviado), true, !recibido) +
         pasoLinea('👨‍🍳', 'Pedido recibido', 'El local lo está preparando.', hora(d.recibido), recibido, recibido && !listo) +
         (aDomicilio
-          ? pasoLinea('🛵', 'En camino', 'Está listo y lo estamos llevando a tu domicilio.', hora(d.listo), listo, listo)
-          : pasoLinea('🛍️', 'Listo para retirar', 'Ya podés pasar a buscarlo por el local.', hora(d.listo), listo, listo)) +
+          ? pasoLinea('🛵', 'En camino', 'Está listo y lo estamos llevando a tu domicilio.', hora(d.listo), listo, listo && !entregado) +
+            pasoLinea('🎉', 'Entregado', 'Tu pedido llegó. ¡Que lo disfrutes!', hora(d.entregado), entregado, entregado)
+          : pasoLinea('🛍️', 'Listo para retirar', 'Ya podés pasar a buscarlo por el local.', hora(d.listo), listo, listo && !entregado) +
+            pasoLinea('🎉', 'Retirado', 'Ya lo retiraste. ¡Que lo disfrutes!', hora(d.entregado), entregado, entregado)) +
       '</ol>' +
       (platos
         ? '<div class="seg-detalle-caja">' +
@@ -449,15 +467,44 @@ var SeguimientoPedidos = (function () {
     if (evento.key === 'Escape' && fondoDetalle) cerrarDetalle();
   });
 
-  /* "Mis pedidos" del menú (cualquier link con data-mis-pedidos). */
+  /* "Mis pedidos" del menú y el botón de arriba (todo lo que tenga
+     data-mis-pedidos). Abre el pedido activo más nuevo, o el último. */
+  function pedidoParaAbrir() {
+    var lista = leer();
+    var activos = lista.filter(activo);
+    var elegido = activos.length ? activos[activos.length - 1] : lista[lista.length - 1];
+    return elegido ? elegido.id : null;
+  }
+
   document.addEventListener('click', function (evento) {
     var link = evento.target.closest('[data-mis-pedidos]');
     if (!link) return;
     evento.preventDefault();
     if (typeof toggleNavOverlay === 'function') toggleNavOverlay(false);
-    var lista = leer();
-    abrirDetalle(lista.length ? lista[lista.length - 1].id : null);
+    abrirDetalle(pedidoParaAbrir());
   });
+
+  /* El botón "📦 Mi pedido" de la barra de arriba, entre el carrito y el
+     menú. Solo aparece mientras hay un pedido activo: cuando el local lo
+     marca como entregado o retirado, desaparece. */
+  var botonArriba = null;
+
+  function mostrarBotonArriba() {
+    var hayActivo = leer().some(activo);
+    if (!botonArriba) {
+      var menu = document.getElementById('menu-toggle');
+      if (!menu || !menu.parentNode) return;
+      botonArriba = document.createElement('button');
+      botonArriba.type = 'button';
+      botonArriba.className = 'action-btn boton-mi-pedido';
+      botonArriba.setAttribute('data-mis-pedidos', '');
+      botonArriba.setAttribute('aria-label', 'Ver el estado de mi pedido');
+      // en el celular se ve solo el 📦 (la barra ya tiene otros botones)
+      botonArriba.innerHTML = '📦<span class="mi-pedido-texto"> Mi pedido</span>';
+      menu.parentNode.insertBefore(botonArriba, menu);
+    }
+    botonArriba.hidden = !hayActivo;
+  }
 
   function alTocar(evento) {
     var boton = evento.target.closest('[data-accion]');
@@ -499,19 +546,19 @@ var SeguimientoPedidos = (function () {
         cambios.oculto = false;
       }
       marcar(pedido.id, cambios);
-      if (cambios.estado) avisarAhora(Object.assign({}, pedido, datos));
+      if (cambios.estado && cambios.estado !== 'entregado') avisarAhora(Object.assign({}, pedido, datos));
     } catch (error) {
       // sin internet un momento: se reintenta en la próxima vuelta
     }
   }
 
   async function actualizar() {
-    var pendientes = leer().filter(function (p) { return p.estado !== 'listo'; });
+    var pendientes = leer().filter(activo);
     for (var i = 0; i < pendientes.length; i++) {
       await consultar(pendientes[i]);
     }
     dibujar();
-    if (!leer().some(function (p) { return p.estado !== 'listo'; })) {
+    if (!leer().some(activo)) {
       clearInterval(reloj);
       reloj = null;
     }
@@ -521,10 +568,9 @@ var SeguimientoPedidos = (function () {
     dibujar();
     // /#mis-pedidos (lo abre la notificación al tocarla) abre la pantalla
     if (location.hash === '#mis-pedidos') {
-      var lista = leer();
-      abrirDetalle(lista.length ? lista[lista.length - 1].id : null);
+      abrirDetalle(pedidoParaAbrir());
     }
-    if (!reloj && leer().some(function (p) { return p.estado !== 'listo'; })) {
+    if (!reloj && leer().some(activo)) {
       reloj = setInterval(actualizar, CADA_CUANTO);
       actualizar();
     }

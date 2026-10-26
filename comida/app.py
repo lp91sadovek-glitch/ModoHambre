@@ -6,6 +6,7 @@ import re
 import secrets
 import threading
 import time
+import unicodedata
 from pathlib import Path
 
 from flask import Flask, jsonify, request, send_from_directory, Response
@@ -564,6 +565,8 @@ TABLAS_NEON = (
     # linea de tiempo de su pedido, como en las apps de delivery.
     "ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS recibido_at TIMESTAMPTZ",
     "ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS listo_at TIMESTAMPTZ",
+    # Y cuando se entrego (a domicilio) o lo retiraron (en el local).
+    "ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS entregado_at TIMESTAMPTZ",
     # Ajustes sueltos del local, por ahora solo si esta abierto o cerrado.
     """
     CREATE TABLE IF NOT EXISTS ajustes (
@@ -1668,6 +1671,58 @@ def platos_del_pedido(items):
     return platos
 
 
+# --- los precios los pone el servidor, no el navegador ---
+#
+# Antes se guardaba el precio que mandaba la pagina: alguien que supiera un
+# poco podia pedir una pizza a $1, y un carrito armado con el menu viejo (o con
+# el menu de respaldo del HTML) se cobraba con precios viejos. Ahora cada plato
+# se busca en el menu de la base y se cobra lo que dice el editor.
+
+
+def _clave_de_nombre(texto):
+    """Para comparar nombres sin que importen mayusculas, tildes ni espacios."""
+    texto = unicodedata.normalize("NFD", str(texto or "").lower())
+    texto = "".join(letra for letra in texto if unicodedata.category(letra) != "Mn")
+    return re.sub(r"\s+", " ", texto).strip()
+
+
+def nombre_con_gusto(comida, gusto):
+    """El mismo nombre que arma la pagina (platos-menu.js, nombreConGusto):
+    "Empanadas de carne, pollo..." + "Carne" -> "Empanada de carne"."""
+    sabor = re.sub(r"^de\s+", "", str(gusto.get("nombre") or "").strip(), flags=re.I)
+    nombre = str(comida.get("nombre") or "").strip()
+    minuscula = nombre.lower()
+    corte = -1
+    for otro in comida.get("gustos") or []:
+        palabra = re.sub(r"^de\s+", "", str(otro.get("nombre") or "").strip(), flags=re.I).lower()
+        donde = minuscula.find(palabra) if palabra else -1
+        if donde > 0 and (corte == -1 or donde < corte):
+            corte = donde
+    if corte == -1:
+        return f"{nombre} ({sabor})"
+    base = re.sub(r"\s+de\s*$", "", nombre[:corte], flags=re.I).rstrip(" ,")
+    if re.fullmatch(r"\S+s", base, flags=re.I):
+        base = base[:-1]
+    return f"{base} de {sabor[:1].lower()}{sabor[1:]}"
+
+
+def precios_del_menu():
+    """{nombre: precio} de todo lo que hoy se puede pedir, o None sin base."""
+    categorias, de_la_base = obtener_menu(solo_activas=True)
+    if not de_la_base:
+        return None
+    precios = {}
+    for categoria in categorias:
+        for comida in categoria.get("comidas") or []:
+            gustos = comida.get("gustos") or []
+            if comida.get("tipo") == "gustos" and gustos:
+                for gusto in gustos:
+                    precios[_clave_de_nombre(nombre_con_gusto(comida, gusto))] = int(gusto.get("precio") or 0)
+            else:
+                precios[_clave_de_nombre(comida.get("nombre"))] = int(comida.get("precio") or 0)
+    return precios
+
+
 def lista_de_pedidos(cur, condicion=""):
     cur.execute(f"SELECT {COLUMNAS_PEDIDO} FROM pedidos {condicion} ORDER BY id DESC")
     return [dict(fila) for fila in cur.fetchall()]
@@ -1723,6 +1778,22 @@ def orders():
     platos = platos_del_pedido(items) if isinstance(items, list) else []
     if not platos:
         return jsonify({"error": "Se requiere al menos un plato"}), 400
+
+    # Cada plato se cobra con el precio del menu de la base.
+    precios = precios_del_menu()
+    if precios is None:
+        return jsonify({"error": "No se pudo leer el menú. Intentá de nuevo en unos segundos."}), 503
+    faltan = [plato["name"] for plato in platos if _clave_de_nombre(plato["name"]) not in precios]
+    if faltan:
+        # Un carrito viejo, o un plato que el local saco del menu.
+        return jsonify({
+            "error": "Algunos productos ya no están en el menú: " + ", ".join(faltan[:3]) +
+                     ". Actualizá la página y armá el pedido de nuevo.",
+            "codigo": "menu_cambio",
+            "faltan": faltan,
+        }), 409
+    for plato in platos:
+        plato["price"] = precios[_clave_de_nombre(plato["name"])]
 
     envio = data.get("envio", "local")
     if envio not in ("domicilio", "local"):
@@ -1785,7 +1856,8 @@ def update_estado(order_id):
 
     data = request.get_json(silent=True) or {}
     estado = data.get("estado")
-    if estado not in ("nuevo", "recibido", "listo"):
+    # "entregado" es el ultimo paso: el pedido llego a domicilio o lo retiraron.
+    if estado not in ("nuevo", "recibido", "listo", "entregado"):
         return jsonify({"error": "Estado inválido"}), 400
 
     def trabajo(cur):
@@ -1794,10 +1866,12 @@ def update_estado(order_id):
         # vuelve a "nuevo", se borran.
         cur.execute(
             "UPDATE pedidos SET estado = %s,"
-            " recibido_at = CASE WHEN %s IN ('recibido', 'listo') THEN COALESCE(recibido_at, now()) END,"
-            " listo_at = CASE WHEN %s = 'listo' THEN COALESCE(listo_at, now()) END"
+            " recibido_at = CASE WHEN %s IN ('recibido', 'listo', 'entregado')"
+            "   THEN COALESCE(recibido_at, now()) END,"
+            " listo_at = CASE WHEN %s IN ('listo', 'entregado') THEN COALESCE(listo_at, now()) END,"
+            " entregado_at = CASE WHEN %s = 'entregado' THEN COALESCE(entregado_at, now()) END"
             " WHERE id = %s",
-            (estado, estado, estado, order_id),
+            (estado, estado, estado, estado, order_id),
         )
         return cur.rowcount
 
@@ -1945,7 +2019,8 @@ def seguimiento_pedido(order_id):
             # en segundos desde 1970: el navegador lo pasa a la hora del celular
             " extract(epoch FROM created_at)::bigint AS enviado,"
             " extract(epoch FROM recibido_at)::bigint AS recibido,"
-            " extract(epoch FROM listo_at)::bigint AS listo"
+            " extract(epoch FROM listo_at)::bigint AS listo,"
+            " extract(epoch FROM entregado_at)::bigint AS entregado"
             " FROM pedidos WHERE id = %s AND seguimiento = %s",
             (order_id, codigo),
         )

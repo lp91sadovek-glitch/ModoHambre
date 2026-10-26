@@ -133,7 +133,7 @@ body {
 
 .admin-resumen {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 1rem;
     margin-bottom: 1.25rem;
 }
@@ -157,6 +157,10 @@ body {
 
 .resumen-listos {
     border-left-color: #2e7d43;
+}
+
+.resumen-entregados {
+    border-left-color: #6b6b6b;
 }
 
 .resumen-numero {
@@ -287,6 +291,15 @@ body {
 
 .estado-listo {
     background: #2e7d43;
+}
+
+/* ya lo retiraron o ya llego a domicilio: el pedido termino */
+.estado-entregado {
+    background: #6b6b6b;
+}
+
+.pedido-card.pedido-entregado {
+    opacity: 0.75;
 }
 
 /* TABLA DE ITEMS */
@@ -732,7 +745,7 @@ body {
 
 @media (max-width: 37.5rem) {
     .admin-resumen {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, 1fr);
         gap: 0.6rem;
     }
 

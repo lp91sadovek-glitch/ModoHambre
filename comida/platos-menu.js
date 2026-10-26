@@ -37,6 +37,34 @@
         return '$' + Number(valor || 0).toLocaleString('es-AR');
     }
 
+    /* El nombre que va al carrito y al pedido cuando se elige un gusto:
+       "Empanada de carne" en vez de solo "Carne". Se arma con el principio del
+       nombre de la comida, hasta donde empiezan los gustos:
+           "Empanadas de carne, pollo o jamón y queso" + "Carne"
+               -> "Empanada de carne"
+           "Milanesas de carne o pollo con papas fritas" + "De pollo"
+               -> "Milanesa de pollo"
+           "Porción de tarta de jamón y queso, pollo..." + "Pollo"
+               -> "Porción de tarta de pollo"
+       Cada gusto queda como una línea distinta del carrito, así se pueden
+       pedir varios gustos a la vez. */
+    function nombreConGusto(comida, gusto) {
+        var sabor = String(gusto.nombre || '').trim().replace(/^de\s+/i, '');
+        var nombre = String(comida.nombre || '').trim();
+        var minuscula = nombre.toLowerCase();
+        var corte = -1;
+        (comida.gustos || []).forEach(function (otro) {
+            var palabra = String(otro.nombre || '').trim().replace(/^de\s+/i, '').toLowerCase();
+            var donde = palabra ? minuscula.indexOf(palabra) : -1;
+            if (donde > 0 && (corte === -1 || donde < corte)) corte = donde;
+        });
+        if (corte === -1) return nombre + ' (' + sabor + ')';
+        var base = nombre.slice(0, corte).replace(/\s+de\s*$/i, '').replace(/[\s,]+$/, '');
+        // "Empanadas" -> "Empanada": una sola palabra en plural pasa a singular
+        if (/^\S+s$/i.test(base)) base = base.slice(0, -1);
+        return base + ' de ' + sabor.charAt(0).toLowerCase() + sabor.slice(1);
+    }
+
     function platoHTML(comida) {
         var id = comida.ancla ? ' id="menu-' + esc(comida.ancla) + '"' : '';
         var foto = comida.imagen_url
@@ -60,7 +88,7 @@
                     return '<div class="variante">' +
                         '<span>' + esc(gusto.nombre) + ' · ' + conPrecio(gusto.precio) + '</span>' +
                         '<button class="variante-add" type="button" data-name="' +
-                        esc(gusto.nombre) + '" data-price="' + esc(gusto.precio) + '">Agregar</button>' +
+                        esc(nombreConGusto(comida, gusto)) + '" data-price="' + esc(gusto.precio) + '">Agregar</button>' +
                         '</div>';
                 }).join('') +
                 '</div>';

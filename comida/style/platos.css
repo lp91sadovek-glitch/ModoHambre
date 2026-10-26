@@ -1731,7 +1731,8 @@ body.checkout-abierto {
     border-radius: 1rem;
     background: #FFFDF9;
     color: #171717;
-    border-left: 0.3rem solid #FC8F02;
+    /* el color del estado bordea toda la tarjeta */
+    border: 0.2rem solid #FC8F02;
     box-shadow: 0 0.6rem 1.8rem rgba(0, 0, 0, 0.25);
     animation: seguimiento-entra 0.35s ease-out;
 }
@@ -1741,7 +1742,7 @@ body.checkout-abierto {
 }
 
 .seguimiento-listo {
-    border-left-color: #1e7b34;
+    border-color: #1e7b34;
 }
 
 @keyframes seguimiento-entra {
@@ -2185,4 +2186,28 @@ body.checkout-abierto {
 /* el cartel del aviso va arriba de la pantalla de seguimiento */
 .seg-aviso-fondo {
     z-index: 2200;
+}
+
+/* el boton "Mi pedido" de la barra de arriba (solo con un pedido activo) */
+.boton-mi-pedido[hidden] {
+    display: none;
+}
+
+/* el precio de cada unidad en "Mis pedidos" */
+.seg-unitario {
+    display: block;
+    font-size: 0.78rem;
+    color: #888;
+}
+
+@media (max-width: 37.5rem) {
+    .header-actions .boton-mi-pedido {
+        flex: 0 0 auto;
+        padding: 0 1rem;
+        font-size: 1.1rem;
+    }
+
+    .mi-pedido-texto {
+        display: none;
+    }
 }

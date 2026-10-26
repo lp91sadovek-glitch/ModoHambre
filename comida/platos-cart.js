@@ -698,7 +698,10 @@ function enviarPedidoSistema(tipo, cliente, quiereAvisos) {
       updateCart();
       cerrarCheckout();
       closeCartDrawer();
-      mostrarToast('Su pedido se ha enviado correctamente');
+      // El total lo calcula el servidor con los precios del menú: si el
+      // carrito tenía algún precio viejo, acá se ve lo que de verdad se cobra.
+      mostrarToast('Su pedido se ha enviado correctamente' +
+        (respuesta && respuesta.total != null ? ' · Total ' + formatPrice(respuesta.total) : ''));
       // La tarjetita de abajo muestra el estado del pedido (seguimiento.js).
       if (typeof SeguimientoPedidos !== 'undefined') SeguimientoPedidos.agregar(respuesta, quiereAvisos);
     })
@@ -710,6 +713,9 @@ function enviarPedidoSistema(tipo, cliente, quiereAvisos) {
       // reintentar mas tarde
       if (e && e.codigo === 'local_cerrado') {
         mostrarToast('No se pudo enviar el pedido: el local está cerrado ahora mismo. Intentá de nuevo más tarde.', 'error');
+      } else if (e && e.codigo === 'menu_cambio') {
+        // el menú cambió desde que se armó el carrito (el servidor dice cuál)
+        mostrarToast(e.message, 'error');
       } else {
         mostrarToast('No se pudo enviar el pedido. Intentá de nuevo.', 'error');
       }

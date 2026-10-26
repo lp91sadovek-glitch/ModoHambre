@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro de pedidos · Modo Hambre</title>
-    <link rel="stylesheet" href="style/admin.css?v=4">
+    <link rel="stylesheet" href="style/admin.css?v=5">
     <style>
         /* esta pagina es solo de lectura: muestra todos los pedidos guardados en Neon */
 
@@ -314,7 +314,7 @@
         <div class="archivo-buscador">
             <input type="search" id="buscar" placeholder="Buscar por nombre, teléfono, pedido o plato…" autocomplete="off">
             <button class="archivo-chip activo" id="filtro-todos" type="button">Todos</button>
-            <button class="archivo-chip" id="filtro-listos" type="button">Solo listos</button>
+            <button class="archivo-chip" id="filtro-listos" type="button">Terminados</button>
             <span class="archivo-conteo" id="conteo"></span>
         </div>
 
@@ -390,7 +390,8 @@
         function visibles() {
             var textoBuscado = buscar.value.trim().toLowerCase();
             return pedidos.filter(function (pedido) {
-                if (soloListos && (pedido.estado || 'nuevo') !== 'listo') return false;
+                // "terminados": listos o ya entregados / retirados
+                if (soloListos && ['listo', 'entregado'].indexOf(pedido.estado || 'nuevo') === -1) return false;
                 return coincide(pedido, textoBuscado);
             });
         }
@@ -399,8 +400,9 @@
             var cliente = pedido.cliente || {};
             var nombre = (cliente.nombre || '') + ' ' + (cliente.apellido || '');
             var estado = pedido.estado || 'nuevo';
-            var etiqueta = estado === 'listo'
-                ? (pedido.envio === 'domicilio' ? 'En camino' : 'Para retirar')
+            var aDomicilio = pedido.envio === 'domicilio';
+            var etiqueta = estado === 'entregado' ? (aDomicilio ? 'Entregado' : 'Retirado')
+                : estado === 'listo' ? (aDomicilio ? 'En camino' : 'Para retirar')
                 : estado === 'recibido' ? 'Recibido' : 'Nuevo';
 
             var productos = (pedido.items || []).map(function (item) {

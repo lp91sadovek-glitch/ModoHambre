@@ -10,6 +10,7 @@ var estadoConexion = document.getElementById('estado-conexion');
 var contadorNuevos = document.getElementById('contador-nuevos');
 var contadorRecibidos = document.getElementById('contador-recibidos');
 var contadorListos = document.getElementById('contador-listos');
+var contadorEntregados = document.getElementById('contador-entregados');
 var ticketPrint = document.getElementById('ticket-print');
 
 var pedidos = [];
@@ -109,6 +110,8 @@ function formatFecha(fecha) {
 function estadoTexto(estado, envio) {
   if (estado === 'recibido') return 'Recibido';
   if (estado === 'listo') return envio === 'domicilio' ? 'En camino' : 'Para retirar';
+  // el último paso: ya llegó a domicilio, o el cliente pasó a buscarlo
+  if (estado === 'entregado') return envio === 'domicilio' ? 'Entregado' : 'Retirado';
   return 'Nuevo';
 }
 
@@ -158,10 +161,20 @@ function construirCard(pedido) {
 
   // El botón dice lo que le va a llegar al cliente: a domicilio "está listo
   // y lo estamos llevando", para retirar "ya podés pasar a buscarlo".
-  var textoListo = pedido.envio === 'domicilio' ? '🛵 Listo y en camino' : '🛍️ Listo para retirar';
-  var botonListo =
-    '<button class="boton-accion accion-listo" data-accion="listo" data-id="' + pedido.id + '"' +
-    (estado === 'listo' ? ' disabled' : '') + '>' + textoListo + '</button>';
+  // Cuando ya está listo, el mismo lugar pasa a ser el último paso:
+  // "Entregado" (llegó a domicilio) o "Retirado" (pasó a buscarlo).
+  var aDomicilio = pedido.envio === 'domicilio';
+  var botonListo;
+  if (estado === 'listo' || estado === 'entregado') {
+    botonListo =
+      '<button class="boton-accion accion-listo" data-accion="entregado" data-id="' + pedido.id + '"' +
+      (estado === 'entregado' ? ' disabled' : '') + '>' +
+      (aDomicilio ? '✔ Entregado' : '✔ Ya lo retiraron') + '</button>';
+  } else {
+    botonListo =
+      '<button class="boton-accion accion-listo" data-accion="listo" data-id="' + pedido.id + '">' +
+      (aDomicilio ? '🛵 Listo y en camino' : '🛍️ Listo para retirar') + '</button>';
+  }
 
   return (
     '<article class="pedido-card pedido-' + estado + '" data-pedido-id="' + pedido.id + '" data-estado="' + estado + '"' +
@@ -194,7 +207,7 @@ function construirCard(pedido) {
 }
 
 function renderizar() {
-  var contadores = { nuevo: 0, recibido: 0, listo: 0 };
+  var contadores = { nuevo: 0, recibido: 0, listo: 0, entregado: 0 };
   pedidos.forEach(function (pedido) {
     var estado = pedido.estado || 'nuevo';
     if (contadores[estado] !== undefined) contadores[estado] += 1;
@@ -202,6 +215,7 @@ function renderizar() {
   contadorNuevos.textContent = String(contadores.nuevo);
   contadorRecibidos.textContent = String(contadores.recibido);
   contadorListos.textContent = String(contadores.listo);
+  if (contadorEntregados) contadorEntregados.textContent = String(contadores.entregado);
 
   var botonBorrar = document.getElementById('borrar-todos');
   if (botonBorrar) botonBorrar.disabled = pedidos.length === 0;
@@ -487,6 +501,7 @@ lista.addEventListener('click', function (event) {
 
   if (accion === 'recibir') cambiarEstado(id, 'recibido');
   else if (accion === 'listo') cambiarEstado(id, 'listo');
+  else if (accion === 'entregado') cambiarEstado(id, 'entregado');
   else if (accion === 'imprimir') imprimirTicket(id);
   else if (accion === 'eliminar') eliminarPedido(id);
 });
