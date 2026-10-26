@@ -211,7 +211,14 @@ navOverlay.addEventListener('click', function (event) {
 });
 
 document.addEventListener('keydown', function (event) {
-  if (event.key === 'Escape') closeAllPanels();
+  if (event.key !== 'Escape') return;
+  // Si está abierto el formulario del pedido, Escape cierra solo eso y el
+  // carrito queda como estaba. Si no, cierra el carrito o el menú.
+  if (checkoutOverlay && checkoutOverlay.classList.contains('visible')) {
+    cerrarCheckout();
+    return;
+  }
+  closeAllPanels();
 });
 
 /* =====================
@@ -570,6 +577,10 @@ function mostrarPasoFormulario(tipo) {
       '<h2 class="elegir-titulo">' + (esDomicilio ? '🛵 Datos del envío' : '🏪 Datos para retirar') + '</h2>' +
       '<p class="elegir-subtitulo">Necesitamos tus datos para confirmar el pedido</p>' +
       '<form class="elegir-form" id="elegir-form">' +
+        /* Trampa para programas que llenan formularios solos: una persona no
+           ve este campo y lo deja vacío. Si llega lleno, el servidor no guarda
+           el pedido. */
+        '<input type="text" name="sitio_web" class="campo-trampa" tabindex="-1" autocomplete="off" aria-hidden="true">' +
         '<label class="elegir-campo">' +
           '<span>Nombre</span>' +
           '<input type="text" name="nombre" placeholder="Tu nombre" required autocomplete="given-name">' +
@@ -628,6 +639,12 @@ function mostrarPasoFormulario(tipo) {
     });
     checkoutOverlay.querySelector('#elegir-guardados').hidden = false;
   }
+  // El cursor va al primer dato que falta completar (con el teclado se puede
+  // llenar todo sin tocar el mouse).
+  var primeroVacio = Array.prototype.find.call(form.elements, function (campo) {
+    return campo.required && !campo.value;
+  });
+  if (primeroVacio) primeroVacio.focus();
   checkoutOverlay.querySelector('#elegir-olvidar').addEventListener('click', function () {
     olvidarDatosCliente();
     CAMPOS_CLIENTE.forEach(function (campo) {
@@ -668,7 +685,8 @@ function leerDatosCliente(tipo) {
   var cliente = {
     nombre: (form.elements.nombre.value || '').trim(),
     apellido: (form.elements.apellido.value || '').trim(),
-    telefono: (form.elements.telefono.value || '').trim()
+    telefono: (form.elements.telefono.value || '').trim(),
+    sitio_web: form.elements.sitio_web ? form.elements.sitio_web.value : ''
   };
   if (tipo === 'domicilio') {
     cliente.calle = (form.elements.calle.value || '').trim();
@@ -713,7 +731,7 @@ function enviarPedidoSistema(tipo, cliente, quiereAvisos) {
       // reintentar mas tarde
       if (e && e.codigo === 'local_cerrado') {
         mostrarToast('No se pudo enviar el pedido: el local está cerrado ahora mismo. Intentá de nuevo más tarde.', 'error');
-      } else if (e && e.codigo === 'menu_cambio') {
+      } else if (e && (e.codigo === 'menu_cambio' || e.codigo === 'demasiados')) {
         // el menú cambió desde que se armó el carrito (el servidor dice cuál)
         mostrarToast(e.message, 'error');
       } else {

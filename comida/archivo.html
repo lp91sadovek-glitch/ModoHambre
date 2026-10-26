@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro de pedidos · Modo Hambre</title>
-    <link rel="stylesheet" href="style/admin.css?v=5">
+    <link rel="stylesheet" href="style/admin.css?v=7">
     <style>
         /* esta pagina es solo de lectura: muestra todos los pedidos guardados en Neon */
 
@@ -325,7 +325,7 @@
     <div class="clave-fondo" id="clave-fondo" hidden>
         <div class="clave-caja">
             <h1 class="clave-titulo">Registro de pedidos</h1>
-            <p class="clave-ayuda">Escribi la clave del local para ver los pedidos.</p>
+            <p class="clave-ayuda">Escribí la clave del local para ver los pedidos.</p>
             <input type="password" id="clave-input" placeholder="Clave" autocomplete="current-password">
             <button class="clave-boton" id="clave-boton" type="button">Entrar</button>
             <p class="clave-error" id="clave-error"></p>
@@ -333,7 +333,7 @@
         </div>
     </div>
 
-    <script src="panel-clave.js?v=4"></script>
+    <script src="panel-clave.js?v=5"></script>
 
     <script>
         var lista = document.getElementById('lista-archivo');
@@ -401,7 +401,8 @@
             var nombre = (cliente.nombre || '') + ' ' + (cliente.apellido || '');
             var estado = pedido.estado || 'nuevo';
             var aDomicilio = pedido.envio === 'domicilio';
-            var etiqueta = estado === 'entregado' ? (aDomicilio ? 'Entregado' : 'Retirado')
+            var etiqueta = estado === 'cancelado' ? 'Cancelado'
+                : estado === 'entregado' ? (aDomicilio ? 'Entregado' : 'Retirado')
                 : estado === 'listo' ? (aDomicilio ? 'En camino' : 'Para retirar')
                 : estado === 'recibido' ? 'Recibido' : 'Nuevo';
 
@@ -472,6 +473,7 @@
                 var respuesta = await fetch('/api/archivo', {
                     headers: PanelClave.cabeceras()
                 });
+                if (respuesta.status === 429) PanelClave.mostrar('Demasiados intentos con la clave equivocada. Esperá 15 minutos y volvé a probar.');
                 if (respuesta.status === 401) {
                     PanelClave.errorDeClave();
                     lista.innerHTML = '';

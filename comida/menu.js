@@ -120,6 +120,7 @@ async function pedir(ruta, opciones) {
     var config = opciones || {};
     config.headers = PanelClave.cabeceras(config.headers);
     var respuesta = await fetch(ruta, config);
+    if (respuesta.status === 429) PanelClave.mostrar('Demasiados intentos con la clave equivocada. Esperá 15 minutos y volvé a probar.');
     if (respuesta.status === 401) {
         PanelClave.errorDeClave();
         throw new Error('sin_clave');
@@ -183,9 +184,9 @@ async function cargar() {
         }
         estado('Sin base de datos', 'rojo');
         if (!yaCargo) {
-            mostrarVacio('⚠️', 'No se pudo leer el menu', error.message);
+            mostrarVacio('⚠️', 'No se pudo leer el menú', error.message);
         } else {
-            avisar('No se pudo leer el menu: ' + error.message, true);
+            avisar('No se pudo leer el menú: ' + error.message, true);
         }
     } finally {
         cargando = false;
@@ -263,7 +264,7 @@ function dibujarComidas() {
 
     if (!categorias.length) {
         cabecera.innerHTML = '';
-        mostrarVacio('🍽️', 'Todavía no hay nada en el menu',
+        mostrarVacio('🍽️', 'Todavía no hay nada en el menú',
             'Empezá creando una categoría, por ejemplo “Empanadas” o “Pizzas”.',
             '<button class="boton-naranja" type="button" data-accion="nueva-categoria">' +
             ICONO.mas + ' Agregar categoría</button>');
@@ -540,7 +541,7 @@ ordenable(grilla, function (ids) {
 /* ------------------------------------------------------------------ */
 
 async function borrarComida(comida) {
-    if (!confirm('¿Borrar "' + comida.nombre + '" del menu?\n\n' +
+    if (!confirm('¿Borrar "' + comida.nombre + '" del menú?\n\n' +
         'Si solo querés que no se vea por un tiempo, mejor apagá "Visible".\n' +
         'Los pedidos que los clientes ya hicieron no se tocan.')) {
         return;
@@ -586,7 +587,7 @@ async function cambiarVisibilidad(comida, activo) {
     }
     try {
         await conCuerpo('/api/admin/comidas/' + comida.id, 'PUT', { activo: activo });
-        avisar(activo ? '"' + comida.nombre + '" ya se ve en el menu' : '"' + comida.nombre + '" quedó oculta');
+        avisar(activo ? '"' + comida.nombre + '" ya se ve en el menú' : '"' + comida.nombre + '" quedó oculta');
     } catch (error) {
         comida.activo = !activo;
         dibujar();
@@ -869,7 +870,7 @@ function abrirComida(comida) {
         '  </div>' +
         '  <label class="fila-visible">' +
         '    <span>' +
-        '      <b>Visible en el menu</b>' +
+        '      <b>Visible en el menú</b>' +
         '      <small>Si lo apagás, los clientes no ven esta comida</small>' +
         '    </span>' +
         '    <span class="interruptor interruptor-grande">' +

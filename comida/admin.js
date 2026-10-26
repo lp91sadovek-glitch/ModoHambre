@@ -24,6 +24,8 @@ async function pedir(url, opciones) {
   var config = opciones || {};
   config.headers = PanelClave.cabeceras(config.headers);
   var response = await fetch(url, config);
+  // bloqueado por 5 claves equivocadas: se avisa en la pantalla de la clave
+  if (response.status === 429) PanelClave.mostrar('Demasiados intentos con la clave equivocada. Esperá 15 minutos y volvé a probar.');
   if (response.status === 401) {
     PanelClave.errorDeClave();
   }
@@ -112,6 +114,7 @@ function estadoTexto(estado, envio) {
   if (estado === 'listo') return envio === 'domicilio' ? 'En camino' : 'Para retirar';
   // el último paso: ya llegó a domicilio, o el cliente pasó a buscarlo
   if (estado === 'entregado') return envio === 'domicilio' ? 'Entregado' : 'Retirado';
+  if (estado === 'cancelado') return 'Cancelado';
   return 'Nuevo';
 }
 
@@ -199,7 +202,10 @@ function construirCard(pedido) {
       '<div class="pedido-pie">' +
         '<span class="pedido-total">Total: ' + formatPrice(pedido.total) + '</span>' +
         '<div class="pedido-acciones">' +
-          botonRecibir + botonListo +
+          // cancelado por el cliente: ya no hay nada que hacer con el pedido
+          (estado === 'cancelado'
+            ? '<span class="pedido-cancelado-texto">❌ Lo canceló el cliente</span>'
+            : botonRecibir + botonListo) +
         '</div>' +
       '</div>' +
     '</article>'
@@ -335,14 +341,25 @@ async function cargarPedidos() {
       });
     }
 
+    // Un pedido que el cliente canceló desde "Mis pedidos": se avisa igual que
+    // un pedido nuevo, así no se prepara de gusto.
+    var cancelados = datos.filter(function (pedido) {
+      var antes = pedidosDelServidor.find(function (p) { return p.id === pedido.id; });
+      return pedido.estado === 'cancelado' && antes && antes.estado !== 'cancelado';
+    });
+
     pedidosDelServidor = datos;
     if (datos.length > 0) ultimoId = Math.max(ultimoId || 0, datos[0].id);
     aplicarPendientes();
 
-    if (hayNuevo) {
+    if (hayNuevo || cancelados.length) {
       sonarNuevo();
+      banner.textContent = cancelados.length
+        ? '❌ El cliente canceló el pedido #' + cancelados.map(function (p) { return p.id; }).join(', #')
+        : '🔔 ¡Nuevo pedido recibido!';
+      banner.classList.toggle('admin-banner-cancelado', cancelados.length > 0);
       banner.hidden = false;
-      setTimeout(function () { banner.hidden = true; }, 4000);
+      setTimeout(function () { banner.hidden = true; }, cancelados.length ? 8000 : 4000);
     }
   } catch (e) {
     estadoConexion.textContent = 'Sin conexión con el servidor';
@@ -576,6 +593,79 @@ if (botonLocal) {
 /* =====================
    INICIALIZACIÓN
    ===================== */
+
+/* =====================
+   COMENTARIOS DE CLIENTES
+   =====================
+   Lo que la gente manda desde "Contactanos". Está abajo de todo y cerrado;
+   el número naranja dice cuántos no se leyeron. Al abrir la sección se
+   marcan como leídos. */
+
+var cajaComentarios = document.getElementById('comentarios');
+var listaComentarios = document.getElementById('comentarios-lista');
+var avisoComentarios = document.getElementById('comentarios-nuevos');
+var comentarios = [];
+
+var ASUNTOS = { consulta: 'Consulta', sugerencia: 'Sugerencia', felicitacion: 'Felicitación', otro: 'Otro' };
+
+function dibujarComentarios() {
+  var nuevos = comentarios.filter(function (c) { return !c.leido; }).length;
+  avisoComentarios.hidden = nuevos === 0;
+  avisoComentarios.textContent = nuevos + (nuevos === 1 ? ' nuevo' : ' nuevos');
+  if (!comentarios.length) {
+    listaComentarios.innerHTML = '<p class="comentarios-vacio">Todavía no hay comentarios.</p>';
+    return;
+  }
+  listaComentarios.innerHTML = comentarios.map(function (c) {
+    return '<article class="comentario' + (c.leido ? '' : ' no-leido') + '">' +
+      '<div class="comentario-cabecera">' +
+        '<b>' + esc(c.nombre) + '</b>' +
+        (c.asunto ? '<span>' + esc(ASUNTOS[c.asunto] || c.asunto) + '</span>' : '') +
+        (c.email ? '<span>✉️ ' + esc(c.email) + '</span>' : '') +
+        (c.telefono ? '<span>📞 ' + esc(c.telefono) + '</span>' : '') +
+        '<span>' + formatFecha(parseFecha(c.created_at)) + '</span>' +
+      '</div>' +
+      '<p class="comentario-mensaje">' + esc(c.mensaje) + '</p>' +
+      '<button class="comentario-borrar" type="button" data-borrar-comentario="' + c.id + '" aria-label="Borrar comentario">🗑️</button>' +
+    '</article>';
+  }).join('');
+}
+
+async function cargarComentarios() {
+  try {
+    var response = await pedir(API + '/api/comentarios');
+    if (!response.ok) return;
+    comentarios = await response.json();
+    dibujarComentarios();
+    if (cajaComentarios.open) marcarComentariosLeidos();
+  } catch (e) {}
+}
+
+function marcarComentariosLeidos() {
+  comentarios.filter(function (c) { return !c.leido; }).forEach(function (c) {
+    c.leido = true;
+    pedir(API + '/api/comentarios/' + c.id, { method: 'POST' }).catch(function () {});
+  });
+  // se dejan resaltados mientras la sección está abierta; el número se va
+  avisoComentarios.hidden = true;
+}
+
+if (cajaComentarios) {
+  cajaComentarios.addEventListener('toggle', function () {
+    if (cajaComentarios.open) marcarComentariosLeidos();
+  });
+  listaComentarios.addEventListener('click', async function (evento) {
+    var boton = evento.target.closest('[data-borrar-comentario]');
+    if (!boton || !confirm('¿Borrar este comentario?')) return;
+    var id = Number(boton.dataset.borrarComentario);
+    comentarios = comentarios.filter(function (c) { return c.id !== id; });
+    dibujarComentarios();
+    pedir(API + '/api/comentarios/' + id, { method: 'DELETE' }).catch(function () {});
+  });
+  cargarComentarios();
+  // casi nadie escribe: alcanza con mirar una vez por minuto
+  setInterval(cargarComentarios, 60000);
+}
 
 mostrarEstadoLocal();
 cargarEstadoLocal();

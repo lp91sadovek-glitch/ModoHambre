@@ -88,7 +88,7 @@ var PanelClave = (function () {
         if (!entrada) return;
         var clave = (entrada.value || '').trim();
         if (!clave) {
-            mostrar('Escribi la clave del local.');
+            mostrar('Escribí la clave del local.');
             return;
         }
 
@@ -96,10 +96,21 @@ var PanelClave = (function () {
         var cabecerasPrueba = cabeceras();
         cabecerasPrueba[CABECERA] = clave;
         fetch('/api/panel/estado', { headers: cabecerasPrueba })
-            .then(function (respuesta) {
+            .then(async function (respuesta) {
                 if (!respuesta.ok) {
                     guardar('');
-                    mostrar('Esa clave no es correcta.');
+                    // El servidor dice cuántos intentos quedan, o que se
+                    // bloqueó por 15 minutos después de 5 claves equivocadas.
+                    var datos = {};
+                    try { datos = await respuesta.json(); } catch (e) {}
+                    if (respuesta.status === 429) {
+                        mostrar(datos.error || 'Demasiados intentos. Esperá unos minutos.');
+                    } else if (datos.intentos_restantes != null) {
+                        mostrar('Esa clave no es correcta. Te quedan ' + datos.intentos_restantes +
+                            (datos.intentos_restantes === 1 ? ' intento.' : ' intentos.'));
+                    } else {
+                        mostrar('Esa clave no es correcta.');
+                    }
                     if (entrada) {
                         entrada.value = '';
                         entrada.focus();
@@ -113,7 +124,7 @@ var PanelClave = (function () {
             })
             .catch(function () {
                 guardar('');
-                mostrar('No se pudo conectar con el servidor. Esta abierto el host?');
+                mostrar('No se pudo conectar con el servidor. Revisá tu internet y probá de nuevo.');
             });
     }
 

@@ -2211,3 +2211,51 @@ body.checkout-abierto {
         display: none;
     }
 }
+
+/* el campo trampa del formulario: fuera de la vista de las personas */
+.campo-trampa {
+    position: absolute !important;
+    left: -9999px !important;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+}
+
+/* cancelar el pedido (tarjeta de abajo y "Mis pedidos") */
+.seg-acciones {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.8rem;
+    margin-top: 0.6rem;
+}
+
+.seg-acciones .seg-ver {
+    margin-top: 0;
+}
+
+.seg-cancelar {
+    padding: 0.3rem 0.75rem;
+    border: 1px solid #c0392b;
+    border-radius: 999px;
+    background: #fff;
+    color: #c0392b;
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.seg-cancelar:hover {
+    background: #fdecea;
+}
+
+.seg-cancelar-ws {
+    font-size: 0.78rem;
+    color: #777;
+}
+
+.seg-detalle-cancelar {
+    margin: 0.2rem 0 0.6rem;
+}

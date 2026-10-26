@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de pedidos · Modo Hambre</title>
-    <link rel="stylesheet" href="style/admin.css?v=5">
+    <link rel="stylesheet" href="style/admin.css?v=7">
 </head>
 <body>
 
@@ -14,7 +14,7 @@
             <div class="admin-header-acciones">
                 <span class="admin-conexion" id="estado-conexion">Conectando…</span>
                 <button class="boton-borrar-todos boton-local" id="boton-local" type="button" hidden>🟢 Local abierto</button>
-                <a class="boton-borrar-todos boton-neutro" href="menu.html" style="text-decoration: none;">🍽️ Editar el menu</a>
+                <a class="boton-borrar-todos boton-neutro" href="menu.html" style="text-decoration: none;">🍽️ Editar el menú</a>
                 <a class="boton-borrar-todos boton-neutro" href="archivo.html" style="text-decoration: none;">🗂 Registro de pedidos</a>
                 <button class="boton-borrar-todos" id="borrar-todos" type="button">🗑 Sacar todos de la pantalla</button>
             </div>
@@ -68,6 +68,15 @@
 
         <section class="pedidos-lista" id="pedidos-lista"></section>
 
+        <!-- Abajo de todo y cerrado: los comentarios del formulario de contacto.
+             No es lo importante del panel, por eso no ocupa lugar si no se abre. -->
+        <details class="admin-nota admin-comentarios" id="comentarios">
+            <summary>💬 Comentarios de clientes <span class="comentarios-nuevos" id="comentarios-nuevos" hidden></span></summary>
+            <div class="comentarios-lista" id="comentarios-lista">
+                <p class="comentarios-vacio">Todavía no hay comentarios.</p>
+            </div>
+        </details>
+
     </main>
 
     <div class="ticket-print" id="ticket-print" aria-hidden="true"></div>
@@ -75,7 +84,7 @@
     <div class="clave-fondo" id="clave-fondo" hidden>
         <div class="clave-caja">
             <h1 class="clave-titulo">Panel de pedidos</h1>
-            <p class="clave-ayuda">Escribi la clave del local para ver los pedidos.</p>
+            <p class="clave-ayuda">Escribí la clave del local para ver los pedidos.</p>
             <input type="password" id="clave-input" placeholder="Clave" autocomplete="current-password">
             <button class="clave-boton" id="clave-boton" type="button">Entrar</button>
             <p class="clave-error" id="clave-error"></p>
@@ -83,7 +92,7 @@
         </div>
     </div>
 
-    <script src="panel-clave.js?v=4"></script>
-    <script src="admin.js?v=13"></script>
+    <script src="panel-clave.js?v=5"></script>
+    <script src="admin.js?v=15"></script>
 </body>
 </html>

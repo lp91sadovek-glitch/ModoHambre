@@ -7,7 +7,8 @@ async function saveOrder(items, envio, cliente) {
   const response = await fetch(API_PEDIDOS + '/api/orders', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ items, envio, cliente })
+    // sitio_web: el campo trampa del formulario (ver platos-cart.js)
+    body: JSON.stringify({ items, envio, cliente, sitio_web: (cliente && cliente.sitio_web) || '' })
   });
 
   if (!response.ok) {

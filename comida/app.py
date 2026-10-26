@@ -228,11 +228,108 @@ def panel_permitido():
     return bool(enviada) and secrets.compare_digest(enviada, CLAVE_PANEL_LIMPIA)
 
 
+# ---------------------------------------------------------------------------
+# FRENOS CONTRA ABUSOS
+#
+# Todo se cuenta en memoria y por conexion (la IP de quien pide). Render tiene
+# un solo proceso, asi que alcanza; si se reinicia, los contadores arrancan de
+# cero, que no es grave.
+# ---------------------------------------------------------------------------
+
+_frenos_lock = threading.Lock()
+_ventanas = {}        # (tipo, quien) -> lista de momentos
+_claves_falladas = {}  # ip -> {"claves": set, "bloqueado_hasta": momento}
+
+MAXIMO_INTENTOS_CLAVE = 5
+MINUTOS_BLOQUEO_CLAVE = 15
+
+
+def ip_del_cliente():
+    """La IP real de quien pide.
+
+    Render pasa todo por Cloudflare, que pone la IP verdadera en
+    CF-Connecting-IP y no deja que el visitante la cambie. X-Forwarded-For en
+    cambio lo puede inventar cualquiera (mandando otro distinto en cada
+    intento se esquivaria el bloqueo), por eso va solo como ultima opcion.
+    """
+    real = request.headers.get("CF-Connecting-IP", "").strip()
+    if real:
+        return real
+    reenviada = request.headers.get("X-Forwarded-For", "")
+    return (reenviada.split(",")[0].strip() if reenviada else request.remote_addr) or "?"
+
+
+def dentro_del_limite(tipo, quien, maximo, segundos):
+    """True si 'quien' hizo menos de 'maximo' cosas de este tipo en 'segundos'."""
+    ahora = time.time()
+    with _frenos_lock:
+        momentos = [m for m in _ventanas.get((tipo, quien), []) if ahora - m < segundos]
+        if len(momentos) >= maximo:
+            _ventanas[(tipo, quien)] = momentos
+            return False
+        momentos.append(ahora)
+        _ventanas[(tipo, quien)] = momentos
+        # de vez en cuando se borra lo viejo, para que no crezca para siempre
+        if len(_ventanas) > 5000:
+            for clave in [c for c, v in _ventanas.items() if not v or ahora - v[-1] > 3600]:
+                _ventanas.pop(clave, None)
+    return True
+
+
 def pedir_clave():
-    """Devuelve la respuesta de error, o None si el pedido puede seguir."""
+    """Devuelve la respuesta de error, o None si el pedido puede seguir.
+
+    Maximo 5 claves equivocadas por conexion: despues de la quinta, esa
+    conexion queda bloqueada 15 minutos (aunque pruebe la correcta), asi nadie
+    puede probar claves sin parar hasta adivinarla. Se cuentan claves
+    distintas: el panel manda varios pedidos con la misma clave, y una clave
+    vieja guardada no tiene que bloquear al dueno de una.
+    """
+    ip = ip_del_cliente()
+    ahora = time.time()
+    with _frenos_lock:
+        registro = _claves_falladas.get(ip)
+        if registro and registro["bloqueado_hasta"] > ahora:
+            minutos = int((registro["bloqueado_hasta"] - ahora) // 60) + 1
+            return jsonify({
+                "error": f"Demasiados intentos con la clave equivocada. Esperá {minutos} "
+                         f"minuto{'s' if minutos != 1 else ''} y volvé a probar.",
+                "codigo": "bloqueado",
+                "minutos": minutos,
+            }), 429
+
     if panel_permitido():
+        with _frenos_lock:
+            _claves_falladas.pop(ip, None)
         return None
-    return jsonify({"error": "Falta la clave del panel", "codigo": "sin_clave"}), 401
+
+    enviada = limpiar_clave(request.headers.get(CABECERA_CLAVE, ""))
+    if not enviada:
+        # sin clave todavia (el panel recien abierto): no cuenta como intento
+        return jsonify({"error": "Falta la clave del panel", "codigo": "sin_clave"}), 401
+
+    with _frenos_lock:
+        registro = _claves_falladas.setdefault(ip, {"claves": set(), "bloqueado_hasta": 0})
+        # se guarda solo un resumen de la clave probada, nunca la clave
+        registro["claves"].add(hash(enviada))
+        intentos = len(registro["claves"])
+        if intentos >= MAXIMO_INTENTOS_CLAVE:
+            registro["claves"] = set()
+            registro["bloqueado_hasta"] = ahora + MINUTOS_BLOQUEO_CLAVE * 60
+            print(f"Clave del panel: {MAXIMO_INTENTOS_CLAVE} intentos equivocados desde {ip}, "
+                  f"bloqueada {MINUTOS_BLOQUEO_CLAVE} minutos.", flush=True)
+            return jsonify({
+                "error": f"Demasiados intentos con la clave equivocada. Esperá "
+                         f"{MINUTOS_BLOQUEO_CLAVE} minutos y volvé a probar.",
+                "codigo": "bloqueado",
+                "minutos": MINUTOS_BLOQUEO_CLAVE,
+            }), 429
+    restantes = MAXIMO_INTENTOS_CLAVE - intentos
+    return jsonify({
+        "error": "Esa clave no es correcta.",
+        "codigo": "sin_clave",
+        "intentos_restantes": restantes,
+    }), 401
 
 
 # Flask sirve la carpeta entera como archivos de la pagina (static_folder="."),
@@ -567,6 +664,21 @@ TABLAS_NEON = (
     "ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS listo_at TIMESTAMPTZ",
     # Y cuando se entrego (a domicilio) o lo retiraron (en el local).
     "ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS entregado_at TIMESTAMPTZ",
+    # Si el cliente cancelo el pedido (solo puede antes de que el local lo reciba).
+    "ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS cancelado_at TIMESTAMPTZ",
+    # Los comentarios del formulario de contacto (los ve el dueno en el panel).
+    """
+    CREATE TABLE IF NOT EXISTS comentarios (
+      id SERIAL PRIMARY KEY,
+      nombre TEXT NOT NULL,
+      email TEXT,
+      telefono TEXT,
+      asunto TEXT,
+      mensaje TEXT NOT NULL,
+      leido BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+    """,
     # Ajustes sueltos del local, por ahora solo si esta abierto o cerrado.
     """
     CREATE TABLE IF NOT EXISTS ajustes (
@@ -1774,6 +1886,20 @@ def orders():
             "codigo": "local_cerrado",
         }), 503
 
+    # Contra pedidos falsos en cantidad:
+    # 1. "sitio_web" es un campo escondido del formulario: una persona no lo ve
+    #    y lo deja vacio, pero los programas que llenan formularios solos lo
+    #    completan. Si viene lleno, se hace como que salio bien y no se guarda.
+    if str(data.get("sitio_web") or "").strip():
+        return jsonify({"ok": True, "order_id": 0, "total": 0})
+    # 2. Como mucho 2 pedidos cada 10 minutos desde la misma conexion (el
+    #    segundo, por si alguien se olvido de agregar algo).
+    if not dentro_del_limite("pedido", ip_del_cliente(), 2, 600):
+        return jsonify({
+            "error": "Hiciste muchos pedidos seguidos. Esperá unos minutos y volvé a intentar.",
+            "codigo": "demasiados",
+        }), 429
+
     items = data.get("items", [])
     platos = platos_del_pedido(items) if isinstance(items, list) else []
     if not platos:
@@ -1816,6 +1942,13 @@ def orders():
     telefono = telefono_normalizado(cliente.get("telefono"))
     if len(telefono) >= 6:
         cliente["telefono_normalizado"] = telefono
+        # 3. Y como mucho 2 cada 10 minutos con el mismo telefono, aunque
+        #    cambie de conexion.
+        if not dentro_del_limite("pedido_tel", telefono, 2, 600):
+            return jsonify({
+                "error": "Hiciste muchos pedidos seguidos. Esperá unos minutos y volvé a intentar.",
+                "codigo": "demasiados",
+            }), 429
 
     # El codigo con el que el navegador del cliente sigue su pedido.
     seguimiento = secrets.token_urlsafe(16)
@@ -1861,6 +1994,10 @@ def update_estado(order_id):
         return jsonify({"error": "Estado inválido"}), 400
 
     def trabajo(cur):
+        cur.execute("SELECT estado FROM pedidos WHERE id = %s", (order_id,))
+        actual = cur.fetchone()
+        if actual and actual["estado"] == "cancelado":
+            return -1  # el cliente lo cancelo: ya no se mueve
         # La hora de cada paso se guarda la primera vez que pasa (si se toca
         # "Listo" sin "Recibir", cuenta como recibido en ese momento). Si se
         # vuelve a "nuevo", se borran.
@@ -1880,6 +2017,8 @@ def update_estado(order_id):
         return sin_base()
     if cambiados == 0:
         return jsonify({"error": "Pedido no encontrado"}), 404
+    if cambiados == -1:
+        return jsonify({"error": "El cliente canceló este pedido.", "codigo": "cancelado"}), 409
     if estado in ("recibido", "listo"):
         # La notificacion al celular del cliente va en otro hilo: el panel no
         # tiene que esperar a que la mande.
@@ -2020,7 +2159,8 @@ def seguimiento_pedido(order_id):
             " extract(epoch FROM created_at)::bigint AS enviado,"
             " extract(epoch FROM recibido_at)::bigint AS recibido,"
             " extract(epoch FROM listo_at)::bigint AS listo,"
-            " extract(epoch FROM entregado_at)::bigint AS entregado"
+            " extract(epoch FROM entregado_at)::bigint AS entregado,"
+            " extract(epoch FROM cancelado_at)::bigint AS cancelado"
             " FROM pedidos WHERE id = %s AND seguimiento = %s",
             (order_id, codigo),
         )
@@ -2037,6 +2177,43 @@ def seguimiento_pedido(order_id):
         for item in (pedido.get("items") or [])
     ]
     return jsonify(pedido)
+
+
+@app.route("/api/seguimiento/<int:order_id>/cancelar", methods=["POST"])
+def cancelar_pedido(order_id):
+    """El cliente cancela su pedido (con su codigo de seguimiento).
+
+    Solo mientras el local no lo recibio: despues ya se esta preparando, y
+    el cliente tiene que hablar con el local.
+    """
+    codigo = str((request.get_json(silent=True) or {}).get("t") or "")
+    if not codigo:
+        return jsonify({"error": "Falta el codigo"}), 400
+
+    def trabajo(cur):
+        cur.execute(
+            "UPDATE pedidos SET estado = 'cancelado', cancelado_at = now()"
+            " WHERE id = %s AND seguimiento = %s AND estado = 'nuevo' RETURNING id",
+            (order_id, codigo),
+        )
+        if cur.fetchone():
+            return "ok"
+        cur.execute("SELECT estado FROM pedidos WHERE id = %s AND seguimiento = %s", (order_id, codigo))
+        fila = cur.fetchone()
+        return fila["estado"] if fila else "no_existe"
+
+    resultado = recorrer_base(trabajo, transaccion=False)
+    if resultado is None:
+        return sin_base()
+    if resultado == "ok" or resultado == "cancelado":
+        return jsonify({"ok": True, "estado": "cancelado"})
+    if resultado == "no_existe":
+        return jsonify({"error": "Pedido no encontrado"}), 404
+    return jsonify({
+        "error": "El local ya recibió tu pedido y lo está preparando. Si necesitás cancelarlo, escribinos por WhatsApp.",
+        "codigo": "ya_recibido",
+        "estado": resultado,
+    }), 409
 
 
 @app.route("/api/avisos/clave")
@@ -2082,6 +2259,82 @@ def activar_avisos(order_id):
     if cambiados == 0:
         return jsonify({"error": "Pedido no encontrado"}), 404
     return jsonify({"ok": True})
+
+
+# ---------------------------------------------------------------------------
+# COMENTARIOS DEL FORMULARIO DE CONTACTO
+#
+# Antes el formulario decia "comentario enviado" pero no mandaba nada a ningun
+# lado. Ahora se guardan en la base y el dueno los ve abajo de todo en el panel.
+# ---------------------------------------------------------------------------
+
+ASUNTOS_VALIDOS = ("consulta", "sugerencia", "felicitacion", "otro")
+
+
+@app.route("/api/comentarios", methods=["GET", "POST"])
+def comentarios():
+    if request.method == "GET":
+        error = pedir_clave()
+        if error:
+            return error
+
+        def leer(cur):
+            cur.execute(
+                "SELECT id, nombre, email, telefono, asunto, mensaje, leido,"
+                " to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD HH24:MI:SS') AS created_at"
+                " FROM comentarios ORDER BY id DESC LIMIT 50"
+            )
+            return [dict(fila) for fila in cur.fetchall()]
+
+        lista = recorrer_base(leer, transaccion=False)
+        if lista is None:
+            return sin_base()
+        return jsonify(lista)
+
+    datos = request.get_json(silent=True) or {}
+    if str(datos.get("sitio_web") or "").strip():
+        return jsonify({"ok": True})  # el campo trampa vino lleno: un programa
+    # Como mucho 3 comentarios cada 10 minutos desde la misma conexion.
+    if not dentro_del_limite("comentario", ip_del_cliente(), 3, 600):
+        return jsonify({"error": "Mandaste varios comentarios seguidos. Esperá unos minutos."}), 429
+    nombre = texto_limpio(datos.get("nombre"), 80, requerido=True)
+    mensaje = str(datos.get("mensaje") or "").strip()[:500]
+    if not nombre or not mensaje:
+        return jsonify({"error": "Faltan el nombre o el mensaje."}), 400
+    asunto = datos.get("asunto") if datos.get("asunto") in ASUNTOS_VALIDOS else None
+
+    def guardar(cur):
+        cur.execute(
+            "INSERT INTO comentarios (nombre, email, telefono, asunto, mensaje)"
+            " VALUES (%s, %s, %s, %s, %s)",
+            (nombre, texto_limpio(datos.get("email"), 120), texto_limpio(datos.get("telefono"), 40),
+             asunto, mensaje),
+        )
+        return True
+
+    if recorrer_base(guardar, transaccion=False) is None:
+        return jsonify({"error": "No se pudo enviar el comentario. Intentá de nuevo."}), 503
+    return jsonify({"ok": True}), 201
+
+
+@app.route("/api/comentarios/<int:comentario_id>", methods=["POST", "DELETE"])
+def comentario(comentario_id):
+    """POST: marcar como leido. DELETE: borrarlo. Solo el dueno."""
+    error = pedir_clave()
+    if error:
+        return error
+
+    def trabajo(cur):
+        if request.method == "DELETE":
+            cur.execute("DELETE FROM comentarios WHERE id = %s", (comentario_id,))
+        else:
+            cur.execute("UPDATE comentarios SET leido = TRUE WHERE id = %s", (comentario_id,))
+        return cur.rowcount
+
+    cambiados = recorrer_base(trabajo, transaccion=False)
+    if cambiados is None:
+        return sin_base()
+    return jsonify({"ok": bool(cambiados)})
 
 
 @app.route("/api/orders/<int:order_id>", methods=["DELETE"])

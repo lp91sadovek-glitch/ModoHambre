@@ -8,10 +8,10 @@
     <link rel="apple-touch-icon" href="/imagenes/icono-192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Modo Hambre">
-    <title>Déjanos tu comentario</title>
+    <title>Dejanos tu comentario</title>
 
     <link rel="stylesheet" href="style/style.css?v=33">
-    <link rel="stylesheet" href="style/platos.css?v=30">
+    <link rel="stylesheet" href="style/platos.css?v=32">
     <link rel="stylesheet" href="style/contactos.css">
     <style>
         .header.con-scroll {
@@ -43,7 +43,7 @@
 
     <!-- TÍTULO -->
     <section class="titulo-comentario">
-        <h1>Déjanos tu comentario</h1>
+        <h1>Dejanos tu comentario</h1>
         <p>Tu opinión nos ayuda a mejorar cada día</p>
         <span class="linea-naranja"></span>
     </section>
@@ -52,6 +52,8 @@
     <main class="tarjeta-comentario">
 
         <form id="form-comentario">
+            <!-- trampa para programas que llenan formularios solos (las personas no la ven) -->
+            <input type="text" name="sitio_web" class="campo-trampa" tabindex="-1" autocomplete="off" aria-hidden="true">
 
             <div class="fila-inputs">
 
@@ -103,7 +105,7 @@
 
             <label class="textarea-titulo" for="mensaje">Tu mensaje *</label>
             <div class="textarea-wrap">
-                <textarea id="mensaje" name="mensaje" maxlength="500" placeholder="Cuéntanos tu experiencia, sugerencias o cualquier comentario que quieras compartir..." required></textarea>
+                <textarea id="mensaje" name="mensaje" maxlength="500" placeholder="Contanos tu experiencia, sugerencias o cualquier comentario que quieras compartir..." required></textarea>
                 <span class="contador" id="contador">0/500</span>
             </div>
 
@@ -230,9 +232,9 @@
     </footer>
 
     <!-- SCRIPTS -->
-    <script src="api-client.js?v=6"></script>
-    <script src="platos-cart.js?v=16"></script>
-    <script src="seguimiento.js?v=7"></script>
+    <script src="api-client.js?v=7"></script>
+    <script src="platos-cart.js?v=17"></script>
+    <script src="seguimiento.js?v=8"></script>
 
     <script>
         const mensaje = document.getElementById('mensaje');
@@ -248,16 +250,38 @@
         const formComentario = document.getElementById('form-comentario');
         const btnEnviar = document.getElementById('btn-enviar');
         if (formComentario) {
-            formComentario.addEventListener('submit', (event) => {
+            // El comentario se guarda en el servidor y el local lo ve en su
+            // panel (antes decía "enviado" pero no se mandaba a ningún lado).
+            formComentario.addEventListener('submit', async (event) => {
                 event.preventDefault();
-                btnEnviar.textContent = '✓ ¡Comentario enviado!';
+                const datos = Object.fromEntries(new FormData(formComentario));
+                btnEnviar.textContent = 'Enviando…';
                 btnEnviar.disabled = true;
-                formComentario.reset();
-                if (contador) contador.textContent = '0/500';
+                let texto = '✓ ¡Comentario enviado!';
+                let salioBien = false;
+                try {
+                    const respuesta = await fetch(API_PEDIDOS + '/api/comentarios', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(datos)
+                    });
+                    salioBien = respuesta.ok;
+                    if (!salioBien) {
+                        const error = await respuesta.json().catch(() => ({}));
+                        texto = error.error || 'No se pudo enviar. Probá de nuevo.';
+                    }
+                } catch (e) {
+                    texto = 'No se pudo enviar. Revisá tu internet.';
+                }
+                btnEnviar.textContent = texto;
+                if (salioBien) {
+                    formComentario.reset();
+                    if (contador) contador.textContent = '0/500';
+                }
                 setTimeout(() => {
                     btnEnviar.textContent = '✈ Enviar comentario';
                     btnEnviar.disabled = false;
-                }, 3000);
+                }, salioBien ? 3000 : 5000);
             });
         }
     </script>

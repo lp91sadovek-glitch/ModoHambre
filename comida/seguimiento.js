@@ -28,14 +28,15 @@ var SeguimientoPedidos = (function () {
     listo_local: { titulo: '✅ ¡Tu pedido está listo!', cuerpo: 'Ya podés pasar a retirarlo por el local.' },
     listo_domicilio: { titulo: '🛵 ¡Tu pedido va en camino!', cuerpo: 'Está listo y lo estamos llevando a tu domicilio.' },
     entregado_local: { titulo: '🎉 ¡Retiraste tu pedido!', cuerpo: '¡Que lo disfrutes!' },
-    entregado_domicilio: { titulo: '🎉 ¡Tu pedido fue entregado!', cuerpo: '¡Que lo disfrutes!' }
+    entregado_domicilio: { titulo: '🎉 ¡Tu pedido fue entregado!', cuerpo: '¡Que lo disfrutes!' },
+    cancelado: { titulo: '❌ Pedido cancelado', cuerpo: 'Cancelaste este pedido. No se va a preparar.' }
   };
 
   /* Un pedido está activo hasta que el local lo marca como entregado o
      retirado. Mientras está activo se sigue preguntando el estado, se ve la
      tarjeta de abajo y el botón "Mi pedido" de arriba. */
   function activo(pedido) {
-    return pedido.estado !== 'entregado';
+    return pedido.estado !== 'entregado' && pedido.estado !== 'cancelado';
   }
 
   var reloj = null;
@@ -63,6 +64,7 @@ var SeguimientoPedidos = (function () {
   }
 
   function textoDe(pedido) {
+    if (pedido.estado === 'cancelado') return TEXTOS.cancelado;
     if (pedido.estado === 'entregado') {
       return TEXTOS[pedido.envio === 'domicilio' ? 'entregado_domicilio' : 'entregado_local'];
     }
@@ -312,10 +314,57 @@ var SeguimientoPedidos = (function () {
         pasoHTML('Recibido', recibido, recibido && !listo) +
         pasoHTML(ultimoPaso, listo, listo) +
       '</ol>' +
-      '<button class="seg-ver" type="button" data-accion="detalle">Ver seguimiento ›</button>' +
+      '<div class="seg-acciones">' +
+        '<button class="seg-ver" type="button" data-accion="detalle">Ver seguimiento ›</button>' +
+        opcionCancelar(pedido) +
+      '</div>' +
       botonAvisos;
     caja.dataset.id = pedido.id;
     if (detalleAbierto) dibujarDetalle();
+  }
+
+  /* ---------- cancelar el pedido ----------
+     Solo mientras el local no lo recibió: después ya se está preparando, y en
+     vez del botón aparece un link para hablar con el local por WhatsApp. */
+
+  var WHATSAPP_LOCAL = '5492215012289';
+
+  function opcionCancelar(pedido) {
+    if (pedido.estado === 'nuevo') {
+      return '<button class="seg-cancelar" type="button" data-accion="cancelar">Cancelar pedido</button>';
+    }
+    if (pedido.estado === 'recibido' || pedido.estado === 'listo') {
+      var texto = encodeURIComponent('Hola, quiero cancelar el pedido #' + pedido.id);
+      return '<a class="seg-cancelar-ws" href="https://wa.me/' + WHATSAPP_LOCAL + '?text=' + texto +
+        '" target="_blank" rel="noopener">¿Cancelar? Escribinos por WhatsApp</a>';
+    }
+    return '';
+  }
+
+  async function cancelar(pedido) {
+    if (!confirm('¿Cancelar el pedido #' + pedido.id + '?\n\nEl local no lo va a preparar.')) return;
+    try {
+      var respuesta = await fetch(API_PEDIDOS + '/api/seguimiento/' + pedido.id + '/cancelar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ t: pedido.t })
+      });
+      var datos = await respuesta.json().catch(function () { return {}; });
+      if (respuesta.ok) {
+        var detalle = Object.assign({}, pedido.detalle || {}, { cancelado: Math.floor(Date.now() / 1000) });
+        marcar(pedido.id, { estado: 'cancelado', detalle: detalle });
+        if (typeof mostrarToast === 'function') mostrarToast('Cancelaste el pedido #' + pedido.id + '.');
+      } else {
+        // el local lo recibió justo antes: se avisa y se actualiza el estado
+        if (typeof mostrarToast === 'function') {
+          mostrarToast(datos.error || 'No se pudo cancelar el pedido. Probá de nuevo.', 'error');
+        }
+        await consultar(pedido);
+      }
+    } catch (error) {
+      if (typeof mostrarToast === 'function') mostrarToast('No se pudo cancelar. Revisá tu internet.', 'error');
+    }
+    dibujar();
   }
 
   /* ---------- la pantalla de seguimiento ----------
@@ -396,14 +445,20 @@ var SeguimientoPedidos = (function () {
       '<p class="seg-cartel-numero">Pedido #' + pedido.id + '</p>' +
       '<p class="seg-detalle-estado">' + texto.titulo + '</p>' +
       '<p class="seg-cartel-cuerpo">' + texto.cuerpo + '</p>' +
+      (pedido.estado === 'cancelado' ? '' : '<div class="seg-detalle-cancelar">' + opcionCancelar(pedido) + '</div>') +
       '<ol class="seg-linea">' +
+        (pedido.estado === 'cancelado'
+          ? pasoLinea('🧾', 'Pedido enviado', 'Le llegó al local.', hora(d.enviado), true, false) +
+            pasoLinea('❌', 'Cancelado', 'Lo cancelaste antes de que el local lo prepare.', hora(d.cancelado), true, true)
+          : '') +
+        (pedido.estado === 'cancelado' ? '' :
         pasoLinea('🧾', 'Pedido enviado', 'Le llegó al local.', hora(d.enviado), true, !recibido) +
         pasoLinea('👨‍🍳', 'Pedido recibido', 'El local lo está preparando.', hora(d.recibido), recibido, recibido && !listo) +
         (aDomicilio
           ? pasoLinea('🛵', 'En camino', 'Está listo y lo estamos llevando a tu domicilio.', hora(d.listo), listo, listo && !entregado) +
             pasoLinea('🎉', 'Entregado', 'Tu pedido llegó. ¡Que lo disfrutes!', hora(d.entregado), entregado, entregado)
           : pasoLinea('🛍️', 'Listo para retirar', 'Ya podés pasar a buscarlo por el local.', hora(d.listo), listo, listo && !entregado) +
-            pasoLinea('🎉', 'Retirado', 'Ya lo retiraste. ¡Que lo disfrutes!', hora(d.entregado), entregado, entregado)) +
+            pasoLinea('🎉', 'Retirado', 'Ya lo retiraste. ¡Que lo disfrutes!', hora(d.entregado), entregado, entregado))) +
       '</ol>' +
       (platos
         ? '<div class="seg-detalle-caja">' +
@@ -441,6 +496,12 @@ var SeguimientoPedidos = (function () {
     fondoDetalle.addEventListener('click', function (evento) {
       if (evento.target === fondoDetalle || evento.target.closest('.seg-detalle-cerrar')) {
         cerrarDetalle();
+        return;
+      }
+      var botonCancelar = evento.target.closest('[data-accion="cancelar"]');
+      if (botonCancelar) {
+        var elegido = leer().find(function (p) { return p.id === detalleAbierto; });
+        if (elegido) cancelar(elegido);
         return;
       }
       var otro = evento.target.closest('[data-ver]');
@@ -519,6 +580,8 @@ var SeguimientoPedidos = (function () {
       dibujar();
     } else if (boton.dataset.accion === 'avisos') {
       activarAvisos(pedido, boton);
+    } else if (boton.dataset.accion === 'cancelar') {
+      cancelar(pedido);
     } else if (boton.dataset.accion === 'detalle') {
       abrirDetalle(id);
     }

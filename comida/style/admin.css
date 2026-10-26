@@ -771,3 +771,95 @@ body {
         text-align: center;
     }
 }
+/* COMENTARIOS DE CLIENTES (abajo de todo, cerrado) */
+
+.admin-comentarios {
+    margin-top: 1.5rem;
+}
+
+.comentarios-nuevos {
+    margin-left: 0.4rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    background: #f57c00;
+    color: #fff;
+    font-size: 0.75rem;
+}
+
+.comentarios-nuevos[hidden] {
+    display: none;
+}
+
+.comentarios-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-top: 0.8rem;
+}
+
+.comentario {
+    position: relative;
+    padding: 0.7rem 2.4rem 0.7rem 0.85rem;
+    border-radius: 0.6rem;
+    background: #fff;
+    border: 0.0625rem solid #eee;
+}
+
+.comentario.no-leido {
+    border-color: #f5b46a;
+    background: #fff8ee;
+}
+
+.comentario-cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem 0.6rem;
+    font-size: 0.8rem;
+    color: #777;
+}
+
+.comentario-cabecera b {
+    color: #171717;
+}
+
+.comentario-mensaje {
+    margin: 0.35rem 0 0;
+    color: #333;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.comentario-borrar {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.comentarios-vacio {
+    margin: 0;
+    color: #888;
+}
+
+/* PEDIDO CANCELADO POR EL CLIENTE */
+
+.estado-cancelado {
+    background: #b42318;
+}
+
+.pedido-card.pedido-cancelado {
+    opacity: 0.65;
+}
+
+.pedido-cancelado-texto {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #b42318;
+}
+
+.admin-banner.admin-banner-cancelado {
+    background: #b42318;
+}
