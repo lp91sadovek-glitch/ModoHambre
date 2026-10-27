@@ -212,7 +212,7 @@ app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16 MB
 CORS(
     app,
     resources={r"/api/.*": {"origins": "*"}},
-    allow_headers=["Content-Type", CABECERA_CLAVE],
+    allow_headers=["Content-Type", CABECERA_CLAVE, "X-Dispositivo"],
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
 )
 
@@ -276,31 +276,144 @@ def dentro_del_limite(tipo, quien, maximo, segundos):
     return True
 
 
+# Desde una misma conexion se puede inventar otro dispositivo en cada intento
+# (borrando los datos del navegador), asi que ademas hay un tope por IP. Es
+# el doble que el del dispositivo para que, si un desarrollador acepta un
+# equipo bloqueado, le queden sus 5 intentos nuevos.
+MAXIMO_INTENTOS_POR_IP = 10
+
+# ---------------------------------------------------------------------------
+# DISPOSITIVOS
+#
+# Cada navegador que abre el panel inventa un numero al azar y lo manda en
+# X-Dispositivo (ver panel-clave.js). Un dispositivo "conocido" (que alguna vez
+# entro con la clave buena) que se equivoca 5 veces espera 15 minutos. Uno
+# nuevo que se equivoca 5 veces queda bloqueado para siempre, aunque despues
+# pruebe la clave buena, hasta que un desarrollador lo acepta (le da 5
+# intentos mas) o lo rechaza, con panel-desarrolladores.py.
+# ---------------------------------------------------------------------------
+
+CABECERA_DISPOSITIVO = "X-Dispositivo"
+_dispositivos = {}  # id -> {"estado", "conocido", "intentos", "claves", "hasta", "leido"}
+# Un dispositivo bloqueado se vuelve a mirar en la base cada tantos segundos:
+# asi, cuando un desarrollador lo acepta, se entera enseguida.
+SEGUNDOS_RELEER_DISPOSITIVO = 5
+
+
+def dispositivo_del_pedido():
+    valor = request.headers.get(CABECERA_DISPOSITIVO, "").strip()
+    if re.fullmatch(r"[A-Za-z0-9_-]{16,64}", valor):
+        return valor
+    # sin el numero (alguien que pide a mano): cuenta como un dispositivo por IP
+    return "ip-" + ip_del_cliente()
+
+
+def leer_dispositivo(dispositivo):
+    """Lo que se sabe del dispositivo, o None si la base no anda (entonces
+    queda solo el freno por IP, para no dejar afuera al dueno)."""
+    ahora = time.time()
+    with _frenos_lock:
+        datos = _dispositivos.get(dispositivo)
+        if datos and ((datos["conocido"] and datos["estado"] == "normal")
+                      or ahora - datos["leido"] < SEGUNDOS_RELEER_DISPOSITIVO):
+            return datos
+
+    def trabajo(cur):
+        cur.execute("SELECT estado, conocido, intentos FROM dispositivos WHERE id = %s", (dispositivo,))
+        return cur.fetchone() or {}
+
+    fila = recorrer_base(trabajo, None, transaccion=False)
+    if fila is None:
+        return None
+    with _frenos_lock:
+        datos = _dispositivos.setdefault(dispositivo, {"claves": set(), "hasta": 0})
+        conocido = bool(fila.get("conocido"))
+        estado = fila.get("estado", "normal")
+        datos.update(
+            estado=estado,
+            conocido=conocido,
+            # a uno conocido solo lo frenan 15 minutos: no hace falta que sus
+            # errores viejos sigan contando despues de reiniciar el servidor
+            intentos=0 if conocido and estado == "normal" else int(fila.get("intentos") or 0),
+            leido=ahora,
+        )
+        if datos["intentos"] == 0:
+            # recien aceptado por un desarrollador: arranca de cero
+            datos["claves"] = set()
+        return datos
+
+
+def guardar_dispositivo(dispositivo, datos, resultado):
+    """Guarda como quedo el dispositivo y anota el intento en el historial."""
+    navegador = request.headers.get("User-Agent", "")[:300]
+    ip = ip_del_cliente()
+
+    def trabajo(cur):
+        cur.execute(
+            "INSERT INTO dispositivos (id, estado, conocido, intentos, ip, navegador, bloqueado_at)"
+            " VALUES (%s, %s, %s, %s, %s, %s, CASE WHEN %s = 'bloqueado' THEN now() END)"
+            " ON CONFLICT (id) DO UPDATE SET estado = EXCLUDED.estado,"
+            " conocido = EXCLUDED.conocido, intentos = EXCLUDED.intentos, ip = EXCLUDED.ip,"
+            " navegador = EXCLUDED.navegador, ultima_vez = now(),"
+            " bloqueado_at = COALESCE(EXCLUDED.bloqueado_at, dispositivos.bloqueado_at)",
+            (dispositivo, datos["estado"], datos["conocido"], datos["intentos"], ip, navegador,
+             datos["estado"]),
+        )
+        cur.execute(
+            "INSERT INTO intentos_clave (dispositivo, ip, navegador, resultado) VALUES (%s, %s, %s, %s)",
+            (dispositivo, ip, navegador, resultado),
+        )
+
+    recorrer_base(trabajo)
+
+
+def respuesta_bloqueado(minutos):
+    return jsonify({
+        "error": f"Demasiados intentos con la clave equivocada. Esperá {minutos} "
+                 f"minuto{'s' if minutos != 1 else ''} y volvé a probar.",
+        "codigo": "bloqueado",
+        "minutos": minutos,
+    }), 429
+
+
+def respuesta_dispositivo_bloqueado():
+    return jsonify({
+        "error": "Este dispositivo quedó bloqueado por equivocarse 5 veces con la clave. "
+                 "Pedile a los desarrolladores de la página que lo habiliten.",
+        "codigo": "dispositivo_bloqueado",
+    }), 403
+
+
 def pedir_clave():
     """Devuelve la respuesta de error, o None si el pedido puede seguir.
 
-    Maximo 5 claves equivocadas por conexion: despues de la quinta, esa
-    conexion queda bloqueada 15 minutos (aunque pruebe la correcta), asi nadie
-    puede probar claves sin parar hasta adivinarla. Se cuentan claves
-    distintas: el panel manda varios pedidos con la misma clave, y una clave
-    vieja guardada no tiene que bloquear al dueno de una.
+    Se cuentan claves distintas: el panel manda varios pedidos con la misma
+    clave, y una clave vieja guardada no tiene que bloquear al dueno de una.
+    De la clave probada se guarda solo un resumen en memoria, nunca la clave.
     """
     ip = ip_del_cliente()
+    dispositivo = dispositivo_del_pedido()
+    datos = leer_dispositivo(dispositivo)
     ahora = time.time()
+
+    if datos and datos["estado"] in ("bloqueado", "rechazado"):
+        return respuesta_dispositivo_bloqueado()
     with _frenos_lock:
         registro = _claves_falladas.get(ip)
-        if registro and registro["bloqueado_hasta"] > ahora:
-            minutos = int((registro["bloqueado_hasta"] - ahora) // 60) + 1
-            return jsonify({
-                "error": f"Demasiados intentos con la clave equivocada. Esperá {minutos} "
-                         f"minuto{'s' if minutos != 1 else ''} y volvé a probar.",
-                "codigo": "bloqueado",
-                "minutos": minutos,
-            }), 429
+        espera = max(registro["bloqueado_hasta"] if registro else 0, datos["hasta"] if datos else 0)
+    if espera > ahora:
+        return respuesta_bloqueado(int((espera - ahora) // 60) + 1)
 
     if panel_permitido():
         with _frenos_lock:
             _claves_falladas.pop(ip, None)
+            primera_vez = datos is not None and not datos["conocido"]
+            if datos:
+                datos.update(conocido=True, intentos=0, claves=set())
+        # se anota cuando entra un equipo nuevo o cuando alguien escribe la
+        # clave (no en cada actualizacion del panel, que son cada 4 segundos)
+        if primera_vez or (datos and request.path == "/api/panel/estado"):
+            guardar_dispositivo(dispositivo, datos, "entro")
         return None
 
     enviada = limpiar_clave(request.headers.get(CABECERA_CLAVE, ""))
@@ -308,25 +421,47 @@ def pedir_clave():
         # sin clave todavia (el panel recien abierto): no cuenta como intento
         return jsonify({"error": "Falta la clave del panel", "codigo": "sin_clave"}), 401
 
+    resumen = hash(enviada)
     with _frenos_lock:
         registro = _claves_falladas.setdefault(ip, {"claves": set(), "bloqueado_hasta": 0})
-        # se guarda solo un resumen de la clave probada, nunca la clave
-        registro["claves"].add(hash(enviada))
-        intentos = len(registro["claves"])
-        if intentos >= MAXIMO_INTENTOS_CLAVE:
-            registro["claves"] = set()
-            registro["bloqueado_hasta"] = ahora + MINUTOS_BLOQUEO_CLAVE * 60
-            print(f"Clave del panel: {MAXIMO_INTENTOS_CLAVE} intentos equivocados desde {ip}, "
-                  f"bloqueada {MINUTOS_BLOQUEO_CLAVE} minutos.", flush=True)
-            return jsonify({
-                "error": f"Demasiados intentos con la clave equivocada. Esperá "
-                         f"{MINUTOS_BLOQUEO_CLAVE} minutos y volvé a probar.",
-                "codigo": "bloqueado",
-                "minutos": MINUTOS_BLOQUEO_CLAVE,
-            }), 429
+        registro["claves"].add(resumen)
+        intentos_ip = len(registro["claves"])
+        nuevo = datos is not None and resumen not in datos["claves"]
+        if nuevo:
+            datos["claves"].add(resumen)
+            datos["intentos"] += 1
+        intentos = datos["intentos"] if datos else intentos_ip
+
+    if datos and nuevo:
+        if not datos["conocido"] and intentos >= MAXIMO_INTENTOS_CLAVE:
+            datos["estado"] = "bloqueado"
+            guardar_dispositivo(dispositivo, datos, "bloqueado")
+            print(f"Clave del panel: dispositivo nuevo bloqueado desde {ip}.", flush=True)
+            return respuesta_dispositivo_bloqueado()
+        guardar_dispositivo(dispositivo, datos, "clave equivocada")
+
+    limite_ip = MAXIMO_INTENTOS_POR_IP if datos else MAXIMO_INTENTOS_CLAVE
+    if intentos >= MAXIMO_INTENTOS_CLAVE or intentos_ip >= limite_ip:
+        # dispositivo conocido (o sin base para saberlo): 15 minutos
+        with _frenos_lock:
+            hasta = ahora + MINUTOS_BLOQUEO_CLAVE * 60
+            if datos and intentos >= MAXIMO_INTENTOS_CLAVE:
+                datos.update(intentos=0, claves=set(), hasta=hasta)
+            if intentos_ip >= limite_ip:
+                registro.update(claves=set(), bloqueado_hasta=hasta)
+        print(f"Clave del panel: demasiados intentos desde {ip}, "
+              f"bloqueada {MINUTOS_BLOQUEO_CLAVE} minutos.", flush=True)
+        return respuesta_bloqueado(MINUTOS_BLOQUEO_CLAVE)
+
     restantes = MAXIMO_INTENTOS_CLAVE - intentos
+    quedan = "Te queda 1 intento" if restantes == 1 else f"Te quedan {restantes} intentos"
+    if datos and not datos["conocido"]:
+        mensaje = f"Esa clave no es correcta. {quedan}: después este dispositivo se bloquea."
+    else:
+        mensaje = f"Esa clave no es correcta. {quedan}."
     return jsonify({
         "error": "Esa clave no es correcta.",
+        "mensaje": mensaje,
         "codigo": "sin_clave",
         "intentos_restantes": restantes,
     }), 401
@@ -684,6 +819,34 @@ TABLAS_NEON = (
     CREATE TABLE IF NOT EXISTS ajustes (
       clave TEXT PRIMARY KEY,
       valor TEXT NOT NULL
+    )
+    """,
+    # Los equipos que intentaron entrar al panel. Uno nuevo que se equivoca 5
+    # veces queda 'bloqueado' hasta que un desarrollador lo acepta o lo
+    # rechaza con panel-desarrolladores.py.
+    """
+    CREATE TABLE IF NOT EXISTS dispositivos (
+      id TEXT PRIMARY KEY,
+      estado TEXT NOT NULL DEFAULT 'normal',
+      conocido BOOLEAN NOT NULL DEFAULT FALSE,
+      intentos INTEGER NOT NULL DEFAULT 0,
+      ip TEXT,
+      navegador TEXT,
+      primera_vez TIMESTAMPTZ NOT NULL DEFAULT now(),
+      ultima_vez TIMESTAMPTZ NOT NULL DEFAULT now(),
+      bloqueado_at TIMESTAMPTZ,
+      revisado_at TIMESTAMPTZ
+    )
+    """,
+    # Historial para el monitoreo: entradas, claves equivocadas y bloqueos.
+    """
+    CREATE TABLE IF NOT EXISTS intentos_clave (
+      id SERIAL PRIMARY KEY,
+      dispositivo TEXT,
+      ip TEXT,
+      navegador TEXT,
+      resultado TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT now()
     )
     """,
 )
@@ -1678,7 +1841,9 @@ def salud():
     para que un servicio como UptimeRobot visite el sitio y Render no se duerma.
     """
     respuesta = {"ok": True, "varios_a_la_vez": bool(request.environ.get("wsgi.multithread"))}
-    if request.args.get("base") == "1":
+    # cada prueba abre una conexion nueva a Neon: si alguien la llama sin
+    # parar gastaria la cuota gratis, asi que van pocas por minuto
+    if request.args.get("base") == "1" and dentro_del_limite("salud", ip_del_cliente(), 6, 60):
         respuesta["base"] = probar_base()
     return jsonify(respuesta)
 

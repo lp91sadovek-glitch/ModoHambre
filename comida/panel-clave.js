@@ -5,16 +5,38 @@
  * archivo se encarga de eso en las dos paginas del dueno: admin.html y
  * archivo.html.
  *
- * La clave queda guardada en el navegador para no escribirla cada vez que se
- * abre el panel.
+ * Funciona como el bloqueo de pantalla del celular: la clave queda solo en la
+ * memoria de la pestaña abierta. Si se actualiza la página, se cierra la
+ * pestaña o se pasa a otra página del panel, se vuelve a pedir.
  */
 
 var PanelClave = (function () {
     var LLAVE = 'modo-hambre-clave';
     var CABECERA = 'X-Clave-Panel';
 
-    // Se usa cuando el navegador no deja guardar nada (modo privado, etc.)
+    // La clave vive solo acá: al recargar o cerrar la pestaña se pierde.
     var enMemoria = '';
+
+    // Antes la clave quedaba guardada en el navegador: se borra la que haya.
+    try { window.localStorage.removeItem(LLAVE); } catch (e) {}
+
+    /* Un número al azar que identifica a este navegador. Si desde un equipo
+       nuevo se escribe mal la clave 5 veces, el servidor bloquea este número
+       hasta que un desarrollador lo habilite. */
+    var dispositivo = (function () {
+        var llave = 'modo-hambre-dispositivo';
+        try {
+            var guardado = window.localStorage.getItem(llave);
+            if (guardado) return guardado;
+        } catch (e) {}
+        var bytes = new Uint8Array(16);
+        window.crypto.getRandomValues(bytes);
+        var nuevo = Array.prototype.map.call(bytes, function (b) {
+            return ('0' + b.toString(16)).slice(-2);
+        }).join('');
+        try { window.localStorage.setItem(llave, nuevo); } catch (e) {}
+        return nuevo;
+    })();
 
     // Funciones que se avisan cuando la clave queda aceptada. Las usa el editor
     // del menu, que no puede mostrar nada hasta que entra la clave.
@@ -25,27 +47,16 @@ var PanelClave = (function () {
     }
 
     function obtener() {
-        try {
-            return window.localStorage.getItem(LLAVE) || enMemoria;
-        } catch (e) {
-            return enMemoria;
-        }
+        return enMemoria;
     }
 
     function guardar(clave) {
         enMemoria = clave || '';
-        try {
-            if (clave) {
-                window.localStorage.setItem(LLAVE, clave);
-            } else {
-                window.localStorage.removeItem(LLAVE);
-            }
-        } catch (e) {}
     }
 
     /* Se agrega a cada pedido al host. Sin esto el servidor responde 401. */
     function cabeceras(adicionales) {
-        var cabeceras = {};
+        var cabeceras = { 'X-Dispositivo': dispositivo };
         var clave = obtener();
         if (clave) cabeceras[CABECERA] = clave;
         if (adicionales) {
@@ -103,11 +114,11 @@ var PanelClave = (function () {
                     // bloqueó por 15 minutos después de 5 claves equivocadas.
                     var datos = {};
                     try { datos = await respuesta.json(); } catch (e) {}
-                    if (respuesta.status === 429) {
+                    if (respuesta.status === 429 || respuesta.status === 403) {
                         mostrar(datos.error || 'Demasiados intentos. Esperá unos minutos.');
                     } else if (datos.intentos_restantes != null) {
-                        mostrar('Esa clave no es correcta. Te quedan ' + datos.intentos_restantes +
-                            (datos.intentos_restantes === 1 ? ' intento.' : ' intentos.'));
+                        mostrar(datos.mensaje || ('Esa clave no es correcta. Te quedan ' + datos.intentos_restantes +
+                            (datos.intentos_restantes === 1 ? ' intento.' : ' intentos.')));
                     } else {
                         mostrar('Esa clave no es correcta.');
                     }
@@ -133,11 +144,25 @@ var PanelClave = (function () {
        es el primer intento y todavia no hay que molestar al usuario. */
     function errorDeClave() {
         if (!obtener()) {
-            mostrar();
+            // solo se muestra la pantalla: sin borrar el aviso que ya estaba
+            // (por ejemplo, cuántos intentos quedan)
+            var fondo = id('clave-fondo');
+            if (fondo) fondo.hidden = false;
             return;
         }
         guardar('');
         mostrar('Esa clave no es correcta.');
+    }
+
+    /* Si el servidor frenó el pedido (15 minutos de espera, o el dispositivo
+       bloqueado), muestra en la pantalla de la clave lo que explicó. */
+    function revisarBloqueo(respuesta) {
+        if (respuesta.status !== 429 && respuesta.status !== 403) return;
+        respuesta.clone().json().then(function (datos) {
+            mostrar((datos && datos.error) || 'Demasiados intentos con la clave equivocada.');
+        }).catch(function () {
+            mostrar('Demasiados intentos con la clave equivocada.');
+        });
     }
 
     function conectar() {
@@ -178,6 +203,7 @@ var PanelClave = (function () {
         mostrar: mostrar,
         ocultar: ocultar,
         errorDeClave: errorDeClave,
+        revisarBloqueo: revisarBloqueo,
         alEntrar: function (funcion) {
             alEntrar.push(funcion);
         }

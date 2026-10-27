@@ -120,7 +120,7 @@ async function pedir(ruta, opciones) {
     var config = opciones || {};
     config.headers = PanelClave.cabeceras(config.headers);
     var respuesta = await fetch(ruta, config);
-    if (respuesta.status === 429) PanelClave.mostrar('Demasiados intentos con la clave equivocada. Esperá 15 minutos y volvé a probar.');
+    PanelClave.revisarBloqueo(respuesta);
     if (respuesta.status === 401) {
         PanelClave.errorDeClave();
         throw new Error('sin_clave');

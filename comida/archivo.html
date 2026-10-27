@@ -333,7 +333,7 @@
         </div>
     </div>
 
-    <script src="panel-clave.js?v=5"></script>
+    <script src="panel-clave.js?v=8"></script>
 
     <script>
         var lista = document.getElementById('lista-archivo');
@@ -473,7 +473,7 @@
                 var respuesta = await fetch('/api/archivo', {
                     headers: PanelClave.cabeceras()
                 });
-                if (respuesta.status === 429) PanelClave.mostrar('Demasiados intentos con la clave equivocada. Esperá 15 minutos y volvé a probar.');
+                PanelClave.revisarBloqueo(respuesta);
                 if (respuesta.status === 401) {
                     PanelClave.errorDeClave();
                     lista.innerHTML = '';
@@ -496,6 +496,9 @@
            coma porque es el separador que usa Excel en español. */
         function celda(valor) {
             var textoCelda = String(valor == null ? '' : valor);
+            // Excel toma como fórmula lo que empieza con = + - @: un cliente
+            // podía poner una fórmula de nombre y se ejecutaba al abrir la copia.
+            if (/^[=+\-@\t\r]/.test(textoCelda)) textoCelda = "'" + textoCelda;
             return '"' + textoCelda.replace(/"/g, '""') + '"';
         }
 

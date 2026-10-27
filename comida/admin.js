@@ -25,7 +25,7 @@ async function pedir(url, opciones) {
   config.headers = PanelClave.cabeceras(config.headers);
   var response = await fetch(url, config);
   // bloqueado por 5 claves equivocadas: se avisa en la pantalla de la clave
-  if (response.status === 429) PanelClave.mostrar('Demasiados intentos con la clave equivocada. Esperá 15 minutos y volvé a probar.');
+  PanelClave.revisarBloqueo(response);
   if (response.status === 401) {
     PanelClave.errorDeClave();
   }
@@ -325,8 +325,8 @@ async function cargarPedidos() {
   try {
     var response = await pedir(API + '/api/orders');
     // sin la clave el servidor responde, solo que no muestra nada todavía
-    if (response.status === 401) {
-      estadoConexion.textContent = 'Esperando la clave';
+    if (response.status === 401 || response.status === 403 || response.status === 429) {
+      estadoConexion.textContent = response.status === 401 ? 'Esperando la clave' : 'Bloqueado';
       estadoConexion.classList.remove('ok');
       return;
     }
