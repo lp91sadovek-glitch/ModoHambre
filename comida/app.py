@@ -286,11 +286,11 @@ MAXIMO_INTENTOS_POR_IP = 10
 # DISPOSITIVOS
 #
 # Cada navegador que abre el panel inventa un numero al azar y lo manda en
-# X-Dispositivo (ver panel-clave.js). Un dispositivo "conocido" (que alguna vez
-# entro con la clave buena) que se equivoca 5 veces espera 15 minutos. Uno
-# nuevo que se equivoca 5 veces queda bloqueado para siempre, aunque despues
-# pruebe la clave buena, hasta que un desarrollador lo acepta (le da 5
-# intentos mas) o lo rechaza, con panel-desarrolladores.py.
+# X-Dispositivo (ver panel-clave.js). El que se equivoca 5 veces con la clave
+# queda bloqueado para siempre, aunque despues pruebe la buena, hasta que un
+# desarrollador lo acepta (le da 5 intentos mas) o lo rechaza, con
+# panel-desarrolladores.py. "Conocido" (si alguna vez entro bien) queda solo
+# como dato para el monitoreo.
 # ---------------------------------------------------------------------------
 
 CABECERA_DISPOSITIVO = "X-Dispositivo"
@@ -327,14 +327,10 @@ def leer_dispositivo(dispositivo):
         return None
     with _frenos_lock:
         datos = _dispositivos.setdefault(dispositivo, {"claves": set(), "hasta": 0})
-        conocido = bool(fila.get("conocido"))
-        estado = fila.get("estado", "normal")
         datos.update(
-            estado=estado,
-            conocido=conocido,
-            # a uno conocido solo lo frenan 15 minutos: no hace falta que sus
-            # errores viejos sigan contando despues de reiniciar el servidor
-            intentos=0 if conocido and estado == "normal" else int(fila.get("intentos") or 0),
+            estado=fila.get("estado", "normal"),
+            conocido=bool(fila.get("conocido")),
+            intentos=int(fila.get("intentos") or 0),
             leido=ahora,
         )
         if datos["intentos"] == 0:
@@ -433,29 +429,26 @@ def pedir_clave():
         intentos = datos["intentos"] if datos else intentos_ip
 
     if datos and nuevo:
-        if not datos["conocido"] and intentos >= MAXIMO_INTENTOS_CLAVE:
+        if intentos >= MAXIMO_INTENTOS_CLAVE:
             datos["estado"] = "bloqueado"
             guardar_dispositivo(dispositivo, datos, "bloqueado")
-            print(f"Clave del panel: dispositivo nuevo bloqueado desde {ip}.", flush=True)
+            print(f"Clave del panel: dispositivo bloqueado desde {ip}.", flush=True)
             return respuesta_dispositivo_bloqueado()
         guardar_dispositivo(dispositivo, datos, "clave equivocada")
 
+    # el freno por IP (alguien inventando dispositivos), o sin base para
+    # saber de que dispositivo se trata: 15 minutos
     limite_ip = MAXIMO_INTENTOS_POR_IP if datos else MAXIMO_INTENTOS_CLAVE
-    if intentos >= MAXIMO_INTENTOS_CLAVE or intentos_ip >= limite_ip:
-        # dispositivo conocido (o sin base para saberlo): 15 minutos
+    if intentos_ip >= limite_ip:
         with _frenos_lock:
-            hasta = ahora + MINUTOS_BLOQUEO_CLAVE * 60
-            if datos and intentos >= MAXIMO_INTENTOS_CLAVE:
-                datos.update(intentos=0, claves=set(), hasta=hasta)
-            if intentos_ip >= limite_ip:
-                registro.update(claves=set(), bloqueado_hasta=hasta)
+            registro.update(claves=set(), bloqueado_hasta=ahora + MINUTOS_BLOQUEO_CLAVE * 60)
         print(f"Clave del panel: demasiados intentos desde {ip}, "
               f"bloqueada {MINUTOS_BLOQUEO_CLAVE} minutos.", flush=True)
         return respuesta_bloqueado(MINUTOS_BLOQUEO_CLAVE)
 
     restantes = MAXIMO_INTENTOS_CLAVE - intentos
     quedan = "Te queda 1 intento" if restantes == 1 else f"Te quedan {restantes} intentos"
-    if datos and not datos["conocido"]:
+    if datos:
         mensaje = f"Esa clave no es correcta. {quedan}: después este dispositivo se bloquea."
     else:
         mensaje = f"Esa clave no es correcta. {quedan}."

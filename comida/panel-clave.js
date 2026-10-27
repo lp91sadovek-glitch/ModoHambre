@@ -114,6 +114,10 @@ var PanelClave = (function () {
                     // bloqueó por 15 minutos después de 5 claves equivocadas.
                     var datos = {};
                     try { datos = await respuesta.json(); } catch (e) {}
+                    if (datos.codigo === 'dispositivo_bloqueado') {
+                        mostrarDispositivoBloqueado();
+                        return;
+                    }
                     if (respuesta.status === 429 || respuesta.status === 403) {
                         mostrar(datos.error || 'Demasiados intentos. Esperá unos minutos.');
                     } else if (datos.intentos_restantes != null) {
@@ -154,11 +158,34 @@ var PanelClave = (function () {
         mostrar('Esa clave no es correcta.');
     }
 
+    /* 5 claves equivocadas: en vez de la pantalla de la clave queda un cartel
+       sin lugar para escribir. Vuelve a la normalidad recién cuando un
+       desarrollador lo habilita y se actualiza la página. */
+    function mostrarDispositivoBloqueado() {
+        var fondo = id('clave-fondo');
+        if (!fondo) return;
+        fondo.hidden = false;
+        var caja = fondo.querySelector('.clave-caja');
+        if (!caja || caja.classList.contains('clave-bloqueada')) return;
+        caja.classList.add('clave-bloqueada');
+        caja.innerHTML =
+            '<div class="clave-bloqueada-icono">🔒</div>' +
+            '<h1 class="clave-titulo">Dispositivo bloqueado</h1>' +
+            '<p class="clave-bloqueada-motivo">5 intentos fallidos con la clave</p>' +
+            '<p class="clave-ayuda">Por seguridad, este dispositivo ya no puede entrar al panel. ' +
+            'Si sos el dueño del local, pedile a los desarrolladores de la página que lo habiliten ' +
+            'y después actualizá la página.</p>';
+    }
+
     /* Si el servidor frenó el pedido (15 minutos de espera, o el dispositivo
        bloqueado), muestra en la pantalla de la clave lo que explicó. */
     function revisarBloqueo(respuesta) {
         if (respuesta.status !== 429 && respuesta.status !== 403) return;
         respuesta.clone().json().then(function (datos) {
+            if (datos && datos.codigo === 'dispositivo_bloqueado') {
+                mostrarDispositivoBloqueado();
+                return;
+            }
             mostrar((datos && datos.error) || 'Demasiados intentos con la clave equivocada.');
         }).catch(function () {
             mostrar('Demasiados intentos con la clave equivocada.');

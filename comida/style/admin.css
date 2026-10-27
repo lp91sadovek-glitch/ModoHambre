@@ -638,6 +638,36 @@ body {
     color: #b3261e;
 }
 
+/* El cartel que reemplaza a la clave cuando el dispositivo quedó bloqueado */
+.clave-bloqueada {
+    border: 0.2rem solid #b3261e;
+}
+
+.clave-bloqueada-icono {
+    font-size: 2.6rem;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.clave-bloqueada .clave-titulo {
+    color: #b3261e;
+}
+
+.clave-bloqueada-motivo {
+    display: inline-block;
+    margin: 0.25rem 0 0.9rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 999px;
+    background: #fde8e6;
+    color: #b3261e;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.clave-bloqueada .clave-ayuda {
+    margin-bottom: 0;
+}
+
 .clave-nota {
     margin: 0.5rem 0 0;
     font-size: 0.75rem;

@@ -40,7 +40,10 @@ def url_de_la_base():
     if ARCHIVO_DB.exists():
         for linea in ARCHIVO_DB.read_text(encoding="utf-8", errors="ignore").splitlines():
             if linea.strip().startswith(llave):
-                return linea.split(":", 1)[1].strip().strip("'\"")
+                url = linea.split(":", 1)[1].strip().strip("'\"")
+                # el archivo tiene lineas de ejemplo ("postgresql://..."): se saltean
+                if "@" in url and "..." not in url:
+                    return url
     return "" if "--vieja" in sys.argv else os.environ.get("DATABASE_URL", "")
 
 
@@ -92,7 +95,7 @@ class Panel:
         # --- Bloqueados ---
         marco = ttk.Frame(self.pestanas, padding=8)
         self.pestanas.add(marco, text="Bloqueados")
-        ttk.Label(marco, text="Equipos nuevos que se equivocaron 5 veces con la clave. Si es el dueño, "
+        ttk.Label(marco, text="Equipos que se equivocaron 5 veces con la clave. Si es el dueño, "
                               "aceptalo (le quedan 5 intentos más). Si no, rechazalo.",
                   wraplength=900).pack(anchor="w", pady=(0, 6))
         self.tabla_bloqueados = self.tabla(marco, (
