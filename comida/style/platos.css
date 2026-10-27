@@ -1217,7 +1217,7 @@ body.panel-abierto {
 
 @media (max-width: 480px) {
     .cart-drawer {
-        width: 94vw;
+        width: 86vw;
         border-radius: 20px 0 0 20px;
     }
 
@@ -1246,11 +1246,21 @@ body.panel-abierto {
     }
 
     .cart-title {
-        font-size: 24px;
+        font-size: 22px;
+        white-space: nowrap;
     }
 
     .cart-header {
-        padding: 16px 16px 12px;
+        gap: 10px;
+        padding: 16px 14px 12px;
+    }
+
+    .cart-close-btn {
+        padding: 0.45rem 0.8rem;
+    }
+
+    .empty-cart-chef {
+        display: none;
     }
 
     .cart-body {
@@ -1743,6 +1753,76 @@ body.checkout-abierto {
 
 .seguimiento-listo {
     border-color: #1e7b34;
+}
+
+/* La barrita del celular: en la computadora no se usa */
+.seg-mini {
+    display: none;
+}
+
+@media (max-width: 37.5rem) {
+    .seguimiento {
+        left: 0.75rem;
+        right: 0.75rem;
+        bottom: 0.75rem;
+        width: auto;
+        padding: 0;
+        border-radius: 999px;
+        border: 0.15rem solid #171717;
+    }
+
+    .seg-completo {
+        display: none;
+    }
+
+    .seg-mini {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        width: 100%;
+        padding: 0.55rem 0.6rem 0.55rem 1rem;
+        border: none;
+        background: none;
+        font-family: inherit;
+        color: inherit;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .seg-mini-texto {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        line-height: 1.2;
+    }
+
+    .seg-mini-texto b {
+        font-size: 0.85rem;
+        font-weight: 800;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .seg-mini-texto small {
+        font-size: 0.7rem;
+        color: #888;
+    }
+
+    .seg-mini-flecha {
+        flex-shrink: 0;
+        padding: 0.45rem 0.8rem;
+        border-radius: 999px;
+        background: #FC8F02;
+        color: #fff;
+        font-size: 0.78rem;
+        font-weight: 800;
+    }
+
+    .seguimiento-listo .seg-mini-flecha {
+        background: #1e7b34;
+    }
 }
 
 @keyframes seguimiento-entra {

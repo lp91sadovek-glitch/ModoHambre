@@ -324,6 +324,12 @@ async function cargarPedidos() {
   var versionAlSalir = versionCambios;
   try {
     var response = await pedir(API + '/api/orders');
+    // sin la clave el servidor responde, solo que no muestra nada todavía
+    if (response.status === 401) {
+      estadoConexion.textContent = 'Esperando la clave';
+      estadoConexion.classList.remove('ok');
+      return;
+    }
     if (!response.ok) throw new Error('Respuesta no válida');
     var datos = await response.json();
     if (versionAlSalir !== versionCambios) return;

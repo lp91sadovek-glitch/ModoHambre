@@ -205,7 +205,7 @@ var SeguimientoPedidos = (function () {
     var fondo = document.createElement('div');
     fondo.className = 'seg-cartel-fondo seg-aviso-fondo';
     fondo.innerHTML =
-      '<div class="seg-cartel' + (pedido.estado === 'listo' ? ' seg-cartel-listo' : '') + '"' +
+      '<div class="seg-cartel' + (pedido.estado === 'listo' || pedido.estado === 'entregado' ? ' seg-cartel-listo' : '') + '"' +
       ' role="alertdialog" aria-modal="true" aria-labelledby="seg-cartel-titulo">' +
         '<p class="seg-cartel-numero">Pedido #' + pedido.id + '</p>' +
         '<p class="seg-cartel-titulo" id="seg-cartel-titulo">' + texto.titulo + '</p>' +
@@ -304,7 +304,15 @@ var SeguimientoPedidos = (function () {
 
     caja.hidden = false;
     caja.className = 'seguimiento' + (listo ? ' seguimiento-listo' : '');
+    // En el celular se ve solo la barrita de arriba (seg-mini); al tocarla se
+    // abre la pantalla con todo. En la computadora se ve la tarjeta completa.
     caja.innerHTML =
+      '<button class="seg-mini" type="button" data-accion="detalle">' +
+        '<span class="seg-mini-texto"><b>' + texto.titulo + '</b>' +
+        '<small>Pedido #' + pedido.id + '</small></span>' +
+        '<span class="seg-mini-flecha">Seguir el pedido ›</span>' +
+      '</button>' +
+      '<div class="seg-completo">' +
       '<button class="seg-cerrar" type="button" data-accion="cerrar" aria-label="Ocultar">×</button>' +
       '<p class="seg-numero">Pedido #' + pedido.id + '</p>' +
       '<p class="seg-titulo">' + texto.titulo + '</p>' +
@@ -318,7 +326,8 @@ var SeguimientoPedidos = (function () {
         '<button class="seg-ver" type="button" data-accion="detalle">Ver seguimiento ›</button>' +
         opcionCancelar(pedido) +
       '</div>' +
-      botonAvisos;
+      botonAvisos +
+      '</div>';
     caja.dataset.id = pedido.id;
     if (detalleAbierto) dibujarDetalle();
   }
@@ -609,7 +618,13 @@ var SeguimientoPedidos = (function () {
         cambios.oculto = false;
       }
       marcar(pedido.id, cambios);
-      if (cambios.estado && cambios.estado !== 'entregado') avisarAhora(Object.assign({}, pedido, datos));
+      var actualizado = Object.assign({}, pedido, datos);
+      if (cambios.estado === 'entregado') {
+        // entregado / retirado: solo el cartel en pantalla, sin notificación
+        cartelEnPantalla(actualizado, textoDe(actualizado));
+      } else if (cambios.estado) {
+        avisarAhora(actualizado);
+      }
     } catch (error) {
       // sin internet un momento: se reintenta en la próxima vuelta
     }
